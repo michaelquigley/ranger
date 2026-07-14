@@ -1,0 +1,12 @@
+.gradle
+.idea
+.vscode
+.pv
+.store
+.claude
+.codex
+.mercurius
+mercurius.yaml
+*.db
+node_modules
+tsconfig.tsbuildinfo
