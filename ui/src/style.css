@@ -125,7 +125,7 @@ textarea {
   background: var(--card);
   border: 1px solid var(--card-edge);
   border-radius: 6px;
-  padding: 0.5rem 0.6rem;
+  padding: 0.8rem 0.9rem;
   cursor: grab;
   box-shadow: 0 1px 2px rgba(20, 24, 30, 0.07);
 }
@@ -135,7 +135,7 @@ textarea {
 }
 
 .card-flags {
-  margin-top: 0.3rem;
+  margin-top: 0.45rem;
   display: flex;
   gap: 0.3rem;
   flex-wrap: wrap;
@@ -156,7 +156,7 @@ textarea {
 }
 
 .log-line {
-  margin-top: 0.3rem;
+  margin-top: 0.45rem;
   font-size: 0.75rem;
   color: var(--dim);
 }
@@ -240,10 +240,6 @@ textarea {
   background: var(--card);
   border: 1px solid var(--card-edge);
   color: var(--dim);
-}
-
-.meta-tag {
-  color: var(--accent);
 }
 
 .meta-source {
@@ -389,4 +385,30 @@ textarea {
   cursor: grabbing;
   box-shadow: 0 6px 18px rgba(20, 24, 30, 0.25);
   width: 214px;
+}
+
+.card-tags {
+  margin-top: 0.45rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  line-height: 1.35;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+}
+
+.capture-body {
+  flex: 1;
+  resize: none;
 }

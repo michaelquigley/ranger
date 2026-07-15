@@ -11,6 +11,7 @@ import {
   type Outcome,
 } from "./api";
 import { CloseIcon, EditIcon } from "./icons";
+import { labelColor, sortedTags } from "./labels";
 
 // the item modal renders the body as markdown by default; the raw-edit
 // gesture lives behind an explicit edit mode, where the operator's own
@@ -162,8 +163,8 @@ export function ItemModal({
       <div className="item-meta">
         <span className="meta-pill">{card.state ?? "state unreadable"}</span>
         {card.created && <span className="meta-pill">{card.created}</span>}
-        {(card.tags ?? []).map((tag) => (
-          <span key={tag} className="meta-pill meta-tag">
+        {sortedTags(card.tags).map((tag) => (
+          <span key={tag} className="tag-pill" style={labelColor(tag)}>
             {tag}
           </span>
         ))}

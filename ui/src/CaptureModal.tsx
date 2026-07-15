@@ -37,7 +37,7 @@ export function CaptureModal({
 
   return (
     <div className="modal-backdrop">
-      <div className="modal">
+      <div className="modal modal-item">
         <h2>capture</h2>
         {local && <p className="local-notice">{local}</p>}
         <input
@@ -46,7 +46,12 @@ export function CaptureModal({
           onChange={(e) => setTitle(e.target.value)}
           autoFocus
         />
-        <textarea placeholder="body (optional)" value={body} onChange={(e) => setBody(e.target.value)} />
+        <textarea
+          className="capture-body"
+          placeholder="body (optional)"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
         <div className="panel-row">
           <button onClick={() => void submit()}>capture</button>
           <button onClick={onClose}>cancel</button>

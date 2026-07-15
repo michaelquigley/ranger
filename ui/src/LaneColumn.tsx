@@ -2,6 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Card, Lane } from "./api";
+import { labelColor, sortedTags } from "./labels";
 
 export function LaneColumn({ lane, onOpen }: { lane: Lane; onOpen: (filename: string) => void }) {
   const { setNodeRef } = useDroppable({ id: `lane:${lane.state}` });
@@ -53,6 +54,15 @@ export function CardBody({ card }: { card: Card }) {
   return (
     <>
       <div className="card-title">{card.title || card.filename}</div>
+      {(card.tags ?? []).length > 0 && (
+        <div className="card-tags">
+          {sortedTags(card.tags).map((tag) => (
+            <span key={tag} className="tag-pill" style={labelColor(tag)}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
       {card.flags.length > 0 && (
         <div className="card-flags">
           {card.flags.map((f) => (
