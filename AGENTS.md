@@ -4,10 +4,10 @@ vane is a roadmap-as-files convention plus a Go reader tool (CLI capture + local
 
 ## How to arrive
 
-1. **`docs/journal/`** — agent memory, dated entries, newest first. Read the recent entries before anything else; write freely as you work. `docs/journal/2026-07-14.md` is the planning-phase handoff and names the things the artifacts don't shout.
-2. **`docs/future/vane-spec.md`** — the design, converged through a seven-round mercurius arc. Its normative rules (slug algorithm, malformed semantics, `order.yaml` evaluation, hash guard, root discovery) are settled; the spec is the authority.
-3. **`docs/future/vane-work-order.md`** — the implementation plan, converged through a joint six-round arc. Stages, packages, tests, contracts. Execute it; don't re-open design questions — surface them instead.
-4. **`docs/current/`** — built behavior, synthesized as stages land. Empty until stage 1 lands something.
+1. **`docs/journal/`** — agent memory, dated entries, newest first. Read the recent entries before anything else; write freely as you work.
+2. **`docs/current/`** — built behavior: the domain model, the document layer, workspace + CLI, the API, and the UI/serve surface. This is the authority on what exists.
+3. **`docs/future/roadmap/`** — vane's own roadmap, kept in vane's own convention (dogfooding). Deferred concerns live here as items; agents may write items but never touch `order.yaml`.
+4. The originating spec and work order were realized and removed 2026-07-15 (v1 complete, all five stages terminus-gated); git history keeps the archaeology. Their settled normative rules — slug algorithm, malformed semantics, `order.yaml` evaluation order, the hash guard, root discovery — now live in the code, its tests, and `docs/current/`.
 
 ## Posture
 
@@ -22,8 +22,8 @@ Prototype-first. v1 exists to validate the model and the approach; hardening com
 
 ## Process
 
-- Work lands in the work order's stages, in order. Each stage is gated by **terminus**: run it, resolve or get an explicit veto on every finding, and bring the stage to Michael `clean`. Findings vetoes are Michael's call, recorded in conversation and journal.
+- v1's staged work order is realized; ongoing work is ad-hoc improvement or new pipeline arcs for anything architectural. Substantive changes are still gated by **terminus**: run it, resolve or get an explicit veto on every finding, and bring the work to Michael `clean`. Findings vetoes are Michael's call, recorded in conversation and journal. Terminus judges convention qualities, not behavior — clean is necessary, not sufficient.
 - As behavior lands, synthesize it into `docs/current/` and add a `CHANGELOG.md` entry under `## Unreleased` (`FEATURE`/`CHANGE`/`FIX` prose, in-house format — not Keep a Changelog).
 - Run `unfurl -i <file>` on any markdown you author or edit, unconditionally.
 - Go conventions: `df/dl` for logging, `df/dd` for YAML/JSON binding. Reference implementation for the ogen/embed/UI wiring: `flo` in `../archive`.
-- When the spec and work order are fully realized, they are removed from `docs/future/` (git history keeps the archaeology); still-live deferred concerns get re-synthesized into new, smaller `docs/future/` documents first.
+- Realized specs and work orders are removed from `docs/future/` (git history keeps the archaeology); still-live deferred concerns get re-synthesized first — for vane, that means roadmap items.
