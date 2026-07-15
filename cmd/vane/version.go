@@ -1,23 +1,9 @@
 package main
 
-import (
-	"fmt"
-	"runtime/debug"
+import "github.com/michaelquigley/push/build"
 
-	"github.com/spf13/cobra"
-)
-
-func newVersionCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "print build info",
-		Args:  cobra.NoArgs,
-		Run: func(_ *cobra.Command, _ []string) {
-			version := "dev"
-			if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
-				version = info.Main.Version
-			}
-			fmt.Printf("vane %s\n", version)
-		},
-	}
+func init() {
+	// vane is pre-release; advertise the dev base as v0.1.x for unstamped
+	// developer builds.
+	build.DevVersion = "v0.1.x"
 }

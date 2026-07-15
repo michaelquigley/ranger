@@ -1,10 +1,10 @@
 horizon:
-  - board-live-reload.md
-  - forge-ingestion-tooling.md
+  - live-board-reload.md
 researching:
 inbox:
   - cross-repo-aggregation.md
   - dfw-integration.md
+  - forge-ingestion-tooling.md
   - done-item-reporting.md
   - config-cascade.md
   - log-append-gestures.md

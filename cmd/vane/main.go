@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/michaelquigley/df/dl"
+	"github.com/michaelquigley/push/build"
 	"github.com/spf13/cobra"
 	"git.hq.quigley.com/products/vane/internal/workspace"
 )
@@ -40,7 +41,7 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
-	cmd.AddCommand(newServeCmd(), newListCmd(), newStateCmd(), newVersionCmd())
+	cmd.AddCommand(newServeCmd(), newListCmd(), newStateCmd(), build.NewVersionCmd("vane"))
 	return cmd
 }
 

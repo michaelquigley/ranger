@@ -1,4 +1,4 @@
-.PHONY: build headless generate test clean
+.PHONY: build headless generate test clean push
 .DEFAULT_GOAL := build
 GOBIN ?= $(shell go env GOPATH)/bin
 
@@ -22,3 +22,6 @@ generate:
 test:
 	go test ./... -count=1
 	go vet ./...
+
+push:
+	push vendor ${GOBIN}/vane vane

@@ -1,5 +1,5 @@
 ---
-title: board live reload
+title: Live Board Reload
 state: horizon
 created: 2026-07-15
 tags: [enhancement, spike]

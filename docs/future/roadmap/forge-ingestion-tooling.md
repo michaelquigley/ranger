@@ -1,6 +1,6 @@
 ---
 title: forge ingestion tooling
-state: horizon
+state: inbox
 created: 2026-07-14
 ---
 
