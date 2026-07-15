@@ -19,7 +19,7 @@ type Flag struct {
 }
 
 // MismatchesSlug reports whether filename should carry the
-// filename-mismatch flag for a readable title. A title whose slug is empty
+// filename-mismatch flag for a readable title. a title whose slug is empty
 // legitimately carries a hand-picked filename and never flags.
 func MismatchesSlug(filename, title string) bool {
 	s := Slug(title)

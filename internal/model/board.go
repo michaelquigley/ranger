@@ -37,7 +37,7 @@ type Board struct {
 // lane mismatch only with positive evidence — the card exists and has a
 // valid, different readable state), then first-occurrence-wins runs among
 // the survivors, then each lane's unranked tail sorts created ascending,
-// filename ascending, undated cards after every dated card. Entries
+// filename ascending, undated cards after every dated card. entries
 // retained for an unreadable-state card are active in the card's effective
 // lane (inbox) and inert everywhere else.
 func ComputeBoard(cards []CardInput, order map[State][]string) Board {

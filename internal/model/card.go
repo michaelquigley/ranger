@@ -9,7 +9,7 @@ type CardInput struct {
 	// couldn't be read.
 	State State
 	// Created is the card's valid YYYY-MM-DD date, or "" when absent or
-	// unreadable. The format sorts lexically.
+	// unreadable. the format sorts lexically.
 	Created string
 	Flags   []Flag
 }
