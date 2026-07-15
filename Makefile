@@ -1,7 +1,7 @@
 .PHONY: build test clean
 
 build:
-	go build ./...
+	go build -o vane ./cmd/vane
 
 test:
 	go test ./...

@@ -187,6 +187,29 @@ func validDate(s string) bool {
 	return err == nil
 }
 
+// NewItem emits a fresh capture skeleton: title from the argument or bare,
+// inbox state, the given created date, and the body after a blank line —
+// what you edit is exactly what lands.
+func NewItem(title, created, body string) []byte {
+	var b strings.Builder
+	b.WriteString("---\n")
+	if title == "" {
+		b.WriteString("title:\n")
+	} else {
+		b.WriteString("title: " + emitScalar(title) + "\n")
+	}
+	b.WriteString("state: inbox\n")
+	b.WriteString("created: " + created + "\n")
+	b.WriteString("---\n\n")
+	if body != "" {
+		b.WriteString(body)
+		if !strings.HasSuffix(body, "\n") {
+			b.WriteString("\n")
+		}
+	}
+	return []byte(b.String())
+}
+
 // SetState returns new file bytes with the state: field's line range
 // replaced in place — same indentation, inline comment preserved, every
 // other byte untouched.
