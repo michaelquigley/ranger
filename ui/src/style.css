@@ -1,0 +1,242 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #16181d;
+  --lane: #1e2128;
+  --card: #262a33;
+  --card-edge: #343a46;
+  --text: #d6d9e0;
+  --dim: #8a90a0;
+  --accent: #6ea8fe;
+  --warn: #e0af68;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+button {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+input,
+textarea {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--card-edge);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+}
+
+.notice {
+  margin: 0 1rem 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: #3a2f1e;
+  border: 1px solid var(--warn);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.board {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+  overflow-x: auto;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.lane {
+  background: var(--lane);
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-width: 230px;
+  width: 230px;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.lane h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+}
+
+.lane h2 .count {
+  font-weight: 400;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 2rem;
+}
+
+.rank-boundary {
+  border-top: 1px dashed var(--dim);
+  margin: 0.2rem 0 0.6rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  cursor: grab;
+}
+
+.card-title {
+  font-weight: 500;
+}
+
+.card-flags {
+  margin-top: 0.3rem;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.flag {
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 3px;
+  background: #4a2f2f;
+  border: 1px solid #7a4a4a;
+  cursor: help;
+}
+
+.flag-filename-mismatch {
+  background: #4a3f2a;
+  border-color: #7a6a3a;
+}
+
+.log-line {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(640px, 90vw);
+  background: var(--lane);
+  border-left: 1px solid var(--card-edge);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.panel textarea {
+  flex: 1;
+  resize: none;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  white-space: pre;
+}
+
+.panel-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.panel-row input {
+  flex: 1;
+}
+
+.local-notice {
+  margin: 0;
+  padding: 0.4rem 0.7rem;
+  background: #3a2f1e;
+  border: 1px solid var(--warn);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.modal {
+  background: var(--lane);
+  border: 1px solid var(--card-edge);
+  border-radius: 8px;
+  padding: 1rem;
+  width: min(520px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.modal textarea {
+  min-height: 8rem;
+  font-family: ui-monospace, monospace;
+}
+
+.fatal {
+  padding: 2rem;
+}

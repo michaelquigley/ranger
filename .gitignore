@@ -11,3 +11,5 @@ mercurius.yaml
 node_modules
 tsconfig.tsbuildinfo
 /vane
+ui/dist/
+ui/node_modules/
