@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+CHANGE: the board carries `project` (the discovered root's name), shown in the header beside the mark and in the browser tab title.
+
+FEATURE: item deletion — the operator's curation act given a gesture (a recorded design change from v1's tool-never-deletes rule): `POST /items/{filename}/delete` removes the file and its order.yaml entries in one hash-guarded gesture, surfaced in the item modal behind an inline confirm. Agents still never delete items.
+
+FEATURE: `milestone:` — a new optional claimed frontmatter field (release-train form, e.g. `v0.1.x`), flowing through the whole stack: document schema (duplicate/shape validated like every claimed field), API card, board display (small mono badge on cards), and single-select milestone filtering composing with tag filters. The grimoire's roadmap-convention note carries the schema addition.
+
+CHANGE: the item modal's metadata row of chips became a structured metadata block — labeled rows (state, created, milestone, tags, source, file) in a bordered grid.
+
+FEATURE: tag filtering on the board — clicking a card's tag chip narrows the board to items carrying every selected tag (forge-style AND), with active filters shown in the header for removal; lane counts and ranked boundaries follow the filtered view.
+
+CHANGE: drop placement is anchor-based — the moved card lands directly beside the card it was dropped against in the lane's full order — which makes dragging work under active filters: hidden neighbors stay put, and a drop targeting an unranked card or empty space serializes as end-of-ranked-list.
+
+CHANGE: board presentation tuning — the whole UI scales from the root font size (115%, one number in `style.css`, with px dimensions converted to rem and icons to em), lanes are 25% wider, cards no longer show log stamps on their faces (the item modal keeps them), and tag chips render 10% smaller.
+
+## v0.1.0
+
 CHANGE: the board UI moved to a light theme with the house fonts (Source Serif 4, Source Code Pro, bundled — no CDN), Material Design icon buttons (inlined SVG), and a map-mark logo/favicon.
 
 CHANGE: the item view is now a centered fixed-size modal rendering the body as markdown (react-markdown + GFM), with meta pills, click-the-title retitling, and raw-bytes editing behind an explicit edit mode; the capture modal matches its dimensions.

@@ -11,11 +11,12 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { fetchBoard, transition, reorder, type Board, type Card, type Conflict, type Outcome, type State } from "./api";
-import { rankedAfterMove } from "./reorder";
+import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import { CardBody, LaneColumn } from "./LaneColumn";
 import { ItemModal } from "./ItemModal";
 import { CaptureModal } from "./CaptureModal";
 import { CaptureIcon, VaneMark } from "./icons";
+import { labelColor } from "./labels";
 
 export default function App() {
   const [board, setBoard] = useState<Board | null>(null);
@@ -24,6 +25,8 @@ export default function App() {
   const [openItem, setOpenItem] = useState<string | null>(null);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [dragging, setDragging] = useState<Card | null>(null);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [milestoneFilter, setMilestoneFilter] = useState<string | null>(null);
   // server truth as of drag start: the optimistic board mutates freely
   // during the drag, and this is what gestures compute against and what a
   // canceled or failed drop restores.
@@ -41,6 +44,12 @@ export default function App() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    if (board?.project) {
+      document.title = `${board.project} — vane`;
+    }
+  }, [board?.project]);
 
   // the shared outcome path for gestures resolved at board level:
   // item_conflict and order_conflict mean the view went stale — reload
@@ -119,59 +128,63 @@ export default function App() {
       const overId = String(event.over.id);
 
       const origin = locate(snapshot, activeId);
-      const cur = locate(board, activeId);
+      let working = board;
+      let cur = locate(working, activeId);
       if (!origin || !cur) {
         setBoard(snapshot);
         return;
       }
 
-      if (cur.lane.state === origin.lane.state) {
-        const tgt = locateTarget(board, overId);
-        if (!tgt) {
+      // a drop can land in a lane the drag never hovered (no re-parent
+      // pass); bring the working board up to date first.
+      const tgt = locateTarget(working, overId);
+      if (tgt && tgt.lane.state !== cur.lane.state) {
+        working = moveAcross(working, cur, tgt);
+        setBoard(working);
+        cur = locate(working, activeId);
+        if (!cur) {
           setBoard(snapshot);
           return;
         }
-        if (tgt.lane.state === origin.lane.state) {
-          // within-lane sort
-          const filenames = rankedAfterMove(origin.lane, origin.index, tgt.index);
-          if (!filenames) {
-            setBoard(snapshot);
-            return;
-          }
-          setBoard(optimisticRanked(board, origin.lane.state, filenames));
-          finishDrag(await reorder(origin.lane.state as State, filenames, snapshot.orderVersion), snapshot);
+      }
+
+      // placement is anchor-based against the *displayed* lane — under a
+      // filter, the card lands directly beside the visible card it was
+      // dropped against, and hidden neighbors stay where they are. the
+      // gesture itself still computes against the pre-drag server truth.
+      const isFiltering = tagFilter.length > 0 || milestoneFilter !== null;
+      const displayedBoard = isFiltering ? filterBoard(working, tagFilter, milestoneFilter) : working;
+      const displayedLane = displayedBoard.lanes.find((l) => l.state === cur.lane.state);
+      const anchor = anchorFor(displayedLane?.cards.map((c) => c.filename) ?? [], activeId, overId);
+
+      if (cur.lane.state === origin.lane.state) {
+        const filenames = rankedAfterDrop(origin.lane, activeId, anchor);
+        if (!filenames) {
+          setBoard(snapshot);
           return;
         }
-        // dropped into another lane without a drag-over pass
-        const position = Math.min(tgt.index, tgt.lane.rankedCount);
-        setBoard(moveAcross(board, cur, tgt));
-        finishDrag(
-          await transition(activeId, tgt.lane.state as State, origin.lane.cards[origin.index].hash, snapshot.orderVersion, position),
-          snapshot,
-        );
+        setBoard(optimisticRanked(working, origin.lane.state, filenames));
+        finishDrag(await reorder(origin.lane.state as State, filenames, snapshot.orderVersion), snapshot);
         return;
       }
 
-      // cross-lane: the card already lives in its destination lane; refine
-      // the final slot, then transition-and-place. position indexes the
-      // destination's ranked list as it exists on disk.
-      let finalIndex = cur.index;
-      const tgt = locateTarget(board, overId);
-      if (tgt && tgt.lane.state === cur.lane.state) {
-        finalIndex = Math.min(tgt.index, cur.lane.cards.length - 1);
-        if (finalIndex !== cur.index) {
-          setBoard(withinLaneMove(board, cur.lane.state, cur.index, finalIndex));
-        }
-      }
-      const diskLane = snapshot.lanes.find((l) => l.state === cur.lane.state);
-      const position = Math.min(finalIndex, diskLane?.rankedCount ?? 0);
+      const destDisk = snapshot.lanes.find((l) => l.state === cur.lane.state);
+      const position = destDisk ? positionAfterDrop(destDisk, anchor) : 0;
       finishDrag(
         await transition(activeId, cur.lane.state as State, origin.lane.cards[origin.index].hash, snapshot.orderVersion, position),
         snapshot,
       );
     },
-    [board, preDrag, finishDrag],
+    [board, preDrag, finishDrag, tagFilter, milestoneFilter],
   );
+
+  const toggleTag = useCallback((tag: string) => {
+    setTagFilter((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
+  }, []);
+
+  const toggleMilestone = useCallback((milestone: string) => {
+    setMilestoneFilter((cur) => (cur === milestone ? null : milestone));
+  }, []);
 
   const handleDragCancel = useCallback(() => {
     setDragging(null);
@@ -191,13 +204,54 @@ export default function App() {
     return <div className="fatal">loading…</div>;
   }
 
+  // an active filter narrows the board to cards carrying every selected
+  // tag and the selected milestone. drags stay live: placement is
+  // anchor-based, so a filtered drop lands beside the visible card it was
+  // dropped against.
+  const filtering = tagFilter.length > 0 || milestoneFilter !== null;
+  const shown = filtering ? filterBoard(board, tagFilter, milestoneFilter) : board;
+
   return (
     <div className="app">
       <header>
         <span className="mark" title="vane">
           <VaneMark />
         </span>
+        <h1 className="project-name">{board.project}</h1>
         <CaptureIcon onClick={() => setCaptureOpen(true)} />
+        {filtering && (
+          <div className="filter-bar">
+            <span className="dim">filtering:</span>
+            {milestoneFilter && (
+              <span
+                className="milestone-pill tag-click"
+                title={`stop filtering by ${milestoneFilter}`}
+                onClick={() => setMilestoneFilter(null)}
+              >
+                {milestoneFilter} ×
+              </span>
+            )}
+            {tagFilter.map((tag) => (
+              <span
+                key={tag}
+                className="tag-pill tag-click"
+                style={labelColor(tag)}
+                title={`stop filtering by ${tag}`}
+                onClick={() => toggleTag(tag)}
+              >
+                {tag} ×
+              </span>
+            ))}
+            <button
+              onClick={() => {
+                setTagFilter([]);
+                setMilestoneFilter(null);
+              }}
+            >
+              clear
+            </button>
+          </div>
+        )}
       </header>
       {notice && (
         <div className="notice" onClick={() => setNotice(null)}>
@@ -213,8 +267,14 @@ export default function App() {
         onDragCancel={handleDragCancel}
       >
         <div className="board">
-          {board.lanes.map((lane) => (
-            <LaneColumn key={lane.state} lane={lane} onOpen={setOpenItem} />
+          {shown.lanes.map((lane) => (
+            <LaneColumn
+              key={lane.state}
+              lane={lane}
+              onOpen={setOpenItem}
+              onToggleTag={toggleTag}
+              onToggleMilestone={toggleMilestone}
+            />
           ))}
         </div>
         <DragOverlay>
@@ -267,6 +327,23 @@ function locateTarget(board: Board, overId: string): Located | null {
   return locate(board, overId);
 }
 
+// filterBoard narrows every lane to cards carrying all of the given tags
+// and the selected milestone. rankedCount shrinks to the surviving members
+// of the ranked prefix so the boundary rule still lands between ranked and
+// unranked cards.
+function filterBoard(board: Board, tags: string[], milestone: string | null): Board {
+  const matches = (c: Card) =>
+    tags.every((t) => (c.tags ?? []).includes(t)) && (milestone === null || c.milestone === milestone);
+  return {
+    ...board,
+    lanes: board.lanes.map((lane) => ({
+      ...lane,
+      cards: lane.cards.filter(matches),
+      rankedCount: lane.cards.slice(0, lane.rankedCount).filter(matches).length,
+    })),
+  };
+}
+
 function cloneLanes(board: Board): Board {
   return { ...board, lanes: board.lanes.map((l) => ({ ...l, cards: [...l.cards] })) };
 }
@@ -284,16 +361,6 @@ function moveAcross(board: Board, src: Located, tgt: Located): Board {
   const at = Math.min(tgt.index, to.cards.length);
   to.cards.splice(at, 0, card);
   if (at <= to.rankedCount) to.rankedCount++;
-  return next;
-}
-
-function withinLaneMove(board: Board, laneState: string, from: number, to: number): Board {
-  const next = cloneLanes(board);
-  const lane = next.lanes.find((l) => l.state === laneState);
-  if (!lane) return board;
-  const [card] = lane.cards.splice(from, 1);
-  if (!card) return board;
-  lane.cards.splice(Math.min(to, lane.cards.length), 0, card);
   return next;
 }
 

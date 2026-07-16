@@ -184,6 +184,34 @@ paths:
         default:
           $ref: "#/components/responses/serverError"
 
+  /items/{filename}/delete:
+    parameters:
+      - $ref: "#/components/parameters/filename"
+    post:
+      operationId: deleteItem
+      summary: >
+        remove an item file — the operator's explicit curation gesture. the
+        item's order.yaml entries go in the same gesture.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedHash, expectedOrderVersion]
+              properties:
+                expectedHash:
+                  type: string
+                expectedOrderVersion:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/freshBoard"
+        "409":
+          $ref: "#/components/responses/conflict"
+        default:
+          $ref: "#/components/responses/serverError"
+
   /items/{filename}/retitle:
     parameters:
       - $ref: "#/components/parameters/filename"
@@ -333,6 +361,8 @@ components:
             type: string
         source:
           type: string
+        milestone:
+          type: string
         log:
           type: array
           items:
@@ -362,8 +392,11 @@ components:
 
     board:
       type: object
-      required: [lanes, orderVersion]
+      required: [project, lanes, orderVersion]
       properties:
+        project:
+          type: string
+          description: the discovered workspace root's name.
         lanes:
           type: array
           items:

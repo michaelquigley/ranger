@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/michaelquigley/df/dd"
 	"git.hq.quigley.com/products/vane/internal/model"
+	"github.com/michaelquigley/df/dd"
 )
 
 var itemClaimed = map[string]bool{
 	"title": true, "state": true, "created": true,
-	"tags": true, "source": true, "log": true,
+	"tags": true, "source": true, "milestone": true, "log": true,
 }
 
 var dateShape = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -26,12 +26,13 @@ type LogEntry struct {
 // itemSchema is the dd-bind target for claimed fields; each field binds
 // independently so one broken sibling never erases another.
 type itemSchema struct {
-	Title   string
-	State   string
-	Created string
-	Tags    []string
-	Source  string
-	Log     []LogEntry
+	Title     string
+	State     string
+	Created   string
+	Tags      []string
+	Source    string
+	Milestone string
+	Log       []LogEntry
 }
 
 // ItemDoc is one parsed item file. Malformed is a verdict, not a blackout:
@@ -47,10 +48,11 @@ type ItemDoc struct {
 	// read and the card falls to inbox.
 	State model.State
 	// Created is the valid YYYY-MM-DD date, or "" when absent or invalid.
-	Created string
-	Tags    []string
-	Source  string
-	Log     []LogEntry
+	Created   string
+	Tags      []string
+	Source    string
+	Milestone string
+	Log       []LogEntry
 	// Malformed reports whether the document fails the schema table;
 	// Diagnostics carries what broke.
 	Malformed   bool
@@ -163,6 +165,7 @@ func ParseItem(raw []byte) *ItemDoc {
 	}
 	d.Tags = schema.Tags
 	d.Source = schema.Source
+	d.Milestone = schema.Milestone
 	d.Log = schema.Log
 	if readable["log"] {
 		for _, entry := range schema.Log {

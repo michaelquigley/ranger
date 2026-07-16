@@ -112,6 +112,17 @@ func (s *Server) ReorderLane(_ context.Context, req *api.ReorderLaneReq, params 
 	return s.boardRes()
 }
 
+func (s *Server) DeleteItem(_ context.Context, req *api.DeleteItemReq, params api.DeleteItemParams) (api.DeleteItemRes, error) {
+	err := s.w.Delete(params.Filename, req.ExpectedHash, req.ExpectedOrderVersion)
+	if err != nil {
+		if conflict, ok := asConflict(err); ok {
+			return conflict, nil
+		}
+		return nil, err
+	}
+	return s.boardRes()
+}
+
 func (s *Server) RetitleItem(_ context.Context, req *api.RetitleItemReq, params api.RetitleItemParams) (api.RetitleItemRes, error) {
 	if req.Title == "" {
 		return &api.ErrorResponse{Message: "title must not be empty"}, nil

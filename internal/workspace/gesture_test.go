@@ -398,6 +398,41 @@ func TestSaveContentRepairOutOfInboxCostsTheInboxRank(t *testing.T) {
 	})
 }
 
+func TestDeleteUnrankedRemovesOnlyTheFile(t *testing.T) {
+	w, snap, before := gestureFixture(t)
+	it := item(t, snap, "board-capture.md")
+	if err := w.Delete("board-capture.md", it.Hash, snap.OrderVersion); err != nil {
+		t.Fatal(err)
+	}
+	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{}, "docs/future/roadmap/board-capture.md")
+}
+
+func TestDeleteRankedRemovesEntries(t *testing.T) {
+	w, snap, before := gestureFixture(t)
+	it := item(t, snap, "retry-semantics.md")
+	if err := w.Delete("retry-semantics.md", it.Hash, snap.OrderVersion); err != nil {
+		t.Fatal(err)
+	}
+	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
+		"docs/future/roadmap/order.yaml": `# hand-tended
+researching:
+  - second-thread.md
+horizon:
+  - frame-composition.md
+`,
+	}, "docs/future/roadmap/retry-semantics.md")
+}
+
+func TestDeleteStaleHashChangesNothing(t *testing.T) {
+	w, snap, before := gestureFixture(t)
+	var conflict *document.ConflictError
+	err := w.Delete("retry-semantics.md", document.Hash([]byte("stale")), snap.OrderVersion)
+	if !errors.As(err, &conflict) {
+		t.Fatalf("stale delete must conflict, got %v", err)
+	}
+	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{})
+}
+
 func TestStaleGuardsRefuseAndChangeNothing(t *testing.T) {
 	w, snap, before := gestureFixture(t)
 	var conflict *document.ConflictError

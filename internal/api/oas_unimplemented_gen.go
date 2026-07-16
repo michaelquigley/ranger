@@ -22,6 +22,16 @@ func (UnimplementedHandler) CreateItem(ctx context.Context, req *CreateItemReq) 
 	return r, ht.ErrNotImplemented
 }
 
+// DeleteItem implements deleteItem operation.
+//
+// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
+// in the same gesture.
+//
+// POST /items/{filename}/delete
+func (UnimplementedHandler) DeleteItem(ctx context.Context, req *DeleteItemReq, params DeleteItemParams) (r DeleteItemRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetBoard implements getBoard operation.
 //
 // The computed board, rebuilt from a fresh read of the disk.

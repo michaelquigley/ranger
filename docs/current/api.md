@@ -9,13 +9,14 @@ Contract-first: `internal/api/specs/vane.yml` (OpenAPI 3.0.3) is the single sour
 
 ## the surface
 
-- `GET /board` — lanes in lifecycle order; each card carries filename, title (empty when unreadable — show the filename), its readable state and created date when they exist, tags/source/log, flags, and its content `hash`; each lane carries `rankedCount`, the boundary between the ranked prefix and the computed unranked tail. The board carries `orderVersion` — order.yaml's hash or the `"absent"` sentinel, because absence is a version.
+- `GET /board` — lanes in lifecycle order; each card carries filename, title (empty when unreadable — show the filename), its readable state and created date when they exist, tags/milestone/source/log, flags, and its content `hash`; each lane carries `rankedCount`, the boundary between the ranked prefix and the computed unranked tail. The board carries `orderVersion` — order.yaml's hash or the `"absent"` sentinel, because absence is a version.
 - `GET /items/{filename}` — raw `content` + parsed card + `hash`; 404 for a name that doesn't exist.
 - `POST /items` — capture into inbox. Empty and empty-slug titles are prevalidated to a typed 400 with no draft file written, so the form keeps its content and the tree stays clean. A slug collision is a 409 carrying the preserved `.capture-` temp path.
 - `PUT /items/{filename}/content` — raw save; a state-changing save runs the ranked-transition cleanup.
 - `POST /items/{filename}/state` — transition, or transition-and-place with `position`, which indexes the destination lane's ranked list only.
 - `PUT /order/{lane}` — `filenames` is only the resulting ranked prefix, never the whole displayed lane.
 - `POST /items/{filename}/retitle`, `POST /items/{filename}/rename-to-slug` — the rename gestures; both return the landing filename.
+- `POST /items/{filename}/delete` — the operator's curation gesture (design change 2026-07-16): removes the file and its order.yaml entries in one hash-guarded gesture.
 
 Every mutation carries `expectedHash` and/or `expectedOrderVersion` — the order version is required on *every* gesture that can touch order.yaml, never conditional on whether the item happens to be ranked, so a ranked item's two-file preflight and an unranked item's one-file gesture run the same contract. Every mutation success returns a fresh board, rebuilt from disk truth after the write.
 

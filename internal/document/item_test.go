@@ -16,6 +16,7 @@ state:    researching
 created: 2026-07-13
 tags: [retry, "zrok"]
 source: github:openziti/zrok#412
+milestone: v0.1.x
 x-priority-notes: |
   someone else's extension data
   with: colons and # hashes
@@ -48,6 +49,9 @@ func TestParseItemValid(t *testing.T) {
 	}
 	if d.Source != "github:openziti/zrok#412" {
 		t.Errorf("source = %q", d.Source)
+	}
+	if d.Milestone != "v0.1.x" {
+		t.Errorf("milestone = %q", d.Milestone)
 	}
 	if len(d.Log) != 1 || d.Log[0].Stamp != "2026-07-13" || d.Log[0].Note != "spec drawn" {
 		t.Errorf("log = %v", d.Log)
@@ -234,6 +238,8 @@ func TestParseItemMalformedClassification(t *testing.T) {
 		{"alias into unknown anchor", "---\ntitle: a\nstate: inbox\ncreated: 2026-07-13\nx-shared: &st [a, b]\ntags: *st\n---\n", false},
 		{"invalid log stamp", "---\ntitle: a\nstate: inbox\ncreated: 2026-07-13\nlog:\n  - stamp: soon\n    note: n\n---\n", true},
 		{"null claimed value", "---\ntitle:\nstate: inbox\ncreated: 2026-07-13\n---\n", true},
+		{"milestone violating shape", "---\ntitle: a\nstate: inbox\ncreated: 2026-07-13\nmilestone: [v0.1.x]\n---\n", true},
+		{"duplicate milestone", "---\ntitle: a\nstate: inbox\ncreated: 2026-07-13\nmilestone: v0.1.x\nmilestone: v0.5.x\n---\n", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

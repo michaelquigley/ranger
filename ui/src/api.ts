@@ -112,6 +112,19 @@ export async function retitle(
   return failure(response.status, error);
 }
 
+export async function deleteItem(
+  filename: string,
+  expectedHash: string,
+  expectedOrderVersion: string,
+): Promise<Outcome> {
+  const { data, error, response } = await client.POST("/items/{filename}/delete", {
+    params: { path: { filename } },
+    body: { expectedHash, expectedOrderVersion },
+  });
+  if (data) return { kind: "ok", board: data };
+  return failure(response.status, error);
+}
+
 export async function renameToSlug(
   filename: string,
   expectedHash: string,

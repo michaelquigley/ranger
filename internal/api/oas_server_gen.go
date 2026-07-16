@@ -14,6 +14,13 @@ type Handler interface {
 	//
 	// POST /items
 	CreateItem(ctx context.Context, req *CreateItemReq) (CreateItemRes, error)
+	// DeleteItem implements deleteItem operation.
+	//
+	// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
+	// in the same gesture.
+	//
+	// POST /items/{filename}/delete
+	DeleteItem(ctx context.Context, req *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error)
 	// GetBoard implements getBoard operation.
 	//
 	// The computed board, rebuilt from a fresh read of the disk.

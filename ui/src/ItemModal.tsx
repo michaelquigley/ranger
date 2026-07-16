@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  deleteItem,
   fetchItem,
   renameToSlug,
   retitle,
@@ -10,7 +11,7 @@ import {
   type ItemDetail,
   type Outcome,
 } from "./api";
-import { CloseIcon, EditIcon } from "./icons";
+import { CloseIcon, DeleteIcon, EditIcon } from "./icons";
 import { labelColor, sortedTags } from "./labels";
 
 // the item modal renders the body as markdown by default; the raw-edit
@@ -34,6 +35,7 @@ export function ItemModal({
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [editing, setEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [local, setLocal] = useState<string | null>(null);
@@ -122,6 +124,13 @@ export function ItemModal({
     }
   };
 
+  const doDelete = async () => {
+    setConfirmingDelete(false);
+    if (handle(await deleteItem(filename, item.hash, orderVersion))) {
+      onClose();
+    }
+  };
+
   return (
     <Backdrop onClose={onClose}>
       <div className="panel-head">
@@ -150,26 +159,61 @@ export function ItemModal({
           </h2>
         )}
         <div className="head-actions">
+          {!editing && <DeleteIcon onClick={() => setConfirmingDelete(true)} />}
           {!editing && <EditIcon onClick={() => setEditing(true)} />}
           <CloseIcon onClick={onClose} />
         </div>
       </div>
+      {confirmingDelete && (
+        <p className="delete-confirm">
+          delete {filename}? an uncommitted item has no git history to recover it from.
+          <button className="delete-button" onClick={() => void doDelete()}>
+            delete
+          </button>
+          <button onClick={() => setConfirmingDelete(false)}>cancel</button>
+        </p>
+      )}
       {local && (
         <p className="local-notice" onClick={() => setLocal(null)}>
           {local}
         </p>
       )}
 
-      <div className="item-meta">
-        <span className="meta-pill">{card.state ?? "state unreadable"}</span>
-        {card.created && <span className="meta-pill">{card.created}</span>}
-        {sortedTags(card.tags).map((tag) => (
-          <span key={tag} className="tag-pill" style={labelColor(tag)}>
-            {tag}
-          </span>
-        ))}
-        {card.source && <span className="meta-pill meta-source">{card.source}</span>}
-        <span className="meta-file">{filename}</span>
+      <div className="meta-block">
+        <div className="meta-label">state</div>
+        <div className="meta-value">{card.state ?? "unreadable"}</div>
+        {card.created && (
+          <>
+            <div className="meta-label">created</div>
+            <div className="meta-value">{card.created}</div>
+          </>
+        )}
+        {card.milestone && (
+          <>
+            <div className="meta-label">milestone</div>
+            <div className="meta-value meta-mono">{card.milestone}</div>
+          </>
+        )}
+        {(card.tags ?? []).length > 0 && (
+          <>
+            <div className="meta-label">tags</div>
+            <div className="meta-value">
+              {sortedTags(card.tags).map((tag) => (
+                <span key={tag} className="tag-pill" style={labelColor(tag)}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+        {card.source && (
+          <>
+            <div className="meta-label">source</div>
+            <div className="meta-value meta-mono">{card.source}</div>
+          </>
+        )}
+        <div className="meta-label">file</div>
+        <div className="meta-value meta-mono">{filename}</div>
       </div>
       {card.flags.length > 0 && (
         <div className="card-flags">

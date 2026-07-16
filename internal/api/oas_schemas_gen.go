@@ -14,9 +14,16 @@ func (s *ServerErrorStatusCode) Error() string {
 
 // Ref: #/components/schemas/board
 type Board struct {
-	Lanes []Lane `json:"lanes"`
+	// The discovered workspace root's name.
+	Project string `json:"project"`
+	Lanes   []Lane `json:"lanes"`
 	// Order.yaml's hash, or the sentinel "absent". absence is a version.
 	OrderVersion string `json:"orderVersion"`
+}
+
+// GetProject returns the value of Project.
+func (s *Board) GetProject() string {
+	return s.Project
 }
 
 // GetLanes returns the value of Lanes.
@@ -29,6 +36,11 @@ func (s *Board) GetOrderVersion() string {
 	return s.OrderVersion
 }
 
+// SetProject sets the value of Project.
+func (s *Board) SetProject(val string) {
+	s.Project = val
+}
+
 // SetLanes sets the value of Lanes.
 func (s *Board) SetLanes(val []Lane) {
 	s.Lanes = val
@@ -39,6 +51,7 @@ func (s *Board) SetOrderVersion(val string) {
 	s.OrderVersion = val
 }
 
+func (*Board) deleteItemRes()     {}
 func (*Board) reorderLaneRes()    {}
 func (*Board) saveContentRes()    {}
 func (*Board) transitionItemRes() {}
@@ -49,13 +62,14 @@ type Card struct {
 	// Empty when the title could not be read; show the filename.
 	Title string `json:"title"`
 	// Absent when state could not be read; the lane carries the effective placement.
-	State   OptState   `json:"state"`
-	Created OptString  `json:"created"`
-	Tags    []string   `json:"tags"`
-	Source  OptString  `json:"source"`
-	Log     []LogEntry `json:"log"`
-	Flags   []Flag     `json:"flags"`
-	Hash    string     `json:"hash"`
+	State     OptState   `json:"state"`
+	Created   OptString  `json:"created"`
+	Tags      []string   `json:"tags"`
+	Source    OptString  `json:"source"`
+	Milestone OptString  `json:"milestone"`
+	Log       []LogEntry `json:"log"`
+	Flags     []Flag     `json:"flags"`
+	Hash      string     `json:"hash"`
 }
 
 // GetFilename returns the value of Filename.
@@ -86,6 +100,11 @@ func (s *Card) GetTags() []string {
 // GetSource returns the value of Source.
 func (s *Card) GetSource() OptString {
 	return s.Source
+}
+
+// GetMilestone returns the value of Milestone.
+func (s *Card) GetMilestone() OptString {
+	return s.Milestone
 }
 
 // GetLog returns the value of Log.
@@ -131,6 +150,11 @@ func (s *Card) SetTags(val []string) {
 // SetSource sets the value of Source.
 func (s *Card) SetSource(val OptString) {
 	s.Source = val
+}
+
+// SetMilestone sets the value of Milestone.
+func (s *Card) SetMilestone(val OptString) {
+	s.Milestone = val
 }
 
 // SetLog sets the value of Log.
@@ -211,6 +235,7 @@ func (s *Conflict) SetDestPath(val OptString) {
 }
 
 func (*Conflict) createItemRes()     {}
+func (*Conflict) deleteItemRes()     {}
 func (*Conflict) renameToSlugRes()   {}
 func (*Conflict) reorderLaneRes()    {}
 func (*Conflict) retitleItemRes()    {}
@@ -288,6 +313,31 @@ func (s *CreateItemReq) SetTitle(val string) {
 // SetBody sets the value of Body.
 func (s *CreateItemReq) SetBody(val OptString) {
 	s.Body = val
+}
+
+type DeleteItemReq struct {
+	ExpectedHash         string `json:"expectedHash"`
+	ExpectedOrderVersion string `json:"expectedOrderVersion"`
+}
+
+// GetExpectedHash returns the value of ExpectedHash.
+func (s *DeleteItemReq) GetExpectedHash() string {
+	return s.ExpectedHash
+}
+
+// GetExpectedOrderVersion returns the value of ExpectedOrderVersion.
+func (s *DeleteItemReq) GetExpectedOrderVersion() string {
+	return s.ExpectedOrderVersion
+}
+
+// SetExpectedHash sets the value of ExpectedHash.
+func (s *DeleteItemReq) SetExpectedHash(val string) {
+	s.ExpectedHash = val
+}
+
+// SetExpectedOrderVersion sets the value of ExpectedOrderVersion.
+func (s *DeleteItemReq) SetExpectedOrderVersion(val string) {
+	s.ExpectedOrderVersion = val
 }
 
 // Ref: #/components/schemas/errorResponse

@@ -114,6 +114,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{filename}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                filename: components["parameters"]["filename"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go in the same gesture. */
+        post: operations["deleteItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{filename}/retitle": {
         parameters: {
             query?: never;
@@ -176,6 +195,7 @@ export interface components {
             created?: string;
             tags?: string[];
             source?: string;
+            milestone?: string;
             log?: components["schemas"]["logEntry"][];
             flags: components["schemas"]["flag"][];
             hash: string;
@@ -187,6 +207,8 @@ export interface components {
             rankedCount: number;
         };
         board: {
+            /** @description the discovered workspace root's name. */
+            project: string;
             lanes: components["schemas"]["lane"][];
             /** @description order.yaml's hash, or the sentinel "absent". absence is a version. */
             orderVersion: string;
@@ -409,6 +431,29 @@ export interface operations {
                     /** @description only the resulting ranked prefix, never the whole displayed lane; cards absent from it stay unranked. */
                     filenames: string[];
                     expectedVersion: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["freshBoard"];
+            409: components["responses"]["conflict"];
+            default: components["responses"]["serverError"];
+        };
+    };
+    deleteItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                filename: components["parameters"]["filename"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expectedHash: string;
+                    expectedOrderVersion: string;
                 };
             };
         };

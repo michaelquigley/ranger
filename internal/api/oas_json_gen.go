@@ -21,6 +21,10 @@ func (s *Board) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Board) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("project")
+		e.Str(s.Project)
+	}
+	{
 		e.FieldStart("lanes")
 		e.ArrStart()
 		for _, elem := range s.Lanes {
@@ -34,9 +38,10 @@ func (s *Board) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfBoard = [2]string{
-	0: "lanes",
-	1: "orderVersion",
+var jsonFieldsNameOfBoard = [3]string{
+	0: "project",
+	1: "lanes",
+	2: "orderVersion",
 }
 
 // Decode decodes Board from json.
@@ -48,8 +53,20 @@ func (s *Board) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "lanes":
+		case "project":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Project = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"project\"")
+			}
+		case "lanes":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				s.Lanes = make([]Lane, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -67,7 +84,7 @@ func (s *Board) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"lanes\"")
 			}
 		case "orderVersion":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.OrderVersion = string(v)
@@ -88,7 +105,7 @@ func (s *Board) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000011,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -180,6 +197,12 @@ func (s *Card) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Milestone.Set {
+			e.FieldStart("milestone")
+			s.Milestone.Encode(e)
+		}
+	}
+	{
 		if s.Log != nil {
 			e.FieldStart("log")
 			e.ArrStart()
@@ -203,16 +226,17 @@ func (s *Card) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfCard = [9]string{
+var jsonFieldsNameOfCard = [10]string{
 	0: "filename",
 	1: "title",
 	2: "state",
 	3: "created",
 	4: "tags",
 	5: "source",
-	6: "log",
-	7: "flags",
-	8: "hash",
+	6: "milestone",
+	7: "log",
+	8: "flags",
+	9: "hash",
 }
 
 // Decode decodes Card from json.
@@ -297,6 +321,16 @@ func (s *Card) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"source\"")
 			}
+		case "milestone":
+			if err := func() error {
+				s.Milestone.Reset()
+				if err := s.Milestone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"milestone\"")
+			}
 		case "log":
 			if err := func() error {
 				s.Log = make([]LogEntry, 0)
@@ -315,7 +349,7 @@ func (s *Card) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"log\"")
 			}
 		case "flags":
-			requiredBitSet[0] |= 1 << 7
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				s.Flags = make([]Flag, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -333,7 +367,7 @@ func (s *Card) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"flags\"")
 			}
 		case "hash":
-			requiredBitSet[1] |= 1 << 0
+			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				v, err := d.Str()
 				s.Hash = string(v)
@@ -354,8 +388,8 @@ func (s *Card) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b10000011,
-		0b00000001,
+		0b00000011,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -714,6 +748,119 @@ func (s *CreateItemReq) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *CreateItemReq) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DeleteItemReq) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DeleteItemReq) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("expectedHash")
+		e.Str(s.ExpectedHash)
+	}
+	{
+		e.FieldStart("expectedOrderVersion")
+		e.Str(s.ExpectedOrderVersion)
+	}
+}
+
+var jsonFieldsNameOfDeleteItemReq = [2]string{
+	0: "expectedHash",
+	1: "expectedOrderVersion",
+}
+
+// Decode decodes DeleteItemReq from json.
+func (s *DeleteItemReq) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DeleteItemReq to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "expectedHash":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.ExpectedHash = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"expectedHash\"")
+			}
+		case "expectedOrderVersion":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.ExpectedOrderVersion = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"expectedOrderVersion\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DeleteItemReq")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDeleteItemReq) {
+					name = jsonFieldsNameOfDeleteItemReq[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DeleteItemReq) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DeleteItemReq) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

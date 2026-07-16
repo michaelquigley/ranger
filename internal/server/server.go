@@ -83,6 +83,9 @@ func wireCard(snap *workspace.Snapshot, c model.CardInput) api.Card {
 		if it.Doc.Source != "" {
 			card.Source = api.NewOptString(it.Doc.Source)
 		}
+		if it.Doc.Milestone != "" {
+			card.Milestone = api.NewOptString(it.Doc.Milestone)
+		}
 		for _, l := range it.Doc.Log {
 			card.Log = append(card.Log, api.LogEntry{Stamp: l.Stamp, Note: l.Note})
 		}
@@ -90,9 +93,9 @@ func wireCard(snap *workspace.Snapshot, c model.CardInput) api.Card {
 	return card
 }
 
-func wireBoard(snap *workspace.Snapshot) *api.Board {
+func wireBoard(snap *workspace.Snapshot, project string) *api.Board {
 	board := snap.Board()
-	out := &api.Board{OrderVersion: snap.OrderVersion}
+	out := &api.Board{Project: project, OrderVersion: snap.OrderVersion}
 	for _, lane := range board.Lanes {
 		wl := api.Lane{
 			State:       api.State(lane.State),
@@ -114,5 +117,5 @@ func (s *Server) freshBoard() (*api.Board, error) {
 	if err != nil {
 		return nil, err
 	}
-	return wireBoard(snap), nil
+	return wireBoard(snap, filepath.Base(s.w.Root())), nil
 }

@@ -18,7 +18,7 @@ Prototype-first. v1 exists to validate the model and the approach; hardening com
 - **The tool never touches git.** No git imports anywhere — `.git` appears only as a filename string in root discovery. A git import is an automatic review finding.
 - **dd reads, hand-patched writes.** `df/dd` is the read/validate path only; every write is surgical byte-level line patching. A write path through any YAML encoder is a review finding.
 - **The convention is primary.** Nothing about the file format may exist only in the tool's understanding.
-- **The tool never commits, pushes, or deletes items.** All persistence is working-tree file writes; the operator owns history.
+- **The tool never commits or pushes.** All persistence is working-tree file writes; the operator owns history. Deletion (design change 2026-07-16) exists as an explicit, hash-guarded, confirmed operator gesture — v1's tool-never-deletes rule assigned removal to the operator's curation, and this is that act given a button. Agents still never delete items.
 
 ## Process
 

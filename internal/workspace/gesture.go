@@ -282,6 +282,55 @@ func (w *Workspace) renameItem(snap *Snapshot, filename, newName string, patched
 	return w.writeOrder(orderBytes, expectedOrderVersion, fmt.Sprintf("%s renamed to %s", filename, newName))
 }
 
+// Delete removes an item file — the operator's explicit curation gesture,
+// hash-guarded like every other write (design change 2026-07-16; v1's
+// tool-never-deletes rule gave the curation act to the operator, and this
+// is that act with a button). the item's order.yaml entries go in the same
+// gesture — a deleted file's entries are prunable unconditionally. under
+// the write model a tracked file's deletion is a reviewable diff; a
+// never-committed file has no net, so callers confirm before invoking.
+func (w *Workspace) Delete(filename, expectedHash, expectedOrderVersion string) error {
+	snap, err := w.Load()
+	if err != nil {
+		return err
+	}
+	if _, err := snap.verifyItem(w, filename, expectedHash); err != nil {
+		return err
+	}
+	if err := snap.verifyOrder(w, expectedOrderVersion); err != nil {
+		return err
+	}
+
+	var orderBytes []byte
+	occurs := false
+	for _, entries := range snap.Lanes() {
+		for _, f := range entries {
+			if f == filename {
+				occurs = true
+			}
+		}
+	}
+	if occurs {
+		cardsAfter := make([]model.CardInput, 0, len(snap.Cards()))
+		for _, c := range snap.Cards() {
+			if c.Filename != filename {
+				cardsAfter = append(cardsAfter, c)
+			}
+		}
+		if orderBytes, err = pruneOrder(snap.OrderRaw, cardsAfter); err != nil {
+			return err
+		}
+	}
+
+	if err := os.Remove(w.itemPath(filename)); err != nil {
+		return err
+	}
+	if orderBytes != nil {
+		return w.writeOrder(orderBytes, expectedOrderVersion, fmt.Sprintf("%s deleted", filename))
+	}
+	return nil
+}
+
 // SaveContent lands raw bytes verbatim — the operator's own bytes, no
 // normalization. a save that changes state is a transition made through
 // vane and gets the transition's discipline, compared in effective lanes:

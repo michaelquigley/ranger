@@ -5,6 +5,10 @@ type CreateItemRes interface {
 	createItemRes()
 }
 
+type DeleteItemRes interface {
+	deleteItemRes()
+}
+
 type GetItemRes interface {
 	getItemRes()
 }

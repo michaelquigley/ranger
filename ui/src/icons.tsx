@@ -4,7 +4,7 @@
 function Icon({ d, label, onClick }: { d: string; label: string; onClick: () => void }) {
   return (
     <button className="icon-button" title={label} aria-label={label} onClick={onClick}>
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" fill="currentColor" aria-hidden="true">
         <path d={d} />
       </svg>
     </button>
@@ -13,9 +13,9 @@ function Icon({ d, label, onClick }: { d: string; label: string; onClick: () => 
 
 // VaneMark is the material design "map" icon — the same drawing as the
 // favicon.
-export function VaneMark({ size = 22 }: { size?: number }) {
+export function VaneMark() {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true">
       <path
         fill="#2563eb"
         d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"
@@ -34,6 +34,16 @@ export function EditIcon({ onClick }: { onClick: () => void }) {
       label="edit raw content"
       onClick={onClick}
       d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+    />
+  );
+}
+
+export function DeleteIcon({ onClick }: { onClick: () => void }) {
+  return (
+    <Icon
+      label="delete item"
+      onClick={onClick}
+      d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
     />
   );
 }

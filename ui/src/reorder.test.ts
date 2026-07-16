@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Lane } from "./api";
-import { rankedAfterMove } from "./reorder";
+import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 
 function lane(rankedCount: number, ...filenames: string[]): Lane {
   return {
@@ -15,35 +15,78 @@ function lane(rankedCount: number, ...filenames: string[]): Lane {
   };
 }
 
-describe("rankedAfterMove", () => {
-  // the regression that shipped: dnd-kit's `to` already encodes the final
-  // slot, so the single most common gesture — dragging a card down one
-  // slot — must produce a changed list, not a silent no-op.
-  it("moves a card down one slot", () => {
-    expect(rankedAfterMove(lane(3, "a", "b", "c"), 0, 1)).toEqual(["b", "a", "c"]);
+describe("anchorFor", () => {
+  it("moving down anchors after the target", () => {
+    expect(anchorFor(["a", "b", "c"], "a", "b")).toEqual({ filename: "b", after: true });
   });
 
-  it("moves a card down several slots", () => {
-    expect(rankedAfterMove(lane(3, "a", "b", "c"), 0, 2)).toEqual(["b", "c", "a"]);
+  it("moving up anchors before the target", () => {
+    expect(anchorFor(["a", "b", "c"], "c", "a")).toEqual({ filename: "a", after: false });
+  });
+
+  it("a lane-container drop has no anchor (tail)", () => {
+    expect(anchorFor(["a", "b"], "a", "lane:researching")).toBeNull();
+  });
+
+  it("dropping on itself falls back to the visible neighbor above", () => {
+    expect(anchorFor(["a", "x", "b"], "x", "x")).toEqual({ filename: "a", after: true });
+  });
+
+  it("dropping on itself at the top falls back to the neighbor below", () => {
+    expect(anchorFor(["x", "a"], "x", "x")).toEqual({ filename: "a", after: false });
+  });
+});
+
+describe("rankedAfterDrop", () => {
+  it("moves a card down one slot", () => {
+    expect(rankedAfterDrop(lane(3, "a", "b", "c"), "a", { filename: "b", after: true })).toEqual(["b", "a", "c"]);
   });
 
   it("moves a card up", () => {
-    expect(rankedAfterMove(lane(3, "a", "b", "c"), 2, 0)).toEqual(["c", "a", "b"]);
+    expect(rankedAfterDrop(lane(3, "a", "b", "c"), "c", { filename: "a", after: false })).toEqual(["c", "a", "b"]);
   });
 
   it("returns null for a drop back into place", () => {
-    expect(rankedAfterMove(lane(3, "a", "b", "c"), 1, 1)).toBeNull();
+    expect(rankedAfterDrop(lane(3, "a", "b", "c"), "b", { filename: "a", after: true })).toBeNull();
   });
 
-  it("ranks an unranked card alone at the drop position", () => {
-    expect(rankedAfterMove(lane(2, "a", "b", "u1", "u2"), 2, 0)).toEqual(["u1", "a", "b"]);
+  it("ranks an unranked card beside the anchor", () => {
+    expect(rankedAfterDrop(lane(2, "a", "b", "u1", "u2"), "u1", { filename: "a", after: false })).toEqual([
+      "u1",
+      "a",
+      "b",
+    ]);
   });
 
-  it("snaps a ranked card's tail-region drop to end-of-ranked-list", () => {
-    expect(rankedAfterMove(lane(2, "a", "b", "u1", "u2"), 0, 3)).toEqual(["b", "a"]);
+  it("an unranked anchor is a tail drop: end-of-ranked-list", () => {
+    expect(rankedAfterDrop(lane(2, "a", "b", "u1", "u2"), "a", { filename: "u1", after: true })).toEqual(["b", "a"]);
   });
 
-  it("ranks an unranked card dragged within the tail at the boundary", () => {
-    expect(rankedAfterMove(lane(2, "a", "b", "u1", "u2"), 3, 2)).toEqual(["a", "b", "u2"]);
+  it("a nil anchor is a tail drop", () => {
+    expect(rankedAfterDrop(lane(2, "a", "b", "u1", "u2"), "u2", null)).toEqual(["a", "b", "u2"]);
+  });
+
+  // the filtered-board case: b is hidden by a filter; dropping c below the
+  // visible a lands it directly below a in the full order, above hidden b.
+  it("lands directly beside the anchor across hidden neighbors", () => {
+    expect(rankedAfterDrop(lane(3, "a", "b", "c"), "c", { filename: "a", after: true })).toEqual(["a", "c", "b"]);
+  });
+});
+
+describe("positionAfterDrop", () => {
+  it("after a ranked anchor", () => {
+    expect(positionAfterDrop(lane(2, "a", "b", "u1"), { filename: "a", after: true })).toBe(1);
+  });
+
+  it("before a ranked anchor", () => {
+    expect(positionAfterDrop(lane(2, "a", "b", "u1"), { filename: "b", after: false })).toBe(1);
+  });
+
+  it("nil anchor is end-of-ranked-list", () => {
+    expect(positionAfterDrop(lane(2, "a", "b", "u1"), null)).toBe(2);
+  });
+
+  it("unranked anchor is end-of-ranked-list", () => {
+    expect(positionAfterDrop(lane(2, "a", "b", "u1"), { filename: "u1", after: true })).toBe(2);
   });
 });

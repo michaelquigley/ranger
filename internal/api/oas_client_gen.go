@@ -33,6 +33,13 @@ type Invoker interface {
 	//
 	// POST /items
 	CreateItem(ctx context.Context, request *CreateItemReq) (CreateItemRes, error)
+	// DeleteItem invokes deleteItem operation.
+	//
+	// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
+	// in the same gesture.
+	//
+	// POST /items/{filename}/delete
+	DeleteItem(ctx context.Context, request *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error)
 	// GetBoard invokes getBoard operation.
 	//
 	// The computed board, rebuilt from a fresh read of the disk.
@@ -186,6 +193,103 @@ func (c *Client) sendCreateItem(ctx context.Context, request *CreateItemReq) (re
 
 	stage = "DecodeResponse"
 	result, err := decodeCreateItemResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteItem invokes deleteItem operation.
+//
+// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
+// in the same gesture.
+//
+// POST /items/{filename}/delete
+func (c *Client) DeleteItem(ctx context.Context, request *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error) {
+	res, err := c.sendDeleteItem(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendDeleteItem(ctx context.Context, request *DeleteItemReq, params DeleteItemParams) (res DeleteItemRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteItem"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/items/{filename}/delete"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteItemOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/items/"
+	{
+		// Encode "filename" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "filename",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Filename))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/delete"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeDeleteItemRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteItemResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
