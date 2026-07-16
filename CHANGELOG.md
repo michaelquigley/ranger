@@ -12,6 +12,8 @@ FEATURE: cards display their tags as colored label chips, sorted for display: th
 
 FIX: within-lane downward drags landed one position short (dnd-kit's drop index already encodes the final slot); the reorder math moved to `ui/src/reorder.ts` with a vitest table pinning the semantics.
 
+FEATURE: GitHub CI following the terminus shape — vet/test (Go suite, UI vitest, headless-tag compile) on every push and PR, a stamped linux-amd64 build using push's `ci/ldflags.sh` with a verify-stamp gate, and a drafted GitHub release with the tarball (binary + CHANGELOG + docs/current) on `v*` tags.
+
 CHANGE: versioning follows the push pattern (`github.com/michaelquigley/push/build`): figlet `vane version` with ldflags-stamped build detail, `v0.1.x` dev base, and a `make push` depot-vendoring target.
 
 FEATURE: `vane serve` + `ui/` — the localhost board: cobra `serve` (default port 4114, `127.0.0.1` only, startup fail-fast, graceful shutdown) serving the embedded Vite/TypeScript/React 19 board over the ogen API at `/api/v1`, with a `no_ui` build tag for headless binaries. The board renders seven lanes with flag badges, log stamps, and ranked/unranked boundaries; dnd-kit drags express reorder (ranked-prefix PUT, tail drops snap to the boundary) and cross-lane transition-and-place; the item panel edits raw bytes with retitle/rename-to-slug gestures; capture keeps its content through every refusal and shows slug-collision recovery paths. Client types generate from the same OpenAPI spec via openapi-typescript/openapi-fetch; the Makefile follows the archive repo's shape (`build` = npm + `go install`, plus `generate` and `headless` targets).
