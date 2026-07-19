@@ -107,9 +107,7 @@ textarea {
   margin: 0;
   padding: 0.5rem 0;
   font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 700;
   color: var(--dim);
 }
 
@@ -256,9 +254,8 @@ textarea {
 
 .meta-label {
   color: var(--dim);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .meta-value {
