@@ -1,11 +1,7 @@
 horizon:
-  - live-board-reload.md
-researching:
-inbox:
   - cross-repo-aggregation.md
-  - dfw-integration.md
-  - forge-ingestion-tooling.md
-  - done-item-reporting.md
-  - config-cascade.md
-  - log-append-gestures.md
-  - automated-state-sync-with-the-pipeline.md
+  - richer-log.md
+researching:
+  - live-board-reload.md
+  - desktop-integration.md
+inbox:
