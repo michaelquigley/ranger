@@ -194,6 +194,11 @@ export default function App() {
 
       const destDisk = snapshot.lanes.find((l) => l.state === cur.lane.state);
       const position = destDisk ? positionAfterDrop(destDisk, anchor) : 0;
+      // repaint the placement the server will produce before awaiting it —
+      // during same-lane hover only dnd-kit transforms move, so without
+      // this the release frame shows the card at its lane-entry slot and
+      // the lane reshuffles when the response lands.
+      setBoard(optimisticPlaced(snapshot, activeId, cur.lane.state, position));
       finishDrag(
         await transition(activeId, cur.lane.state as State, origin.lane.cards[origin.index].hash, snapshot.orderVersion, position),
         snapshot,
@@ -247,7 +252,6 @@ export default function App() {
           <RangerMark />
         </span>
         <h1 className="project-name">{board.project}</h1>
-        <CaptureIcon onClick={() => setCaptureOpen(true)} />
         <input
           className="search-box"
           placeholder="search"
@@ -257,6 +261,7 @@ export default function App() {
             if (e.key === "Escape") setQuery("");
           }}
         />
+        <CaptureIcon onClick={() => setCaptureOpen(true)} />
         {filtering && (
           <div className="filter-bar">
             <span className="dim">filtering:</span>
@@ -421,6 +426,23 @@ function moveAcross(board: Board, src: Located, tgt: Located): Board {
   const at = Math.min(tgt.index, to.cards.length);
   to.cards.splice(at, 0, card);
   if (at <= to.rankedCount) to.rankedCount++;
+  return next;
+}
+
+// optimisticPlaced is the cross-lane sibling of optimisticRanked: the moved
+// card leaves its origin lane and enters the destination's ranked prefix at
+// position, computed from the pre-drag server truth the gesture was sent
+// against.
+function optimisticPlaced(snapshot: Board, activeId: string, destState: string, position: number): Board {
+  const next = cloneLanes(snapshot);
+  const src = locate(next, activeId);
+  const to = next.lanes.find((l) => l.state === destState);
+  if (!src || !to || src.lane.state === destState) return snapshot;
+  const [card] = src.lane.cards.splice(src.index, 1);
+  if (!card) return snapshot;
+  if (src.index < src.lane.rankedCount) src.lane.rankedCount--;
+  to.cards.splice(Math.min(position, to.rankedCount), 0, card);
+  to.rankedCount++;
   return next;
 }
 

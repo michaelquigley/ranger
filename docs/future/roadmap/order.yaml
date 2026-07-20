@@ -1,4 +1,5 @@
 horizon:
+  - specwork-order-management.md
   - cross-repo-aggregation.md
   - richer-log.md
 researching:

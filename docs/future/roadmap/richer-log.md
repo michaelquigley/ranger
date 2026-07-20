@@ -2,7 +2,7 @@
 title: "richer log:"
 state: horizon
 created: 2026-07-15
-tags: [epic]
+tags: [epic, spike]
 milestone: v0.1.x
 ---
 

@@ -520,4 +520,6 @@ textarea {
 .search-box {
   width: 14rem;
   font-size: 0.85rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
 }

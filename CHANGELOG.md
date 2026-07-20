@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+FIX: cross-lane drops no longer reshuffle the destination lane after release. Same-lane hover moves only dnd-kit transforms — board state kept the card at its lane-entry slot — so the release frame rendered it mis-placed, then the whole lane animated into position when the server responded. The cross-lane path now repaints the placement synchronously before awaiting the server (`optimisticPlaced`, the twin of the within-lane path's `optimisticRanked`), so the release frame already shows the final arrangement and the response confirms it with nothing left to move.
+
 CHANGE: the binoculars mark is redrawn — the first drawing's solid objective discs read closer to owl face than field glasses. Now a front three-quarter view (ring objectives, barrels receding up-inward to the eyepieces, hinge wheel between), with masked separation gaps so the mark stays crisp on any tab background. Favicon and header mark share the drawing.
 
 CHANGE: the project is renamed vane -> ranger — the vision matured through use into a thinking tool for developing scouting intelligence over a product's territory, and the name follows. Module path `github.com/michaelquigley/ranger`, binary `ranger`, env var `RANGER_EDITOR` (EDITOR fallback unchanged), spec `specs/ranger.yml`, new binoculars mark. Earlier changelog entries keep the old name as history.
