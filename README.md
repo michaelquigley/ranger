@@ -1,5 +1,7 @@
 # ranger
 
+![the ranger interface](docs/images/ranger.png)
+
 A roadmap that lives in your repository as plain markdown files, plus a Go reader tool — CLI capture and a localhost board — for working with it. The convention is the product; the tool is a reader. One binary, no daemon, no database, and it never touches git.
 
 ## The idea
