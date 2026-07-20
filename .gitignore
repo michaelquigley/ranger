@@ -10,6 +10,6 @@ mercurius.yaml
 *.db
 node_modules
 tsconfig.tsbuildinfo
-/vane
+/ranger
 ui/dist/
 ui/node_modules/

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"git.hq.quigley.com/products/vane/internal/api"
-	"git.hq.quigley.com/products/vane/internal/model"
-	"git.hq.quigley.com/products/vane/internal/workspace"
+	"git.hq.quigley.com/products/ranger/internal/api"
+	"git.hq.quigley.com/products/ranger/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/workspace"
 )
 
 func (s *Server) GetBoard(_ context.Context) (*api.Board, error) {

@@ -1,4 +1,4 @@
-module git.hq.quigley.com/products/vane
+module git.hq.quigley.com/products/ranger
 
 go 1.26
 

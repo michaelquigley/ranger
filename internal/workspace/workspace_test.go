@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/model"
 )
 
 func writeFiles(t *testing.T, root string, files map[string]string) {

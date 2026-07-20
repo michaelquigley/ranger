@@ -5,7 +5,7 @@ created: 2026-07-14
 
 # the API
 
-Contract-first: `internal/api/specs/vane.yml` (OpenAPI 3.0.3) is the single source of truth, with the ogen-generated server code (`ogen@v1.20.3`, `--clean`) committed beside it in `internal/api`. Hand-written handlers live in `internal/server`, implementing the generated `Handler` interface flo-style: constructor-injected workspace, every load fresh from disk — the server holds no snapshot, because files are the truth and other writers never stop. Reads load once; a mutation loads twice, deliberately: once inside the workspace gesture as its guard preflight, and once after the write to build the response board from disk truth rather than from what the mutation thinks it did. Model↔wire translation happens at this edge only. No auth; the serve binding (localhost, `/api/v1`) arrives with stage 5.
+Contract-first: `internal/api/specs/ranger.yml` (OpenAPI 3.0.3) is the single source of truth, with the ogen-generated server code (`ogen@v1.20.3`, `--clean`) committed beside it in `internal/api`. Hand-written handlers live in `internal/server`, implementing the generated `Handler` interface flo-style: constructor-injected workspace, every load fresh from disk — the server holds no snapshot, because files are the truth and other writers never stop. Reads load once; a mutation loads twice, deliberately: once inside the workspace gesture as its guard preflight, and once after the write to build the response board from disk truth rather than from what the mutation thinks it did. Model↔wire translation happens at this edge only. No auth; the serve binding (localhost, `/api/v1`) arrives with stage 5.
 
 ## the surface
 

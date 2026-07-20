@@ -45,7 +45,7 @@ jobs:
         run: go test ./...
 
       - name: headless build
-        run: go build -tags no_ui -o /dev/null ./cmd/vane
+        run: go build -tags no_ui -o /dev/null ./cmd/ranger
 
   build:
     runs-on: ubuntu-latest
@@ -81,24 +81,24 @@ jobs:
           GOARCH: amd64
         run: |
           LDFLAGS=$(_push/ci/ldflags.sh)
-          go build -ldflags "${LDFLAGS}" -o vane ./cmd/vane
+          go build -ldflags "${LDFLAGS}" -o ranger ./cmd/ranger
 
       - name: verify stamp
         run: |
-          out=$(./vane version)
+          out=$(./ranger version)
           if [ -z "${out}" ] || printf '%s\n' "${out}" | grep -F '[developer build]'; then
             printf '%s\n' "${out}"
             exit 1
           fi
 
       - name: package artifact
-        run: tar -czf vane-linux-amd64.tar.gz vane CHANGELOG.md docs/current
+        run: tar -czf ranger-linux-amd64.tar.gz ranger CHANGELOG.md docs/current
 
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vane-linux-amd64
-          path: vane-linux-amd64.tar.gz
+          name: ranger-linux-amd64
+          path: ranger-linux-amd64.tar.gz
 
   release:
     runs-on: ubuntu-latest
@@ -108,14 +108,14 @@ jobs:
       - name: download artifact
         uses: actions/download-artifact@v4
         with:
-          name: vane-linux-amd64
+          name: ranger-linux-amd64
 
       - name: name archive with ref tag
-        run: mv vane-linux-amd64.tar.gz "vane-${{ github.ref_name }}-linux-amd64.tar.gz"
+        run: mv ranger-linux-amd64.tar.gz "ranger-${{ github.ref_name }}-linux-amd64.tar.gz"
 
       - name: draft release
         uses: softprops/action-gh-release@v2
         with:
-          files: vane-${{ github.ref_name }}-linux-amd64.tar.gz
+          files: ranger-${{ github.ref_name }}-linux-amd64.tar.gz
           fail_on_unmatched_files: true
           draft: true

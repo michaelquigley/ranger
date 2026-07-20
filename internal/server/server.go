@@ -9,10 +9,10 @@ import (
 	"errors"
 	"path/filepath"
 
-	"git.hq.quigley.com/products/vane/internal/api"
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/model"
-	"git.hq.quigley.com/products/vane/internal/workspace"
+	"git.hq.quigley.com/products/ranger/internal/api"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/workspace"
 )
 
 // Server is the api.Handler implementation: a workspace root and nothing

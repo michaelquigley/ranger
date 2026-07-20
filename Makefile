@@ -4,7 +4,7 @@ GOBIN ?= $(shell go env GOPATH)/bin
 
 clean:
 	go clean
-	rm -f ${GOBIN}/vane vane
+	rm -f ${GOBIN}/ranger ranger
 	rm -rf ui/dist ui/node_modules
 
 build:
@@ -24,4 +24,4 @@ test:
 	go vet ./...
 
 push:
-	push vendor ${GOBIN}/vane vane
+	push vendor ${GOBIN}/ranger ranger

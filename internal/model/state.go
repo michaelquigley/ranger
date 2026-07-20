@@ -1,4 +1,4 @@
-// Package model holds vane's pure domain types and functions: lifecycle
+// Package model holds ranger's pure domain types and functions: lifecycle
 // states, the slug rule, card flags, and the board ordering computation. no
 // I/O, no bytes, no rendering, no transport.
 package model

@@ -5,7 +5,7 @@ created: 2026-07-14
 
 # the workspace and the CLI
 
-`internal/workspace` composes document operations into the spec's gestures against a discovered root. It is stateless — every `Load` is a fresh read, because the working tree is a shared buffer and other writers never stop. `cmd/vane` is a thin cobra surface over it: the root command is capture, plus `list`, `state`, and `version`.
+`internal/workspace` composes document operations into the spec's gestures against a discovered root. It is stateless — every `Load` is a fresh read, because the working tree is a shared buffer and other writers never stop. `cmd/ranger` is a thin cobra surface over it: the root command is capture, plus `list`, `state`, and `version`.
 
 ## root discovery
 
@@ -24,15 +24,15 @@ Every gesture follows one shape: load fresh, verify every affected guard token a
 - **Reorder** rewrites one lane's ranked prefix, moving existing entry lines byte-for-byte.
 - **Retitle** patches the title, renames to the new slug no-clobber, and replaces the old filename in every retained order occurrence — active and inert alike, positions preserved, so a rank held through a transient parse failure survives the rename. A title whose slug is empty patches in place: the existing filename becomes the hand-picked name such titles carry, rank intact. **RenameToSlug** is the one-gesture mismatch repair, refusing when there is no slug to repair toward.
 - **Delete** (design change 2026-07-16 — v1 shipped with no tool deletion; this is the operator's curation act given a gesture) removes the item file and every one of its order.yaml entries in one hash-guarded gesture — a deleted file's entries are prunable unconditionally. Under the write model a tracked file's deletion is a reviewable diff; a never-committed file has no net, so the UI confirms first.
-- **SaveContent** lands the operator's bytes verbatim. A save that changes state is a transition made through vane: compared in effective lanes (an unreadable old state is inbox), departing a lane the card was actively ranked in costs that rank, and entries are retained only when the *new* state is unreadable. Renames are never a side effect of a save — a changed title surfaces as the mismatch flag.
+- **SaveContent** lands the operator's bytes verbatim. A save that changes state is a transition made through ranger: compared in effective lanes (an unreadable old state is inbox), departing a lane the card was actively ranked in costs that rank, and entries are retained only when the *new* state is unreadable. Renames are never a side effect of a save — a changed title surfaces as the mismatch flag.
 
 The composite-gesture suite asserts each of these against the whole tree: exactly the files that express the gesture change, to exactly the expected bytes, and every other byte survives.
 
 ## the CLI
 
-- `vane [title words...]` — capture. Editor cascade `VANE_EDITOR` → `EDITOR`; neither set is an error naming the fix. Exit paths print the finalize outcome, the temp path always surviving cancellation.
-- `vane list` — lanes in lifecycle order, ranked prefix numbered, unranked tail dashed, flags marked inline. A plain renderer over the same `ComputeBoard` output the UI will consume.
-- `vane state <filename|slug> <state>` — the transition gesture from the terminal (`.md` optional). No placement; the card lands unranked in its new lane.
-- `vane version` — build info. `-v/--verbose` re-inits `dl` at debug.
+- `ranger [title words...]` — capture. Editor cascade `RANGER_EDITOR` → `EDITOR`; neither set is an error naming the fix. Exit paths print the finalize outcome, the temp path always surviving cancellation.
+- `ranger list` — lanes in lifecycle order, ranked prefix numbered, unranked tail dashed, flags marked inline. A plain renderer over the same `ComputeBoard` output the UI will consume.
+- `ranger state <filename|slug> <state>` — the transition gesture from the terminal (`.md` optional). No placement; the card lands unranked in its new lane.
+- `ranger version` — build info. `-v/--verbose` re-inits `dl` at debug.
 
-vane's own repo now dogfoods the convention: `docs/future/roadmap/` holds the spec's still-live deferred concerns as horizon items, captured and triaged entirely through the binary.
+ranger's own repo now dogfoods the convention: `docs/future/roadmap/` holds the spec's still-live deferred concerns as horizon items, captured and triaged entirely through the binary.

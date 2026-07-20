@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/model"
 )
 
 // every gesture here follows one discipline: load fresh, verify every
@@ -333,7 +333,7 @@ func (w *Workspace) Delete(filename, expectedHash, expectedOrderVersion string) 
 
 // SaveContent lands raw bytes verbatim — the operator's own bytes, no
 // normalization. a save that changes state is a transition made through
-// vane and gets the transition's discipline, compared in effective lanes:
+// ranger and gets the transition's discipline, compared in effective lanes:
 // departing a lane the card was actively ranked in costs that rank. entries
 // are retained only when the new state is unreadable — still not positive
 // evidence. renames are never a side effect of a text save; a changed title

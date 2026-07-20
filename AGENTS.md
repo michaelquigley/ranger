@@ -1,12 +1,12 @@
-# AGENTS.md — vane
+# AGENTS.md — ranger
 
-vane is a roadmap-as-files convention plus a Go reader tool (CLI capture + localhost board). The convention is the product; the tool is a reader. Repo: `git.hq.quigley.com/products/vane`.
+ranger is a roadmap-as-files convention plus a Go reader tool (CLI capture + localhost board). The convention is the product; the tool is a reader. Repo: `git.hq.quigley.com/products/ranger`.
 
 ## How to arrive
 
 1. **`docs/journal/`** — agent memory, dated entries, newest first. Read the recent entries before anything else; write freely as you work.
 2. **`docs/current/`** — built behavior: the domain model, the document layer, workspace + CLI, the API, and the UI/serve surface. This is the authority on what exists.
-3. **`docs/future/roadmap/`** — vane's own roadmap, kept in vane's own convention (dogfooding). Deferred concerns live here as items; agents may write items but never touch `order.yaml`. The agent-facing convention spec lives in the grimoire at `software/conventions/roadmap-convention.md`.
+3. **`docs/future/roadmap/`** — ranger's own roadmap, kept in ranger's own convention (dogfooding). Deferred concerns live here as items; agents may write items but never touch `order.yaml`. The agent-facing convention spec lives in the grimoire at `software/conventions/roadmap-convention.md`.
 4. The originating spec and work order were realized and removed 2026-07-15 (v1 complete, all five stages terminus-gated); git history keeps the archaeology. Their settled normative rules — slug algorithm, malformed semantics, `order.yaml` evaluation order, the hash guard, root discovery — now live in the code, its tests, and `docs/current/`.
 
 ## Posture
@@ -26,4 +26,4 @@ Prototype-first. v1 exists to validate the model and the approach; hardening com
 - As behavior lands, synthesize it into `docs/current/` and add a `CHANGELOG.md` entry under `## Unreleased` (`FEATURE`/`CHANGE`/`FIX` prose, in-house format — not Keep a Changelog).
 - Run `unfurl -i <file>` on any markdown you author or edit, unconditionally.
 - Go conventions: `df/dl` for logging, `df/dd` for YAML/JSON binding. Reference implementation for the ogen/embed/UI wiring: `flo` in `../archive`.
-- Realized specs and work orders are removed from `docs/future/` (git history keeps the archaeology); still-live deferred concerns get re-synthesized first — for vane, that means roadmap items.
+- Realized specs and work orders are removed from `docs/future/` (git history keeps the archaeology); still-live deferred concerns get re-synthesized first — for ranger, that means roadmap items.

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"git.hq.quigley.com/products/vane/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/model"
 	"github.com/michaelquigley/df/dd"
 )
 

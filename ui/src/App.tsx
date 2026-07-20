@@ -15,7 +15,7 @@ import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import { CardBody, LaneColumn } from "./LaneColumn";
 import { ItemModal } from "./ItemModal";
 import { CaptureModal } from "./CaptureModal";
-import { CaptureIcon, VaneMark } from "./icons";
+import { CaptureIcon, RangerMark } from "./icons";
 import { labelColor, subsystemColor } from "./labels";
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
 
   useEffect(() => {
     if (board?.project) {
-      document.title = `${board.project} — vane`;
+      document.title = `${board.project} — ranger`;
     }
   }, [board?.project]);
 
@@ -223,7 +223,7 @@ export default function App() {
   if (fatal) {
     return (
       <div className="fatal">
-        <h1>vane</h1>
+        <h1>ranger</h1>
         <p>{fatal}</p>
       </div>
     );
@@ -243,8 +243,8 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <span className="mark" title="vane">
-          <VaneMark />
+        <span className="mark" title="ranger">
+          <RangerMark />
         </span>
         <h1 className="project-name">{board.project}</h1>
         <CaptureIcon onClick={() => setCaptureOpen(true)} />

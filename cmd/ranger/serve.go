@@ -12,9 +12,9 @@ import (
 
 	"github.com/michaelquigley/df/dl"
 	"github.com/spf13/cobra"
-	"git.hq.quigley.com/products/vane/internal/api"
-	"git.hq.quigley.com/products/vane/internal/server"
-	"git.hq.quigley.com/products/vane/ui"
+	"git.hq.quigley.com/products/ranger/internal/api"
+	"git.hq.quigley.com/products/ranger/internal/server"
+	"git.hq.quigley.com/products/ranger/ui"
 )
 
 // newServeCmd presents the localhost board. fail-fast is reserved for

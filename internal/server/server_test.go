@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"git.hq.quigley.com/products/vane/internal/api"
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/workspace"
+	"git.hq.quigley.com/products/ranger/internal/api"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/workspace"
 )
 
 const (

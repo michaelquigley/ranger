@@ -14,6 +14,6 @@ func Middleware(apiHandler http.Handler) http.Handler {
 			apiHandler.ServeHTTP(w, r)
 			return
 		}
-		http.Error(w, "vane was built without the ui (no_ui); the api is at /api/v1", http.StatusNotFound)
+		http.Error(w, "ranger was built without the ui (no_ui); the api is at /api/v1", http.StatusNotFound)
 	})
 }

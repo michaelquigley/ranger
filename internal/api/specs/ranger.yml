@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: vane
+  title: ranger
   description: >
     your roadmap lives in your repo. every read that paints state carries
     content hashes; every mutation carries them back; every mutation success

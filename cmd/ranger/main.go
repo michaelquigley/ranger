@@ -1,4 +1,4 @@
-// vane — your roadmap lives in your repo. the root command is capture;
+// ranger — your roadmap lives in your repo. the root command is capture;
 // subcommands read and gesture over the same convention any hand can.
 package main
 
@@ -12,7 +12,7 @@ import (
 	"github.com/michaelquigley/df/dl"
 	"github.com/michaelquigley/push/build"
 	"github.com/spf13/cobra"
-	"git.hq.quigley.com/products/vane/internal/workspace"
+	"git.hq.quigley.com/products/ranger/internal/workspace"
 )
 
 func main() {
@@ -26,8 +26,8 @@ func main() {
 func newRootCmd() *cobra.Command {
 	var verbose bool
 	cmd := &cobra.Command{
-		Use:           "vane [title words...]",
-		Short:         "vane - your roadmap lives in your repo",
+		Use:           "ranger [title words...]",
+		Short:         "ranger - your roadmap lives in your repo",
 		Args:          cobra.ArbitraryArgs,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -41,7 +41,7 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
-	cmd.AddCommand(newServeCmd(), newListCmd(), newStateCmd(), build.NewVersionCmd("vane"))
+	cmd.AddCommand(newServeCmd(), newListCmd(), newStateCmd(), build.NewVersionCmd("ranger"))
 	return cmd
 }
 
@@ -58,12 +58,12 @@ func discovered() (*workspace.Workspace, error) {
 }
 
 func runCapture(args []string) error {
-	editor := os.Getenv("VANE_EDITOR")
+	editor := os.Getenv("RANGER_EDITOR")
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
 	}
 	if editor == "" {
-		return fmt.Errorf("no editor configured: set VANE_EDITOR or EDITOR")
+		return fmt.Errorf("no editor configured: set RANGER_EDITOR or EDITOR")
 	}
 
 	w, err := discovered()

@@ -5,7 +5,7 @@ created: 2026-07-14
 
 # the domain model
 
-`internal/model` is vane's pure domain layer: types and functions with no I/O, no bytes, no rendering, no transport. Everything here is testable as pure functions, and is — the ordering and flag semantics of the convention live entirely in this package's test suite.
+`internal/model` is ranger's pure domain layer: types and functions with no I/O, no bytes, no rendering, no transport. Everything here is testable as pure functions, and is — the ordering and flag semantics of the convention live entirely in this package's test suite.
 
 ## states
 

@@ -5,7 +5,7 @@ created: 2026-07-14
 
 # the document layer
 
-`internal/document` owns everything byte-shaped. One discipline governs it: dd/yaml.v3 read, hand-patched writes — no vane write ever passes through a YAML encoder, because a decode-and-encode cycle is exactly the reformat the surgical-edit commitment forbids. `gopkg.in/yaml.v3` is imported here and nowhere else, for the read-side node pass.
+`internal/document` owns everything byte-shaped. One discipline governs it: dd/yaml.v3 read, hand-patched writes — no ranger write ever passes through a YAML encoder, because a decode-and-encode cycle is exactly the reformat the surgical-edit commitment forbids. `gopkg.in/yaml.v3` is imported here and nowhere else, for the read-side node pass.
 
 ## the two-pass parse
 

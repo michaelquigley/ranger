@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/model"
 )
 
 // the standard gesture fixture: two ranked researching items, one ranked

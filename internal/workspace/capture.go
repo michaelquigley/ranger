@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"git.hq.quigley.com/products/vane/internal/document"
-	"git.hq.quigley.com/products/vane/internal/model"
+	"git.hq.quigley.com/products/ranger/internal/document"
+	"git.hq.quigley.com/products/ranger/internal/model"
 )
 
 // FinalizeOutcome is one of the four explicit ends of a capture.

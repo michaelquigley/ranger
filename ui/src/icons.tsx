@@ -11,15 +11,17 @@ function Icon({ d, label, onClick }: { d: string; label: string; onClick: () => 
   );
 }
 
-// VaneMark is the material design "map" icon — the same drawing as the
-// favicon.
-export function VaneMark() {
+// RangerMark is the binoculars mark — the same drawing as the favicon.
+export function RangerMark() {
   return (
     <svg viewBox="0 0 24 24" width="1.5em" height="1.5em" aria-hidden="true">
-      <path
-        fill="#2563eb"
-        d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"
-      />
+      <g fill="#2563eb">
+        <rect x="4.9" y="3.5" width="4.2" height="7.4" rx="2" />
+        <rect x="14.9" y="3.5" width="4.2" height="7.4" rx="2" />
+        <rect x="10.6" y="6" width="2.8" height="4" rx="1.2" />
+        <circle cx="7" cy="15.3" r="4.6" />
+        <circle cx="17" cy="15.3" r="4.6" />
+      </g>
     </svg>
   );
 }
