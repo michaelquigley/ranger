@@ -12,11 +12,11 @@ import (
 	"github.com/michaelquigley/df/dl"
 	"github.com/michaelquigley/push/build"
 	"github.com/spf13/cobra"
-	"git.hq.quigley.com/products/ranger/internal/workspace"
+	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
 func main() {
-	dl.Init(dl.DefaultOptions().SetTrimPrefix("git.hq.quigley.com/products/"))
+	dl.Init(dl.DefaultOptions().SetTrimPrefix("github.com/michaelquigley/"))
 	if err := newRootCmd().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -33,7 +33,7 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors: true,
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			if verbose {
-				dl.Init(dl.DefaultOptions().SetTrimPrefix("git.hq.quigley.com/products/").SetLevel(slog.LevelDebug))
+				dl.Init(dl.DefaultOptions().SetTrimPrefix("github.com/michaelquigley/").SetLevel(slog.LevelDebug))
 			}
 		},
 		RunE: func(_ *cobra.Command, args []string) error {

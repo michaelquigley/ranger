@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // newListCmd renders the board as plain text: lanes in lifecycle order,

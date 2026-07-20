@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // the hand-formatted fixture: comments, unusual spacing, unknown fields,

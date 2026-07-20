@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"git.hq.quigley.com/products/ranger/internal/document"
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/document"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // RoadmapRel is the roadmap directory, relative to the root.

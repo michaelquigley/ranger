@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"git.hq.quigley.com/products/ranger/internal/document"
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/document"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // every gesture here follows one discipline: load fresh, verify every

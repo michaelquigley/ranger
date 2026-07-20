@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-CHANGE: the project is renamed vane -> ranger — the vision matured through use into a thinking tool for developing scouting intelligence over a product's territory, and the name follows. Module path `git.hq.quigley.com/products/ranger`, binary `ranger`, env var `RANGER_EDITOR` (EDITOR fallback unchanged), spec `specs/ranger.yml`, new binoculars mark. Earlier changelog entries keep the old name as history.
+CHANGE: the project is renamed vane -> ranger — the vision matured through use into a thinking tool for developing scouting intelligence over a product's territory, and the name follows. Module path `github.com/michaelquigley/ranger`, binary `ranger`, env var `RANGER_EDITOR` (EDITOR fallback unchanged), spec `specs/ranger.yml`, new binoculars mark. Earlier changelog entries keep the old name as history.
 
 CHANGE: the lifecycle ends at evaluating — `done` and `dropped` are retired (a recorded design change from pilot experience). An item is a prompt: realized or declined prompts are deleted via the delete gesture, their information synthesized into the project first; git history keeps the archaeology, and the board never accumulates terminal residue. Existing `state: done`/`dropped` items surface as malformed-flagged cards in inbox for re-triage or deletion.
 

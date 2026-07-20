@@ -1,4 +1,4 @@
-module git.hq.quigley.com/products/ranger
+module github.com/michaelquigley/ranger
 
 go 1.26
 

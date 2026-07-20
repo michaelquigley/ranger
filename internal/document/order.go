@@ -6,7 +6,7 @@ import (
 
 	"github.com/michaelquigley/df/dd"
 	"gopkg.in/yaml.v3"
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // laneSchema is the dd-bind target for one recognized lane's shape: a list

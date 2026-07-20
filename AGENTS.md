@@ -1,6 +1,6 @@
 # AGENTS.md — ranger
 
-ranger is a roadmap-as-files convention plus a Go reader tool (CLI capture + localhost board). The convention is the product; the tool is a reader. Repo: `git.hq.quigley.com/products/ranger`.
+ranger is a roadmap-as-files convention plus a Go reader tool (CLI capture + localhost board). The convention is the product; the tool is a reader. Repo: `github.com/michaelquigley/ranger`.
 
 ## How to arrive
 

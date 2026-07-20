@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.hq.quigley.com/products/ranger/internal/model"
+	"github.com/michaelquigley/ranger/internal/model"
 )
 
 // hand-formatted fixture: comments, an unknown lane key, block and flow
