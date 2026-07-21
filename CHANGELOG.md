@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.1.1
+
 FEATURE: `ranger daemon` — the tray-resident serving story: one process serving every root named in `~/.config/ranger/config.yaml` (hand-edited, read-only, re-read fresh per request so edits land without a restart), with the binoculars mark in the tray and a two-item menu — `open board` firing the default browser at the board URL, and quit. The board grows a project selector in the header: the project lives in the URL (`/p/{name}`, bare `/` redirecting to the configured default), available projects list by name, unavailable ones stay visible flagged with their diagnostic, and a broken project shows its error in the body region under a live header — never a page-replacing panel — so healthy projects stay one click away. A broken root degrades and heals per request; only the daemon's own config and port fail-fast at startup. `ranger serve` is unchanged in spirit: the same server, synthesized down to one discovered project, no tray. No webview, no CGO — browser windows are the window manager.
 
 CHANGE: the HTTP contract is restructured project-scoped (breaking, absorbed by v0.1.x): every operation moves under `/api/v1/projects/{project}/…`, a new `GET /projects` returns the project index (names, availability with diagnostics, the default), and the asset route becomes `/roadmap/{project}/…` with every containment property intact. `board.project` now carries the *configured* name — slug-shaped everywhere, including serve's synthesized entry, so it changes for any root whose basename isn't already a slug. Project names address everything on the wire; filesystem roots stay config-private. Both sides of the contract are regenerated together; the SPA calls through a project-bound client factory.
@@ -19,8 +21,6 @@ CHANGE: the lifecycle ends at evaluating — `done` and `dropped` are retired (a
 FEATURE: search — a header search box backed by `GET /search?q=`: case-insensitive substring match over item titles and bodies against a fresh disk read (no index, no store), debounced in the client, with the match set composing with tag/subsystem/milestone filters. Escape clears.
 
 FEATURE: `subsystems:` — a second optional claimed list field naming the parts of the stack an item impacts, for combined projects with distinguishable parts. Rendered as outlined mono chips (visibly a different species from the solid genre tags), AND-filterable like tags and composing with tag and milestone filters; shown in the item modal's metadata block. Schema addition recorded in the grimoire's roadmap-convention note.
-
-## v0.1.1
 
 CHANGE: the board carries `project` (the discovered root's name), shown in the header beside the mark and in the browser tab title.
 
