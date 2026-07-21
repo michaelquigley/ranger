@@ -2,7 +2,7 @@
 
 ![the ranger interface](docs/images/ranger.png)
 
-A roadmap that lives in your repository as plain markdown files, plus a Go reader tool — CLI capture and a localhost board — for working with it. The convention is the product; the tool is a reader. One binary, no daemon, no database, and it never touches git.
+A roadmap that lives in your repository as plain markdown files, plus a Go reader tool — CLI capture, a localhost board, and a tray-resident daemon serving every repo you range across — for working with it. The convention is the product; the tool is a reader. One binary, no database, and it never touches git.
 
 ## The idea
 
@@ -50,9 +50,11 @@ Files listed rank in that order at the top of their lane; everything else in the
 
 Capture is the root command. `ranger retry semantics v2` opens your editor (`RANGER_EDITOR`, falling back to `EDITOR`) on a skeleton with the title filled in and `state: inbox`; save, and the item lands in the roadmap under its slug. Cancel, and the draft temp survives inside the working tree — nothing is lost outside the judgment gate.
 
-`ranger serve` hosts the board on `http://127.0.0.1:4114` — five lanes in lifecycle order, embedded in the binary and fully offline (fonts, icons, everything). Dragging a card between lanes patches its `state:` line; dragging within a lane rewrites the ranked prefix; drops are anchor-placed, so reordering works correctly even under active filters. The board filters by tag, subsystem, and milestone, searches titles and bodies against a fresh disk read, and opens each item in a modal: rendered markdown, in-place retitle, raw-bytes edit, and deletion behind a confirm. Freshness is a manual browser refresh — every request re-reads the disk, so there is nothing to go stale.
+`ranger daemon` is how the board is meant to live day-to-day: a tray process that knows every root you care about and serves all of them from `http://127.0.0.1:4114`. The config is one hand-edited file, `~/.config/ranger/config.yaml`, naming repository roots; it's re-read fresh on every request, so edits land without a restart. The tray menu is **open board** and quit — every board window is just a browser tab at `/p/{project}`, and a selector in the header switches between projects. A root that moves or breaks degrades to a flagged entry with its error shown plainly, and heals the moment the disk does; the daemon never dies because one repo moved.
 
-`ranger list` prints the same board in the terminal, ranked prefix numbered and flags inline; `ranger state <filename|slug> <state>` transitions an item from the command line.
+The board itself: five lanes in lifecycle order, embedded in the binary and fully offline (fonts, icons, everything). Dragging a card between lanes patches its `state:` line; dragging within a lane rewrites the ranked prefix; drops are anchor-placed, so reordering works correctly even under active filters. The board filters by tag, subsystem, and milestone, searches titles and bodies against a fresh disk read, and opens each item in a modal: rendered markdown, in-place retitle, raw-bytes edit, and deletion behind a confirm. Freshness is a manual browser refresh — every request re-reads the disk, so there is nothing to go stale.
+
+`ranger serve` is the same server, ad-hoc: run it anywhere inside a repo — no config, no tray — and get that one project's board, ctrl-C when done. `ranger list` prints the board in the terminal, ranked prefix numbered and flags inline; `ranger state <filename|slug> <state>` transitions an item from the command line. The CLI gestures never consult the daemon's config: in-repo, discovery is the addressing.
 
 ## Load-bearing rules
 
@@ -73,7 +75,7 @@ Then, from anywhere inside a repository:
 # capture a prompt
 ranger retry semantics v2
 
-# the board
+# the board, ad-hoc (or `ranger daemon` for the tray over every configured repo)
 ranger serve
 
 # terminal views

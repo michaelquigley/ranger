@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- the binoculars mark, tray-simplified from ui/public/favicon.svg:
+       light monochrome for the panel, hinge ring and highlight arcs
+       dropped (they melt below 24px), ring strokes thickened. the
+       silhouette carries the read. -->
+  <defs>
+    <mask id="body">
+      <rect width="24" height="24" fill="white"/>
+      <circle cx="6.6" cy="15.2" r="6.2" fill="black"/>
+      <circle cx="17.4" cy="15.2" r="6.2" fill="black"/>
+    </mask>
+  </defs>
+  <g fill="#dedede" mask="url(#body)">
+    <path d="M3.83,10.98 L7.09,4.06 A1.7,1.7 0 0 1 10.31,5.14 L8.77,12.62 Z"/>
+    <path d="M20.17,10.98 L16.91,4.06 A1.7,1.7 0 0 0 13.69,5.14 L15.23,12.62 Z"/>
+    <path d="M10.75,6.2 A1.25,1.25 0 0 1 13.25,6.2 L13.05,12.2 L10.95,12.2 Z"/>
+  </g>
+  <g fill="none" stroke="#dedede">
+    <circle cx="6.6" cy="15.2" r="4.3" stroke-width="2.6"/>
+    <circle cx="17.4" cy="15.2" r="4.3" stroke-width="2.6"/>
+  </g>
+</svg>

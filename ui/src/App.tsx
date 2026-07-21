@@ -49,7 +49,10 @@ function DefaultRedirect() {
 function ProjectBoard({ project }: { project: string }) {
   const api = useMemo(() => makeApi(project), [project]);
   const [board, setBoard] = useState<Board | null>(null);
-  const [fatal, setFatal] = useState<string | null>(null);
+  // a board-load failure is recoverable — rendered in the body region
+  // under the live selector — where the index tier below is the genuinely
+  // fatal, page-replacing state.
+  const [boardError, setBoardError] = useState<string | null>(null);
   // the header renders from the project index, independent of board
   // success; only the index itself failing has nothing to select.
   const [index, setIndex] = useState<ProjectIndex | null>(null);
@@ -71,9 +74,9 @@ function ProjectBoard({ project }: { project: string }) {
   const reload = useCallback(async () => {
     try {
       setBoard(await api.fetchBoard());
-      setFatal(null);
+      setBoardError(null);
     } catch (err) {
-      setFatal(err instanceof Error ? err.message : String(err));
+      setBoardError(err instanceof Error ? err.message : String(err));
     }
   }, [api]);
 
@@ -356,9 +359,9 @@ function ProjectBoard({ project }: { project: string }) {
           {notice}
         </div>
       )}
-      {fatal ? (
+      {boardError ? (
         <div className="board-error">
-          <p>{fatal}</p>
+          <p>{boardError}</p>
         </div>
       ) : !shown ? (
         <div className="board-error dim">loading…</div>

@@ -1,6 +1,6 @@
 ---
 title: desktop integration
-state: building
+state: evaluating
 created: 2026-07-14
 tags: [spike, enhancement]
 milestone: v0.1.x
