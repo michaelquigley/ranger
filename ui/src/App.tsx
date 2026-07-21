@@ -10,8 +10,9 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { fetchProjects, makeApi, type Board, type Card, type Conflict, type Outcome, type State } from "./api";
-import { projectFromPath } from "./project";
+import { fetchProjects, makeApi, type Board, type Card, type Conflict, type Outcome, type ProjectIndex, type State } from "./api";
+import { projectFromPath, projectPath } from "./project";
+import { selectorOptions } from "./selector";
 import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import { CardBody, LaneColumn } from "./LaneColumn";
 import { ItemModal } from "./ItemModal";
@@ -49,6 +50,10 @@ function ProjectBoard({ project }: { project: string }) {
   const api = useMemo(() => makeApi(project), [project]);
   const [board, setBoard] = useState<Board | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
+  // the header renders from the project index, independent of board
+  // success; only the index itself failing has nothing to select.
+  const [index, setIndex] = useState<ProjectIndex | null>(null);
+  const [indexFatal, setIndexFatal] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<string | null>(null);
   const [captureOpen, setCaptureOpen] = useState(false);
@@ -75,6 +80,10 @@ function ProjectBoard({ project }: { project: string }) {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    fetchProjects().then(setIndex, (err) => setIndexFatal(err instanceof Error ? err.message : String(err)));
+  }, []);
 
   useEffect(() => {
     if (board?.project) {
@@ -253,15 +262,20 @@ function ProjectBoard({ project }: { project: string }) {
     setPreDrag(null);
   }, [preDrag]);
 
-  if (fatal) {
+  // the project index failing is the daemon-level tier — genuinely
+  // nothing to select — and keeps the pre-board fatal shape. a board
+  // failure renders in the body region under a live header instead, so a
+  // broken or unknown project never strands the operator away from the
+  // healthy ones.
+  if (indexFatal) {
     return (
       <div className="fatal">
         <h1>ranger</h1>
-        <p>{fatal}</p>
+        <p>{indexFatal}</p>
       </div>
     );
   }
-  if (!board) {
+  if (!index) {
     return <div className="fatal">loading…</div>;
   }
 
@@ -271,7 +285,8 @@ function ProjectBoard({ project }: { project: string }) {
   // dropped against.
   const filtering =
     tagFilter.length > 0 || subsystemFilter.length > 0 || milestoneFilter !== null || searchMatches !== null;
-  const shown = filtering ? filterBoard(board, tagFilter, subsystemFilter, milestoneFilter, searchMatches) : board;
+  const shown =
+    board && (filtering ? filterBoard(board, tagFilter, subsystemFilter, milestoneFilter, searchMatches) : board);
 
   return (
     <div className="app">
@@ -279,7 +294,7 @@ function ProjectBoard({ project }: { project: string }) {
         <span className="mark" title="ranger">
           <RangerMark />
         </span>
-        <h1 className="project-name">{board.project}</h1>
+        <ProjectSelector index={index} current={project} />
         <input
           className="search-box"
           placeholder="search"
@@ -341,35 +356,43 @@ function ProjectBoard({ project }: { project: string }) {
           {notice}
         </div>
       )}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <div className="board">
-          {shown.lanes.map((lane) => (
-            <LaneColumn
-              key={lane.state}
-              lane={lane}
-              onOpen={setOpenItem}
-              onToggleTag={toggleTag}
-              onToggleSubsystem={toggleSubsystem}
-              onToggleMilestone={toggleMilestone}
-            />
-          ))}
+      {fatal ? (
+        <div className="board-error">
+          <p>{fatal}</p>
         </div>
-        <DragOverlay>
-          {dragging && (
-            <div className="card card-overlay">
-              <CardBody card={dragging} />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
-      {openItem && (
+      ) : !shown ? (
+        <div className="board-error dim">loading…</div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div className="board">
+            {shown.lanes.map((lane) => (
+              <LaneColumn
+                key={lane.state}
+                lane={lane}
+                onOpen={setOpenItem}
+                onToggleTag={toggleTag}
+                onToggleSubsystem={toggleSubsystem}
+                onToggleMilestone={toggleMilestone}
+              />
+            ))}
+          </div>
+          <DragOverlay>
+            {dragging && (
+              <div className="card card-overlay">
+                <CardBody card={dragging} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
+      {openItem && board && (
         <ItemModal
           api={api}
           filename={openItem}
@@ -381,6 +404,26 @@ function ProjectBoard({ project }: { project: string }) {
       )}
       {captureOpen && <CaptureModal api={api} onOutcome={applyOutcome} onClose={() => setCaptureOpen(false)} />}
     </div>
+  );
+}
+
+// switching projects is a navigation, not a state mutation — everything
+// downstream keys off the URL. unavailable projects stay listed, flagged
+// with their diagnostic: explain, don't hide.
+function ProjectSelector({ index, current }: { index: ProjectIndex; current: string }) {
+  return (
+    <select
+      className="project-selector"
+      value={current}
+      aria-label="project"
+      onChange={(e) => window.location.assign(projectPath(e.target.value))}
+    >
+      {selectorOptions(index, current).map((o) => (
+        <option key={o.name} value={o.name} disabled={o.disabled} title={o.title ?? undefined}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   );
 }
 

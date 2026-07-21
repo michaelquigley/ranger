@@ -7,3 +7,9 @@ export function projectFromPath(pathname: string): string | null {
   const m = pathname.match(/^\/p\/([^/]+)/);
   return m ? m[1] : null;
 }
+
+// projectPath is projectFromPath's dual: switching projects is a
+// navigation to this path, never a state mutation.
+export function projectPath(name: string): string {
+  return `/p/${name}`;
+}

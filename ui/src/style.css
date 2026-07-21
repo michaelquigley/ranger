@@ -48,6 +48,41 @@ header h1 {
   font-weight: 600;
 }
 
+/* the selector sits in the project name's slot and carries its weight: a
+   quiet control until hovered, the current name rendered as the title */
+.project-selector {
+  appearance: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+
+.project-selector:hover {
+  border-color: var(--card-edge);
+  background: var(--card);
+}
+
+.project-selector option {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.project-selector option:disabled {
+  color: var(--warn);
+}
+
+/* a repository-level failure renders here, in the body region, under the
+   live header — never as a page-replacing panel */
+.board-error {
+  padding: 2rem;
+}
+
 
 button {
   background: var(--card);
