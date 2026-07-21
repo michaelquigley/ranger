@@ -4,5 +4,6 @@ horizon:
   - richer-log.md
 researching:
   - live-board-reload.md
-  - desktop-integration.md
 inbox:
+building:
+  - desktop-integration.md
