@@ -12,62 +12,69 @@ type Handler interface {
 	//
 	// Capture a new item into inbox.
 	//
-	// POST /items
-	CreateItem(ctx context.Context, req *CreateItemReq) (CreateItemRes, error)
+	// POST /projects/{project}/items
+	CreateItem(ctx context.Context, req *CreateItemReq, params CreateItemParams) (CreateItemRes, error)
 	// DeleteItem implements deleteItem operation.
 	//
 	// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
 	// in the same gesture.
 	//
-	// POST /items/{filename}/delete
+	// POST /projects/{project}/items/{filename}/delete
 	DeleteItem(ctx context.Context, req *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error)
 	// GetBoard implements getBoard operation.
 	//
 	// The computed board, rebuilt from a fresh read of the disk.
 	//
-	// GET /board
-	GetBoard(ctx context.Context) (*Board, error)
+	// GET /projects/{project}/board
+	GetBoard(ctx context.Context, params GetBoardParams) (GetBoardRes, error)
 	// GetItem implements getItem operation.
 	//
 	// One item's raw content and parsed card.
 	//
-	// GET /items/{filename}
+	// GET /projects/{project}/items/{filename}
 	GetItem(ctx context.Context, params GetItemParams) (GetItemRes, error)
+	// GetProjects implements getProjects operation.
+	//
+	// The configured project index — each project's name and availability, judged by a fresh load at
+	// request time, plus the default.
+	//
+	// GET /projects
+	GetProjects(ctx context.Context) (*ProjectIndex, error)
 	// RenameToSlug implements renameToSlug operation.
 	//
 	// Repair the filename-mismatch flag with one rename.
 	//
-	// POST /items/{filename}/rename-to-slug
+	// POST /projects/{project}/items/{filename}/rename-to-slug
 	RenameToSlug(ctx context.Context, req *RenameToSlugReq, params RenameToSlugParams) (RenameToSlugRes, error)
 	// ReorderLane implements reorderLane operation.
 	//
 	// Rewrite one lane's ranked prefix.
 	//
-	// PUT /order/{lane}
+	// PUT /projects/{project}/order/{lane}
 	ReorderLane(ctx context.Context, req *ReorderLaneReq, params ReorderLaneParams) (ReorderLaneRes, error)
 	// RetitleItem implements retitleItem operation.
 	//
 	// Retitle and rename to the new slug, rank preserved.
 	//
-	// POST /items/{filename}/retitle
+	// POST /projects/{project}/items/{filename}/retitle
 	RetitleItem(ctx context.Context, req *RetitleItemReq, params RetitleItemParams) (RetitleItemRes, error)
 	// SaveContent implements saveContent operation.
 	//
 	// Raw save; a state-changing save runs the ranked-transition cleanup.
 	//
-	// PUT /items/{filename}/content
+	// PUT /projects/{project}/items/{filename}/content
 	SaveContent(ctx context.Context, req *SaveContentReq, params SaveContentParams) (SaveContentRes, error)
 	// SearchItems implements searchItems operation.
 	//
 	// Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.
 	//
-	// GET /search
-	SearchItems(ctx context.Context, params SearchItemsParams) (*SearchItemsOK, error)
+	// GET /projects/{project}/search
+	SearchItems(ctx context.Context, params SearchItemsParams) (SearchItemsRes, error)
 	// TransitionItem implements transitionItem operation.
 	//
 	// Transition, or transition-and-place when position is given.
 	//
-	// POST /items/{filename}/state
+	// POST /projects/{project}/items/{filename}/state
 	TransitionItem(ctx context.Context, req *TransitionItemReq, params TransitionItemParams) (TransitionItemRes, error)
 	// NewError creates *ServerErrorStatusCode from error returned by handler.
 	//

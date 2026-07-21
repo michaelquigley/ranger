@@ -6,6 +6,8 @@ export type Lane = components["schemas"]["lane"];
 export type Card = components["schemas"]["card"];
 export type State = components["schemas"]["state"];
 export type Conflict = components["schemas"]["conflict"];
+export type ProjectIndex = components["schemas"]["projectIndex"];
+export type ProjectStatus = components["schemas"]["projectStatus"];
 
 export const client = createClient<paths>({ baseUrl: "/api/v1" });
 
@@ -30,117 +32,134 @@ function failure(status: number, error: unknown): Outcome {
   return { kind: "fault", message: body?.message ?? `request failed (${status})` };
 }
 
-export async function fetchBoard(): Promise<Board> {
-  const { data, error, response } = await client.GET("/board");
-  if (data) return data;
-  const body = error as { message?: string } | undefined;
-  throw new Error(body?.message ?? `board load failed (${response.status})`);
-}
-
 export type ItemDetail = {
   content: string;
   card: Card;
   hash: string;
 };
 
-export async function fetchItem(filename: string): Promise<ItemDetail> {
-  const { data, error, response } = await client.GET("/items/{filename}", {
-    params: { path: { filename } },
-  });
+// fetchProjects is the one unscoped call: the index the selector renders
+// and the bare / consults for its redirect.
+export async function fetchProjects(): Promise<ProjectIndex> {
+  const { data, error, response } = await client.GET("/projects");
   if (data) return data;
   const body = error as { message?: string } | undefined;
-  throw new Error(body?.message ?? `item load failed (${response.status})`);
+  throw new Error(body?.message ?? `project index failed (${response.status})`);
 }
 
-export async function search(q: string): Promise<string[]> {
-  const { data, error, response } = await client.GET("/search", { params: { query: { q } } });
-  if (data) return data.filenames;
-  const body = error as { message?: string } | undefined;
-  throw new Error(body?.message ?? `search failed (${response.status})`);
+// makeApi binds every operation to one project — the one UI seam. call
+// sites never thread the name; everything downstream keys off the URL's
+// project through this binding.
+export function makeApi(project: string) {
+  return {
+    project,
+
+    async fetchBoard(): Promise<Board> {
+      const { data, error, response } = await client.GET("/projects/{project}/board", {
+        params: { path: { project } },
+      });
+      if (data) return data;
+      const body = error as { message?: string } | undefined;
+      throw new Error(body?.message ?? `board load failed (${response.status})`);
+    },
+
+    async fetchItem(filename: string): Promise<ItemDetail> {
+      const { data, error, response } = await client.GET("/projects/{project}/items/{filename}", {
+        params: { path: { project, filename } },
+      });
+      if (data) return data;
+      const body = error as { message?: string } | undefined;
+      throw new Error(body?.message ?? `item load failed (${response.status})`);
+    },
+
+    async search(q: string): Promise<string[]> {
+      const { data, error, response } = await client.GET("/projects/{project}/search", {
+        params: { path: { project }, query: { q } },
+      });
+      if (data) return data.filenames;
+      const body = error as { message?: string } | undefined;
+      throw new Error(body?.message ?? `search failed (${response.status})`);
+    },
+
+    async capture(title: string, body: string): Promise<Outcome> {
+      const { data, error, response } = await client.POST("/projects/{project}/items", {
+        params: { path: { project } },
+        body: body ? { title, body } : { title },
+      });
+      if (data) return { kind: "ok", board: data.board, filename: data.filename };
+      return failure(response.status, error);
+    },
+
+    async transition(
+      filename: string,
+      state: State,
+      expectedHash: string,
+      expectedOrderVersion: string,
+      position?: number,
+    ): Promise<Outcome> {
+      const { data, error, response } = await client.POST("/projects/{project}/items/{filename}/state", {
+        params: { path: { project, filename } },
+        body: { state, expectedHash, expectedOrderVersion, ...(position !== undefined ? { position } : {}) },
+      });
+      if (data) return { kind: "ok", board: data };
+      return failure(response.status, error);
+    },
+
+    async reorder(lane: State, filenames: string[], expectedVersion: string): Promise<Outcome> {
+      const { data, error, response } = await client.PUT("/projects/{project}/order/{lane}", {
+        params: { path: { project, lane } },
+        body: { filenames, expectedVersion },
+      });
+      if (data) return { kind: "ok", board: data };
+      return failure(response.status, error);
+    },
+
+    async saveContent(
+      filename: string,
+      content: string,
+      expectedHash: string,
+      expectedOrderVersion: string,
+    ): Promise<Outcome> {
+      const { data, error, response } = await client.PUT("/projects/{project}/items/{filename}/content", {
+        params: { path: { project, filename } },
+        body: { content, expectedHash, expectedOrderVersion },
+      });
+      if (data) return { kind: "ok", board: data };
+      return failure(response.status, error);
+    },
+
+    async retitle(
+      filename: string,
+      title: string,
+      expectedHash: string,
+      expectedOrderVersion: string,
+    ): Promise<Outcome> {
+      const { data, error, response } = await client.POST("/projects/{project}/items/{filename}/retitle", {
+        params: { path: { project, filename } },
+        body: { title, expectedHash, expectedOrderVersion },
+      });
+      if (data) return { kind: "ok", board: data.board, filename: data.filename };
+      return failure(response.status, error);
+    },
+
+    async deleteItem(filename: string, expectedHash: string, expectedOrderVersion: string): Promise<Outcome> {
+      const { data, error, response } = await client.POST("/projects/{project}/items/{filename}/delete", {
+        params: { path: { project, filename } },
+        body: { expectedHash, expectedOrderVersion },
+      });
+      if (data) return { kind: "ok", board: data };
+      return failure(response.status, error);
+    },
+
+    async renameToSlug(filename: string, expectedHash: string, expectedOrderVersion: string): Promise<Outcome> {
+      const { data, error, response } = await client.POST("/projects/{project}/items/{filename}/rename-to-slug", {
+        params: { path: { project, filename } },
+        body: { expectedHash, expectedOrderVersion },
+      });
+      if (data) return { kind: "ok", board: data.board, filename: data.filename };
+      return failure(response.status, error);
+    },
+  };
 }
 
-export async function capture(title: string, body: string): Promise<Outcome> {
-  const { data, error, response } = await client.POST("/items", {
-    body: body ? { title, body } : { title },
-  });
-  if (data) return { kind: "ok", board: data.board, filename: data.filename };
-  return failure(response.status, error);
-}
-
-export async function transition(
-  filename: string,
-  state: State,
-  expectedHash: string,
-  expectedOrderVersion: string,
-  position?: number,
-): Promise<Outcome> {
-  const { data, error, response } = await client.POST("/items/{filename}/state", {
-    params: { path: { filename } },
-    body: { state, expectedHash, expectedOrderVersion, ...(position !== undefined ? { position } : {}) },
-  });
-  if (data) return { kind: "ok", board: data };
-  return failure(response.status, error);
-}
-
-export async function reorder(lane: State, filenames: string[], expectedVersion: string): Promise<Outcome> {
-  const { data, error, response } = await client.PUT("/order/{lane}", {
-    params: { path: { lane } },
-    body: { filenames, expectedVersion },
-  });
-  if (data) return { kind: "ok", board: data };
-  return failure(response.status, error);
-}
-
-export async function saveContent(
-  filename: string,
-  content: string,
-  expectedHash: string,
-  expectedOrderVersion: string,
-): Promise<Outcome> {
-  const { data, error, response } = await client.PUT("/items/{filename}/content", {
-    params: { path: { filename } },
-    body: { content, expectedHash, expectedOrderVersion },
-  });
-  if (data) return { kind: "ok", board: data };
-  return failure(response.status, error);
-}
-
-export async function retitle(
-  filename: string,
-  title: string,
-  expectedHash: string,
-  expectedOrderVersion: string,
-): Promise<Outcome> {
-  const { data, error, response } = await client.POST("/items/{filename}/retitle", {
-    params: { path: { filename } },
-    body: { title, expectedHash, expectedOrderVersion },
-  });
-  if (data) return { kind: "ok", board: data.board, filename: data.filename };
-  return failure(response.status, error);
-}
-
-export async function deleteItem(
-  filename: string,
-  expectedHash: string,
-  expectedOrderVersion: string,
-): Promise<Outcome> {
-  const { data, error, response } = await client.POST("/items/{filename}/delete", {
-    params: { path: { filename } },
-    body: { expectedHash, expectedOrderVersion },
-  });
-  if (data) return { kind: "ok", board: data };
-  return failure(response.status, error);
-}
-
-export async function renameToSlug(
-  filename: string,
-  expectedHash: string,
-  expectedOrderVersion: string,
-): Promise<Outcome> {
-  const { data, error, response } = await client.POST("/items/{filename}/rename-to-slug", {
-    params: { path: { filename } },
-    body: { expectedHash, expectedOrderVersion },
-  });
-  if (data) return { kind: "ok", board: data.board, filename: data.filename };
-  return failure(response.status, error);
-}
+export type Api = ReturnType<typeof makeApi>;

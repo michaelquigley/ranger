@@ -10,6 +10,7 @@ const (
 	DeleteItemOperation     OperationName = "DeleteItem"
 	GetBoardOperation       OperationName = "GetBoard"
 	GetItemOperation        OperationName = "GetItem"
+	GetProjectsOperation    OperationName = "GetProjects"
 	RenameToSlugOperation   OperationName = "RenameToSlug"
 	ReorderLaneOperation    OperationName = "ReorderLane"
 	RetitleItemOperation    OperationName = "RetitleItem"

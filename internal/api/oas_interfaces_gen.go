@@ -9,6 +9,10 @@ type DeleteItemRes interface {
 	deleteItemRes()
 }
 
+type GetBoardRes interface {
+	getBoardRes()
+}
+
 type GetItemRes interface {
 	getItemRes()
 }
@@ -27,6 +31,10 @@ type RetitleItemRes interface {
 
 type SaveContentRes interface {
 	saveContentRes()
+}
+
+type SearchItemsRes interface {
+	searchItemsRes()
 }
 
 type TransitionItemRes interface {

@@ -3,7 +3,8 @@ openapi: "3.0.3"
 info:
   title: ranger
   description: >
-    your roadmap lives in your repo. every read that paints state carries
+    your roadmap lives in your repo. every operation is scoped to a
+    configured project by name; every read that paints state carries
     content hashes; every mutation carries them back; every mutation success
     returns a fresh board so the client repaints from disk truth. no auth,
     localhost only.
@@ -13,7 +14,25 @@ servers:
   - url: /api/v1
 
 paths:
-  /board:
+  /projects:
+    get:
+      operationId: getProjects
+      summary: >
+        the configured project index — each project's name and availability,
+        judged by a fresh load at request time, plus the default.
+      responses:
+        "200":
+          description: the project index
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/projectIndex"
+        default:
+          $ref: "#/components/responses/serverError"
+
+  /projects/{project}/board:
+    parameters:
+      - $ref: "#/components/parameters/project"
     get:
       operationId: getBoard
       summary: the computed board, rebuilt from a fresh read of the disk
@@ -24,10 +43,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/board"
+        "404":
+          $ref: "#/components/responses/notFound"
         default:
           $ref: "#/components/responses/serverError"
 
-  /search:
+  /projects/{project}/search:
+    parameters:
+      - $ref: "#/components/parameters/project"
     get:
       operationId: searchItems
       summary: >
@@ -53,10 +76,14 @@ paths:
                     type: array
                     items:
                       type: string
+        "404":
+          $ref: "#/components/responses/notFound"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items:
+  /projects/{project}/items:
+    parameters:
+      - $ref: "#/components/parameters/project"
     post:
       operationId: createItem
       summary: capture a new item into inbox
@@ -81,13 +108,16 @@ paths:
                 $ref: "#/components/schemas/itemLanded"
         "400":
           $ref: "#/components/responses/validationError"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}:
+  /projects/{project}/items/{filename}:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     get:
       operationId: getItem
@@ -108,7 +138,7 @@ paths:
                   hash:
                     type: string
         "404":
-          description: no such item
+          description: no such project or item
           content:
             application/json:
               schema:
@@ -116,8 +146,9 @@ paths:
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}/content:
+  /projects/{project}/items/{filename}/content:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     put:
       operationId: saveContent
@@ -139,13 +170,16 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}/state:
+  /projects/{project}/items/{filename}/state:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     post:
       operationId: transitionItem
@@ -173,13 +207,16 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /order/{lane}:
+  /projects/{project}/order/{lane}:
     parameters:
+      - $ref: "#/components/parameters/project"
       - name: lane
         in: path
         required: true
@@ -208,13 +245,16 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}/delete:
+  /projects/{project}/items/{filename}/delete:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     post:
       operationId: deleteItem
@@ -236,13 +276,16 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}/retitle:
+  /projects/{project}/items/{filename}/retitle:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     post:
       operationId: retitleItem
@@ -270,13 +313,16 @@ paths:
                 $ref: "#/components/schemas/itemLanded"
         "400":
           $ref: "#/components/responses/validationError"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
           $ref: "#/components/responses/serverError"
 
-  /items/{filename}/rename-to-slug:
+  /projects/{project}/items/{filename}/rename-to-slug:
     parameters:
+      - $ref: "#/components/parameters/project"
       - $ref: "#/components/parameters/filename"
     post:
       operationId: renameToSlug
@@ -302,6 +348,8 @@ paths:
                 $ref: "#/components/schemas/itemLanded"
         "400":
           $ref: "#/components/responses/validationError"
+        "404":
+          $ref: "#/components/responses/notFound"
         "409":
           $ref: "#/components/responses/conflict"
         default:
@@ -309,6 +357,13 @@ paths:
 
 components:
   parameters:
+    project:
+      name: project
+      in: path
+      required: true
+      schema:
+        type: string
+
     filename:
       name: filename
       in: path
@@ -323,6 +378,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/board"
+    notFound:
+      description: no such project
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/errorResponse"
     conflict:
       description: >
         guard refusal. item_conflict and order_conflict mean the view went
@@ -430,7 +491,7 @@ components:
       properties:
         project:
           type: string
-          description: the discovered workspace root's name.
+          description: the configured project name.
         lanes:
           type: array
           items:
@@ -438,6 +499,29 @@ components:
         orderVersion:
           type: string
           description: order.yaml's hash, or the sentinel "absent". absence is a version.
+
+    projectStatus:
+      type: object
+      required: [name, available]
+      properties:
+        name:
+          type: string
+        available:
+          type: boolean
+        error:
+          type: string
+          description: the repository-level error for an unavailable root.
+
+    projectIndex:
+      type: object
+      required: [projects, default]
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/projectStatus"
+        default:
+          type: string
 
     itemLanded:
       type: object

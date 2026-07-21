@@ -31,62 +31,69 @@ type Invoker interface {
 	//
 	// Capture a new item into inbox.
 	//
-	// POST /items
-	CreateItem(ctx context.Context, request *CreateItemReq) (CreateItemRes, error)
+	// POST /projects/{project}/items
+	CreateItem(ctx context.Context, request *CreateItemReq, params CreateItemParams) (CreateItemRes, error)
 	// DeleteItem invokes deleteItem operation.
 	//
 	// Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
 	// in the same gesture.
 	//
-	// POST /items/{filename}/delete
+	// POST /projects/{project}/items/{filename}/delete
 	DeleteItem(ctx context.Context, request *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error)
 	// GetBoard invokes getBoard operation.
 	//
 	// The computed board, rebuilt from a fresh read of the disk.
 	//
-	// GET /board
-	GetBoard(ctx context.Context) (*Board, error)
+	// GET /projects/{project}/board
+	GetBoard(ctx context.Context, params GetBoardParams) (GetBoardRes, error)
 	// GetItem invokes getItem operation.
 	//
 	// One item's raw content and parsed card.
 	//
-	// GET /items/{filename}
+	// GET /projects/{project}/items/{filename}
 	GetItem(ctx context.Context, params GetItemParams) (GetItemRes, error)
+	// GetProjects invokes getProjects operation.
+	//
+	// The configured project index — each project's name and availability, judged by a fresh load at
+	// request time, plus the default.
+	//
+	// GET /projects
+	GetProjects(ctx context.Context) (*ProjectIndex, error)
 	// RenameToSlug invokes renameToSlug operation.
 	//
 	// Repair the filename-mismatch flag with one rename.
 	//
-	// POST /items/{filename}/rename-to-slug
+	// POST /projects/{project}/items/{filename}/rename-to-slug
 	RenameToSlug(ctx context.Context, request *RenameToSlugReq, params RenameToSlugParams) (RenameToSlugRes, error)
 	// ReorderLane invokes reorderLane operation.
 	//
 	// Rewrite one lane's ranked prefix.
 	//
-	// PUT /order/{lane}
+	// PUT /projects/{project}/order/{lane}
 	ReorderLane(ctx context.Context, request *ReorderLaneReq, params ReorderLaneParams) (ReorderLaneRes, error)
 	// RetitleItem invokes retitleItem operation.
 	//
 	// Retitle and rename to the new slug, rank preserved.
 	//
-	// POST /items/{filename}/retitle
+	// POST /projects/{project}/items/{filename}/retitle
 	RetitleItem(ctx context.Context, request *RetitleItemReq, params RetitleItemParams) (RetitleItemRes, error)
 	// SaveContent invokes saveContent operation.
 	//
 	// Raw save; a state-changing save runs the ranked-transition cleanup.
 	//
-	// PUT /items/{filename}/content
+	// PUT /projects/{project}/items/{filename}/content
 	SaveContent(ctx context.Context, request *SaveContentReq, params SaveContentParams) (SaveContentRes, error)
 	// SearchItems invokes searchItems operation.
 	//
 	// Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.
 	//
-	// GET /search
-	SearchItems(ctx context.Context, params SearchItemsParams) (*SearchItemsOK, error)
+	// GET /projects/{project}/search
+	SearchItems(ctx context.Context, params SearchItemsParams) (SearchItemsRes, error)
 	// TransitionItem invokes transitionItem operation.
 	//
 	// Transition, or transition-and-place when position is given.
 	//
-	// POST /items/{filename}/state
+	// POST /projects/{project}/items/{filename}/state
 	TransitionItem(ctx context.Context, request *TransitionItemReq, params TransitionItemParams) (TransitionItemRes, error)
 }
 
@@ -133,17 +140,17 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 //
 // Capture a new item into inbox.
 //
-// POST /items
-func (c *Client) CreateItem(ctx context.Context, request *CreateItemReq) (CreateItemRes, error) {
-	res, err := c.sendCreateItem(ctx, request)
+// POST /projects/{project}/items
+func (c *Client) CreateItem(ctx context.Context, request *CreateItemReq, params CreateItemParams) (CreateItemRes, error) {
+	res, err := c.sendCreateItem(ctx, request, params)
 	return res, err
 }
 
-func (c *Client) sendCreateItem(ctx context.Context, request *CreateItemReq) (res CreateItemRes, err error) {
+func (c *Client) sendCreateItem(ctx context.Context, request *CreateItemReq, params CreateItemParams) (res CreateItemRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("createItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/items"),
+		semconv.URLTemplateKey.String("/projects/{project}/items"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -176,8 +183,27 @@ func (c *Client) sendCreateItem(ctx context.Context, request *CreateItemReq) (re
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/items"
+	var pathParts [3]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -211,7 +237,7 @@ func (c *Client) sendCreateItem(ctx context.Context, request *CreateItemReq) (re
 // Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
 // in the same gesture.
 //
-// POST /items/{filename}/delete
+// POST /projects/{project}/items/{filename}/delete
 func (c *Client) DeleteItem(ctx context.Context, request *DeleteItemReq, params DeleteItemParams) (DeleteItemRes, error) {
 	res, err := c.sendDeleteItem(ctx, request, params)
 	return res, err
@@ -221,7 +247,7 @@ func (c *Client) sendDeleteItem(ctx context.Context, request *DeleteItemReq, par
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/items/{filename}/delete"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}/delete"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -254,8 +280,27 @@ func (c *Client) sendDeleteItem(ctx context.Context, request *DeleteItemReq, par
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/items/"
+	var pathParts [5]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -272,9 +317,9 @@ func (c *Client) sendDeleteItem(ctx context.Context, request *DeleteItemReq, par
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
-	pathParts[2] = "/delete"
+	pathParts[4] = "/delete"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -307,17 +352,17 @@ func (c *Client) sendDeleteItem(ctx context.Context, request *DeleteItemReq, par
 //
 // The computed board, rebuilt from a fresh read of the disk.
 //
-// GET /board
-func (c *Client) GetBoard(ctx context.Context) (*Board, error) {
-	res, err := c.sendGetBoard(ctx)
+// GET /projects/{project}/board
+func (c *Client) GetBoard(ctx context.Context, params GetBoardParams) (GetBoardRes, error) {
+	res, err := c.sendGetBoard(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendGetBoard(ctx context.Context) (res *Board, err error) {
+func (c *Client) sendGetBoard(ctx context.Context, params GetBoardParams) (res GetBoardRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getBoard"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/board"),
+		semconv.URLTemplateKey.String("/projects/{project}/board"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -350,8 +395,27 @@ func (c *Client) sendGetBoard(ctx context.Context) (res *Board, err error) {
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/board"
+	var pathParts [3]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/board"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -381,7 +445,7 @@ func (c *Client) sendGetBoard(ctx context.Context) (res *Board, err error) {
 //
 // One item's raw content and parsed card.
 //
-// GET /items/{filename}
+// GET /projects/{project}/items/{filename}
 func (c *Client) GetItem(ctx context.Context, params GetItemParams) (GetItemRes, error) {
 	res, err := c.sendGetItem(ctx, params)
 	return res, err
@@ -391,7 +455,7 @@ func (c *Client) sendGetItem(ctx context.Context, params GetItemParams) (res Get
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getItem"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/items/{filename}"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -424,8 +488,27 @@ func (c *Client) sendGetItem(ctx context.Context, params GetItemParams) (res Get
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/items/"
+	var pathParts [4]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -442,7 +525,7 @@ func (c *Client) sendGetItem(ctx context.Context, params GetItemParams) (res Get
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
 	uri.AddPathParts(u, pathParts[:]...)
 
@@ -469,11 +552,86 @@ func (c *Client) sendGetItem(ctx context.Context, params GetItemParams) (res Get
 	return result, nil
 }
 
+// GetProjects invokes getProjects operation.
+//
+// The configured project index — each project's name and availability, judged by a fresh load at
+// request time, plus the default.
+//
+// GET /projects
+func (c *Client) GetProjects(ctx context.Context) (*ProjectIndex, error) {
+	res, err := c.sendGetProjects(ctx)
+	return res, err
+}
+
+func (c *Client) sendGetProjects(ctx context.Context) (res *ProjectIndex, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getProjects"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/projects"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetProjectsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/projects"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetProjectsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // RenameToSlug invokes renameToSlug operation.
 //
 // Repair the filename-mismatch flag with one rename.
 //
-// POST /items/{filename}/rename-to-slug
+// POST /projects/{project}/items/{filename}/rename-to-slug
 func (c *Client) RenameToSlug(ctx context.Context, request *RenameToSlugReq, params RenameToSlugParams) (RenameToSlugRes, error) {
 	res, err := c.sendRenameToSlug(ctx, request, params)
 	return res, err
@@ -483,7 +641,7 @@ func (c *Client) sendRenameToSlug(ctx context.Context, request *RenameToSlugReq,
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("renameToSlug"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/items/{filename}/rename-to-slug"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}/rename-to-slug"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -516,8 +674,27 @@ func (c *Client) sendRenameToSlug(ctx context.Context, request *RenameToSlugReq,
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/items/"
+	var pathParts [5]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -534,9 +711,9 @@ func (c *Client) sendRenameToSlug(ctx context.Context, request *RenameToSlugReq,
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
-	pathParts[2] = "/rename-to-slug"
+	pathParts[4] = "/rename-to-slug"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -569,7 +746,7 @@ func (c *Client) sendRenameToSlug(ctx context.Context, request *RenameToSlugReq,
 //
 // Rewrite one lane's ranked prefix.
 //
-// PUT /order/{lane}
+// PUT /projects/{project}/order/{lane}
 func (c *Client) ReorderLane(ctx context.Context, request *ReorderLaneReq, params ReorderLaneParams) (ReorderLaneRes, error) {
 	res, err := c.sendReorderLane(ctx, request, params)
 	return res, err
@@ -579,7 +756,7 @@ func (c *Client) sendReorderLane(ctx context.Context, request *ReorderLaneReq, p
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("reorderLane"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/order/{lane}"),
+		semconv.URLTemplateKey.String("/projects/{project}/order/{lane}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -612,8 +789,27 @@ func (c *Client) sendReorderLane(ctx context.Context, request *ReorderLaneReq, p
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/order/"
+	var pathParts [4]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/order/"
 	{
 		// Encode "lane" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -630,7 +826,7 @@ func (c *Client) sendReorderLane(ctx context.Context, request *ReorderLaneReq, p
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
 	uri.AddPathParts(u, pathParts[:]...)
 
@@ -664,7 +860,7 @@ func (c *Client) sendReorderLane(ctx context.Context, request *ReorderLaneReq, p
 //
 // Retitle and rename to the new slug, rank preserved.
 //
-// POST /items/{filename}/retitle
+// POST /projects/{project}/items/{filename}/retitle
 func (c *Client) RetitleItem(ctx context.Context, request *RetitleItemReq, params RetitleItemParams) (RetitleItemRes, error) {
 	res, err := c.sendRetitleItem(ctx, request, params)
 	return res, err
@@ -674,7 +870,7 @@ func (c *Client) sendRetitleItem(ctx context.Context, request *RetitleItemReq, p
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("retitleItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/items/{filename}/retitle"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}/retitle"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -707,8 +903,27 @@ func (c *Client) sendRetitleItem(ctx context.Context, request *RetitleItemReq, p
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/items/"
+	var pathParts [5]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -725,9 +940,9 @@ func (c *Client) sendRetitleItem(ctx context.Context, request *RetitleItemReq, p
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
-	pathParts[2] = "/retitle"
+	pathParts[4] = "/retitle"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -760,7 +975,7 @@ func (c *Client) sendRetitleItem(ctx context.Context, request *RetitleItemReq, p
 //
 // Raw save; a state-changing save runs the ranked-transition cleanup.
 //
-// PUT /items/{filename}/content
+// PUT /projects/{project}/items/{filename}/content
 func (c *Client) SaveContent(ctx context.Context, request *SaveContentReq, params SaveContentParams) (SaveContentRes, error) {
 	res, err := c.sendSaveContent(ctx, request, params)
 	return res, err
@@ -770,7 +985,7 @@ func (c *Client) sendSaveContent(ctx context.Context, request *SaveContentReq, p
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("saveContent"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/items/{filename}/content"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}/content"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -803,8 +1018,27 @@ func (c *Client) sendSaveContent(ctx context.Context, request *SaveContentReq, p
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/items/"
+	var pathParts [5]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -821,9 +1055,9 @@ func (c *Client) sendSaveContent(ctx context.Context, request *SaveContentReq, p
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
-	pathParts[2] = "/content"
+	pathParts[4] = "/content"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
@@ -856,17 +1090,17 @@ func (c *Client) sendSaveContent(ctx context.Context, request *SaveContentReq, p
 //
 // Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.
 //
-// GET /search
-func (c *Client) SearchItems(ctx context.Context, params SearchItemsParams) (*SearchItemsOK, error) {
+// GET /projects/{project}/search
+func (c *Client) SearchItems(ctx context.Context, params SearchItemsParams) (SearchItemsRes, error) {
 	res, err := c.sendSearchItems(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendSearchItems(ctx context.Context, params SearchItemsParams) (res *SearchItemsOK, err error) {
+func (c *Client) sendSearchItems(ctx context.Context, params SearchItemsParams) (res SearchItemsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("searchItems"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/search"),
+		semconv.URLTemplateKey.String("/projects/{project}/search"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -899,8 +1133,27 @@ func (c *Client) sendSearchItems(ctx context.Context, params SearchItemsParams) 
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/search"
+	var pathParts [3]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/search"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeQueryParams"
@@ -948,7 +1201,7 @@ func (c *Client) sendSearchItems(ctx context.Context, params SearchItemsParams) 
 //
 // Transition, or transition-and-place when position is given.
 //
-// POST /items/{filename}/state
+// POST /projects/{project}/items/{filename}/state
 func (c *Client) TransitionItem(ctx context.Context, request *TransitionItemReq, params TransitionItemParams) (TransitionItemRes, error) {
 	res, err := c.sendTransitionItem(ctx, request, params)
 	return res, err
@@ -958,7 +1211,7 @@ func (c *Client) sendTransitionItem(ctx context.Context, request *TransitionItem
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("transitionItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/items/{filename}/state"),
+		semconv.URLTemplateKey.String("/projects/{project}/items/{filename}/state"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -991,8 +1244,27 @@ func (c *Client) sendTransitionItem(ctx context.Context, request *TransitionItem
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [3]string
-	pathParts[0] = "/items/"
+	var pathParts [5]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/items/"
 	{
 		// Encode "filename" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
@@ -1009,9 +1281,9 @@ func (c *Client) sendTransitionItem(ctx context.Context, request *TransitionItem
 		if err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
-		pathParts[1] = encoded
+		pathParts[3] = encoded
 	}
-	pathParts[2] = "/state"
+	pathParts[4] = "/state"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"

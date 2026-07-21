@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/michaelquigley/ranger/internal/api"
+	"github.com/michaelquigley/ranger/internal/config"
 	"github.com/michaelquigley/ranger/internal/document"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
@@ -59,7 +59,12 @@ func fixture(t *testing.T, withOrder bool) (*Server, *workspace.Workspace) {
 		}
 	}
 	w := workspace.New(root)
-	return New(w), w
+	cfg := &config.Config{
+		Projects: []config.ProjectRef{{Root: root, Name: "test"}},
+		Default:  "test",
+		Port:     config.DefaultPort,
+	}
+	return New(NewProjects(constantSource(cfg))), w
 }
 
 func hashes(t *testing.T, w *workspace.Workspace, filename string) (string, string) {
@@ -86,11 +91,24 @@ func laneOf(t *testing.T, board *api.Board, state api.State) api.Lane {
 	return api.Lane{}
 }
 
-func TestGetBoard(t *testing.T) {
-	s, _ := fixture(t, true)
-	board, err := s.GetBoard(context.Background())
+func mustBoard(t *testing.T, res any, err error) *api.Board {
+	t.Helper()
 	if err != nil {
 		t.Fatal(err)
+	}
+	board, ok := res.(*api.Board)
+	if !ok {
+		t.Fatalf("res = %#v", res)
+	}
+	return board
+}
+
+func TestGetBoard(t *testing.T) {
+	s, _ := fixture(t, true)
+	res, err := s.GetBoard(context.Background(), api.GetBoardParams{Project: "test"})
+	board := mustBoard(t, res, err)
+	if board.Project != "test" {
+		t.Errorf("project = %s, want the configured name", board.Project)
 	}
 	if board.OrderVersion != document.Hash([]byte(orderFixture)) {
 		t.Errorf("orderVersion = %s", board.OrderVersion)
@@ -116,12 +134,28 @@ func TestGetBoard(t *testing.T) {
 
 func TestGetBoardAbsentOrderVersion(t *testing.T) {
 	s, _ := fixture(t, false)
-	board, err := s.GetBoard(context.Background())
+	res, err := s.GetBoard(context.Background(), api.GetBoardParams{Project: "test"})
+	board := mustBoard(t, res, err)
+	if board.OrderVersion != document.VersionAbsent {
+		t.Errorf("orderVersion = %s, want the absent sentinel", board.OrderVersion)
+	}
+}
+
+func TestUnknownProjectIs404(t *testing.T) {
+	s, _ := fixture(t, true)
+	res, err := s.GetBoard(context.Background(), api.GetBoardParams{Project: "missing"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if board.OrderVersion != document.VersionAbsent {
-		t.Errorf("orderVersion = %s, want the absent sentinel", board.OrderVersion)
+	if _, is404 := res.(*api.ErrorResponse); !is404 {
+		t.Fatalf("board res = %#v", res)
+	}
+	createRes, err := s.CreateItem(context.Background(), &api.CreateItemReq{Title: "anything"}, api.CreateItemParams{Project: "missing"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, is404 := createRes.(*api.CreateItemNotFound); !is404 {
+		t.Fatalf("create res = %#v", createRes)
 	}
 }
 
@@ -137,17 +171,21 @@ func TestSearchItems(t *testing.T) {
 		{"nothing-matches-this", []string{}},
 	}
 	for _, tt := range tests {
-		res, err := s.SearchItems(context.Background(), api.SearchItemsParams{Q: tt.q})
+		res, err := s.SearchItems(context.Background(), api.SearchItemsParams{Project: "test", Q: tt.q})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(res.Filenames) != len(tt.want) {
-			t.Errorf("search %q = %v, want %v", tt.q, res.Filenames, tt.want)
+		found, isOK := res.(*api.SearchItemsOK)
+		if !isOK {
+			t.Fatalf("res = %#v", res)
+		}
+		if len(found.Filenames) != len(tt.want) {
+			t.Errorf("search %q = %v, want %v", tt.q, found.Filenames, tt.want)
 			continue
 		}
 		for i, f := range tt.want {
-			if res.Filenames[i] != f {
-				t.Errorf("search %q = %v, want %v", tt.q, res.Filenames, tt.want)
+			if found.Filenames[i] != f {
+				t.Errorf("search %q = %v, want %v", tt.q, found.Filenames, tt.want)
 			}
 		}
 	}
@@ -155,7 +193,7 @@ func TestSearchItems(t *testing.T) {
 
 func TestGetItem(t *testing.T) {
 	s, _ := fixture(t, true)
-	res, err := s.GetItem(context.Background(), api.GetItemParams{Filename: "retry-semantics.md"})
+	res, err := s.GetItem(context.Background(), api.GetItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +205,7 @@ func TestGetItem(t *testing.T) {
 		t.Error("content and hash must be the raw truth")
 	}
 
-	missing, err := s.GetItem(context.Background(), api.GetItemParams{Filename: "gone.md"})
+	missing, err := s.GetItem(context.Background(), api.GetItemParams{Project: "test", Filename: "gone.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +219,7 @@ func TestStaleItemHashConflicts(t *testing.T) {
 	_, orderVersion := hashes(t, w, "retry-semantics.md")
 	res, err := s.TransitionItem(context.Background(),
 		&api.TransitionItemReq{State: api.StateBuilding, ExpectedHash: document.Hash([]byte("stale view")), ExpectedOrderVersion: orderVersion},
-		api.TransitionItemParams{Filename: "retry-semantics.md"})
+		api.TransitionItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +234,7 @@ func TestStaleOrderVersionConflicts(t *testing.T) {
 	hash, _ := hashes(t, w, "retry-semantics.md")
 	res, err := s.TransitionItem(context.Background(),
 		&api.TransitionItemReq{State: api.StateBuilding, ExpectedHash: hash, ExpectedOrderVersion: document.Hash([]byte("stale order"))},
-		api.TransitionItemParams{Filename: "retry-semantics.md"})
+		api.TransitionItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +250,7 @@ func TestExpectedAbsentVersusRacingCreation(t *testing.T) {
 	s, _ := fixture(t, true)
 	res, err := s.ReorderLane(context.Background(),
 		&api.ReorderLaneReq{Filenames: []string{"retry-semantics.md"}, ExpectedVersion: document.VersionAbsent},
-		api.ReorderLaneParams{Lane: api.StateResearching})
+		api.ReorderLaneParams{Project: "test", Lane: api.StateResearching})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,16 +261,10 @@ func TestExpectedAbsentVersusRacingCreation(t *testing.T) {
 
 	// against a genuinely absent order.yaml the same expectation creates it
 	sAbsent, _ := fixture(t, false)
-	res, err = sAbsent.ReorderLane(context.Background(),
+	absentRes, err := sAbsent.ReorderLane(context.Background(),
 		&api.ReorderLaneReq{Filenames: []string{"retry-semantics.md"}, ExpectedVersion: document.VersionAbsent},
-		api.ReorderLaneParams{Lane: api.StateResearching})
-	if err != nil {
-		t.Fatal(err)
-	}
-	board, isBoard := res.(*api.Board)
-	if !isBoard {
-		t.Fatalf("res = %#v", res)
-	}
+		api.ReorderLaneParams{Project: "test", Lane: api.StateResearching})
+	board := mustBoard(t, absentRes, err)
 	if laneOf(t, board, api.StateResearching).RankedCount != 1 {
 		t.Error("first-ever ranking must land")
 	}
@@ -247,14 +279,9 @@ func TestTransitionReturnsFreshBoard(t *testing.T) {
 	pos := 0
 	req := &api.TransitionItemReq{State: api.StateResearching, ExpectedHash: hash, ExpectedOrderVersion: orderVersion}
 	req.Position = api.NewOptInt(pos)
-	res, err := s.TransitionItem(context.Background(), req, api.TransitionItemParams{Filename: "board-capture.md"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	board, isBoard := res.(*api.Board)
-	if !isBoard {
-		t.Fatalf("res = %#v", res)
-	}
+	res, err := s.TransitionItem(context.Background(), req,
+		api.TransitionItemParams{Project: "test", Filename: "board-capture.md"})
+	board := mustBoard(t, res, err)
 	researching := laneOf(t, board, api.StateResearching)
 	if researching.RankedCount != 2 || researching.Cards[0].Filename != "board-capture.md" {
 		t.Errorf("transition-and-place did not paint through: %+v", researching)
@@ -270,7 +297,7 @@ func TestPartialTwoFileFailureIsReportedVerbatim(t *testing.T) {
 	}
 	_, err := s.TransitionItem(context.Background(),
 		&api.TransitionItemReq{State: api.StateBuilding, ExpectedHash: hash, ExpectedOrderVersion: orderVersion},
-		api.TransitionItemParams{Filename: "retry-semantics.md"})
+		api.TransitionItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err == nil {
 		t.Fatal("write against a read-only order.yaml must fail")
 	}
@@ -285,7 +312,7 @@ func TestCreateItem(t *testing.T) {
 		s, _ := fixture(t, true)
 		req := &api.CreateItemReq{Title: "new idea"}
 		req.Body = api.NewOptString("the body.\n")
-		res, err := s.CreateItem(context.Background(), req)
+		res, err := s.CreateItem(context.Background(), req, api.CreateItemParams{Project: "test"})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -308,11 +335,11 @@ func TestCreateItem(t *testing.T) {
 	t.Run("prevalidation writes no draft", func(t *testing.T) {
 		s, w := fixture(t, true)
 		for _, title := range []string{"", "((()))"} {
-			res, err := s.CreateItem(context.Background(), &api.CreateItemReq{Title: title})
+			res, err := s.CreateItem(context.Background(), &api.CreateItemReq{Title: title}, api.CreateItemParams{Project: "test"})
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, is400 := res.(*api.ErrorResponse); !is400 {
+			if _, is400 := res.(*api.CreateItemBadRequest); !is400 {
 				t.Fatalf("res = %#v", res)
 			}
 		}
@@ -326,7 +353,7 @@ func TestCreateItem(t *testing.T) {
 
 	t.Run("collision preserves the draft and reports both paths", func(t *testing.T) {
 		s, _ := fixture(t, true)
-		res, err := s.CreateItem(context.Background(), &api.CreateItemReq{Title: "board capture"})
+		res, err := s.CreateItem(context.Background(), &api.CreateItemReq{Title: "board capture"}, api.CreateItemParams{Project: "test"})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -349,7 +376,7 @@ func TestRetitleCollisionCarriesPaths(t *testing.T) {
 	hash, orderVersion := hashes(t, w, "retry-semantics.md")
 	res, err := s.RetitleItem(context.Background(),
 		&api.RetitleItemReq{Title: "board capture", ExpectedHash: hash, ExpectedOrderVersion: orderVersion},
-		api.RetitleItemParams{Filename: "retry-semantics.md"})
+		api.RetitleItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -369,7 +396,7 @@ func TestRenameToSlugRefusalIsValidation(t *testing.T) {
 	// empty-slug title first so the rename has nothing to repair toward.
 	res, err := s.RetitleItem(context.Background(),
 		&api.RetitleItemReq{Title: "((()))", ExpectedHash: hash, ExpectedOrderVersion: orderVersion},
-		api.RetitleItemParams{Filename: "retry-semantics.md"})
+		api.RetitleItemParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -379,11 +406,11 @@ func TestRenameToSlugRefusalIsValidation(t *testing.T) {
 	hash, orderVersion = hashes(t, w, "retry-semantics.md")
 	renameRes, err := s.RenameToSlug(context.Background(),
 		&api.RenameToSlugReq{ExpectedHash: hash, ExpectedOrderVersion: orderVersion},
-		api.RenameToSlugParams{Filename: "retry-semantics.md"})
+		api.RenameToSlugParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, is400 := renameRes.(*api.ErrorResponse); !is400 {
+	if _, is400 := renameRes.(*api.RenameToSlugBadRequest); !is400 {
 		t.Fatalf("refusal must be a validation error, got %#v", renameRes)
 	}
 }
@@ -392,7 +419,7 @@ func TestSaveContentConflictOnStaleHash(t *testing.T) {
 	s, _ := fixture(t, true)
 	res, err := s.SaveContent(context.Background(),
 		&api.SaveContentReq{Content: "anything", ExpectedHash: document.Hash([]byte("stale")), ExpectedOrderVersion: document.VersionAbsent},
-		api.SaveContentParams{Filename: "retry-semantics.md"})
+		api.SaveContentParams{Project: "test", Filename: "retry-semantics.md"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -402,25 +429,49 @@ func TestSaveContentConflictOnStaleHash(t *testing.T) {
 	}
 }
 
+// TestHTTPRoundTrip drives one read and one mutation through the real wire
+// — generated client through generated router to handler — proving the
+// project-scoped paths compose; a method-level test cannot catch a stale
+// path.
 func TestHTTPRoundTrip(t *testing.T) {
-	s, _ := fixture(t, true)
+	s, w := fixture(t, true)
 	h, err := api.NewServer(s)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := httptest.NewRequest("GET", "/board", nil)
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
-	if rec.Code != 200 {
-		t.Fatalf("GET /board = %d: %s", rec.Code, rec.Body)
-	}
-	var board struct {
-		OrderVersion string `json:"orderVersion"`
-	}
-	if err := json.Unmarshal(rec.Body.Bytes(), &board); err != nil {
+	srv := httptest.NewServer(h)
+	defer srv.Close()
+	c, err := api.NewClient(srv.URL)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if board.OrderVersion == "" {
-		t.Error("wire board must carry orderVersion")
+
+	readRes, err := c.GetBoard(context.Background(), api.GetBoardParams{Project: "test"})
+	board := mustBoard(t, readRes, err)
+	if board.Project != "test" || board.OrderVersion == "" {
+		t.Errorf("wire board = project %q, orderVersion %q", board.Project, board.OrderVersion)
+	}
+
+	hash, orderVersion := hashes(t, w, "board-capture.md")
+	mutRes, err := c.TransitionItem(context.Background(),
+		&api.TransitionItemReq{State: api.StateResearching, ExpectedHash: hash, ExpectedOrderVersion: orderVersion},
+		api.TransitionItemParams{Project: "test", Filename: "board-capture.md"})
+	mutated := mustBoard(t, mutRes, err)
+	found := false
+	for _, card := range laneOf(t, mutated, api.StateResearching).Cards {
+		if card.Filename == "board-capture.md" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("mutation must land through the wire and paint the fresh board")
+	}
+
+	res, err := c.GetBoard(context.Background(), api.GetBoardParams{Project: "missing"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, is404 := res.(*api.ErrorResponse); !is404 {
+		t.Fatalf("unknown project over the wire = %#v", res)
 	}
 }

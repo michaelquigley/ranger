@@ -37,14 +37,14 @@ func (c *codeRecorder) Unwrap() http.ResponseWriter {
 //
 // Capture a new item into inbox.
 //
-// POST /items
-func (s *Server) handleCreateItemRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /projects/{project}/items
+func (s *Server) handleCreateItemRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("createItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/items"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -109,6 +109,16 @@ func (s *Server) handleCreateItemRequest(args [0]string, argsEscaped bool, w htt
 			ID:   "createItem",
 		}
 	)
+	params, err := decodeCreateItemParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	var rawBody []byte
 	request, rawBody, close, err := s.decodeCreateItemRequest(r)
@@ -136,13 +146,18 @@ func (s *Server) handleCreateItemRequest(args [0]string, argsEscaped bool, w htt
 			OperationID:      "createItem",
 			Body:             request,
 			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
+			Params: middleware.Parameters{
+				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+			},
+			Raw: r,
 		}
 
 		type (
 			Request  = *CreateItemReq
-			Params   = struct{}
+			Params   = CreateItemParams
 			Response = CreateItemRes
 		)
 		response, err = middleware.HookMiddleware[
@@ -152,14 +167,14 @@ func (s *Server) handleCreateItemRequest(args [0]string, argsEscaped bool, w htt
 		](
 			m,
 			mreq,
-			nil,
+			unpackCreateItemParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.CreateItem(ctx, request)
+				response, err = s.h.CreateItem(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.CreateItem(ctx, request)
+		response, err = s.h.CreateItem(ctx, request, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ServerErrorStatusCode](err); ok {
@@ -192,14 +207,14 @@ func (s *Server) handleCreateItemRequest(args [0]string, argsEscaped bool, w htt
 // Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
 // in the same gesture.
 //
-// POST /items/{filename}/delete
-func (s *Server) handleDeleteItemRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /projects/{project}/items/{filename}/delete
+func (s *Server) handleDeleteItemRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("deleteItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/items/{filename}/delete"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}/delete"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -303,6 +318,10 @@ func (s *Server) handleDeleteItemRequest(args [1]string, argsEscaped bool, w htt
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "filename",
 					In:   "path",
 				}: params.Filename,
@@ -361,14 +380,14 @@ func (s *Server) handleDeleteItemRequest(args [1]string, argsEscaped bool, w htt
 //
 // The computed board, rebuilt from a fresh read of the disk.
 //
-// GET /board
-func (s *Server) handleGetBoardRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /projects/{project}/board
+func (s *Server) handleGetBoardRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getBoard"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/board"),
+		semconv.HTTPRouteKey.String("/projects/{project}/board"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -427,12 +446,26 @@ func (s *Server) handleGetBoardRequest(args [0]string, argsEscaped bool, w http.
 
 			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
 		}
-		err error
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: GetBoardOperation,
+			ID:   "getBoard",
+		}
 	)
+	params, err := decodeGetBoardParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		defer recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	var rawBody []byte
 
-	var response *Board
+	var response GetBoardRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -441,14 +474,19 @@ func (s *Server) handleGetBoardRequest(args [0]string, argsEscaped bool, w http.
 			OperationID:      "getBoard",
 			Body:             nil,
 			RawBody:          rawBody,
-			Params:           middleware.Parameters{},
-			Raw:              r,
+			Params: middleware.Parameters{
+				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+			},
+			Raw: r,
 		}
 
 		type (
 			Request  = struct{}
-			Params   = struct{}
-			Response = *Board
+			Params   = GetBoardParams
+			Response = GetBoardRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -457,14 +495,14 @@ func (s *Server) handleGetBoardRequest(args [0]string, argsEscaped bool, w http.
 		](
 			m,
 			mreq,
-			nil,
+			unpackGetBoardParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.GetBoard(ctx)
+				response, err = s.h.GetBoard(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.GetBoard(ctx)
+		response, err = s.h.GetBoard(ctx, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ServerErrorStatusCode](err); ok {
@@ -496,14 +534,14 @@ func (s *Server) handleGetBoardRequest(args [0]string, argsEscaped bool, w http.
 //
 // One item's raw content and parsed card.
 //
-// GET /items/{filename}
-func (s *Server) handleGetItemRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /projects/{project}/items/{filename}
+func (s *Server) handleGetItemRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("getItem"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/items/{filename}"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -592,6 +630,10 @@ func (s *Server) handleGetItemRequest(args [1]string, argsEscaped bool, w http.R
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "filename",
 					In:   "path",
 				}: params.Filename,
@@ -646,18 +688,154 @@ func (s *Server) handleGetItemRequest(args [1]string, argsEscaped bool, w http.R
 	}
 }
 
+// handleGetProjectsRequest handles getProjects operation.
+//
+// The configured project index — each project's name and availability, judged by a fresh load at
+// request time, plus the default.
+//
+// GET /projects
+func (s *Server) handleGetProjectsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	statusWriter := &codeRecorder{ResponseWriter: w}
+	w = statusWriter
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getProjects"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/projects"),
+	}
+	// Add attributes from config.
+	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), GetProjectsOperation,
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Add Labeler to context.
+	labeler := &Labeler{attrs: otelAttrs}
+	ctx = contextWithLabeler(ctx, labeler)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+
+		attrSet := labeler.AttributeSet()
+		attrs := attrSet.ToSlice()
+		code := statusWriter.status
+		if code != 0 {
+			codeAttr := semconv.HTTPResponseStatusCode(code)
+			attrs = append(attrs, codeAttr)
+			span.SetAttributes(codeAttr)
+		}
+		attrOpt := metric.WithAttributes(attrs...)
+
+		// Increment request counter.
+		s.requests.Add(ctx, 1, attrOpt)
+
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), attrOpt)
+	}()
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+
+			// https://opentelemetry.io/docs/specs/semconv/http/http-spans/#status
+			// Span Status MUST be left unset if HTTP status code was in the 1xx, 2xx or 3xx ranges,
+			// unless there was another error (e.g., network error receiving the response body; or 3xx codes with
+			// max redirects exceeded), in which case status MUST be set to Error.
+			code := statusWriter.status
+			if code < 100 || code >= 500 {
+				span.SetStatus(codes.Error, stage)
+			}
+
+			attrSet := labeler.AttributeSet()
+			attrs := attrSet.ToSlice()
+			if code != 0 {
+				attrs = append(attrs, semconv.HTTPResponseStatusCode(code))
+			}
+
+			s.errors.Add(ctx, 1, metric.WithAttributes(attrs...))
+		}
+		err error
+	)
+
+	var rawBody []byte
+
+	var response *ProjectIndex
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    GetProjectsOperation,
+			OperationSummary: "the configured project index — each project's name and availability, judged by a fresh load at request time, plus the default.\n",
+			OperationID:      "getProjects",
+			Body:             nil,
+			RawBody:          rawBody,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *ProjectIndex
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.GetProjects(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.GetProjects(ctx)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*ServerErrorStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w, span); err != nil {
+				defer recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w, span); err != nil {
+			defer recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeGetProjectsResponse(response, w, span); err != nil {
+		defer recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
 // handleRenameToSlugRequest handles renameToSlug operation.
 //
 // Repair the filename-mismatch flag with one rename.
 //
-// POST /items/{filename}/rename-to-slug
-func (s *Server) handleRenameToSlugRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /projects/{project}/items/{filename}/rename-to-slug
+func (s *Server) handleRenameToSlugRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("renameToSlug"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/items/{filename}/rename-to-slug"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}/rename-to-slug"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -761,6 +939,10 @@ func (s *Server) handleRenameToSlugRequest(args [1]string, argsEscaped bool, w h
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "filename",
 					In:   "path",
 				}: params.Filename,
@@ -819,14 +1001,14 @@ func (s *Server) handleRenameToSlugRequest(args [1]string, argsEscaped bool, w h
 //
 // Rewrite one lane's ranked prefix.
 //
-// PUT /order/{lane}
-func (s *Server) handleReorderLaneRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// PUT /projects/{project}/order/{lane}
+func (s *Server) handleReorderLaneRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("reorderLane"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/order/{lane}"),
+		semconv.HTTPRouteKey.String("/projects/{project}/order/{lane}"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -930,6 +1112,10 @@ func (s *Server) handleReorderLaneRequest(args [1]string, argsEscaped bool, w ht
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "lane",
 					In:   "path",
 				}: params.Lane,
@@ -988,14 +1174,14 @@ func (s *Server) handleReorderLaneRequest(args [1]string, argsEscaped bool, w ht
 //
 // Retitle and rename to the new slug, rank preserved.
 //
-// POST /items/{filename}/retitle
-func (s *Server) handleRetitleItemRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /projects/{project}/items/{filename}/retitle
+func (s *Server) handleRetitleItemRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("retitleItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/items/{filename}/retitle"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}/retitle"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1099,6 +1285,10 @@ func (s *Server) handleRetitleItemRequest(args [1]string, argsEscaped bool, w ht
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "filename",
 					In:   "path",
 				}: params.Filename,
@@ -1157,14 +1347,14 @@ func (s *Server) handleRetitleItemRequest(args [1]string, argsEscaped bool, w ht
 //
 // Raw save; a state-changing save runs the ranked-transition cleanup.
 //
-// PUT /items/{filename}/content
-func (s *Server) handleSaveContentRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// PUT /projects/{project}/items/{filename}/content
+func (s *Server) handleSaveContentRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("saveContent"),
 		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.HTTPRouteKey.String("/items/{filename}/content"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}/content"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1268,6 +1458,10 @@ func (s *Server) handleSaveContentRequest(args [1]string, argsEscaped bool, w ht
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
 				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
+				{
 					Name: "filename",
 					In:   "path",
 				}: params.Filename,
@@ -1326,14 +1520,14 @@ func (s *Server) handleSaveContentRequest(args [1]string, argsEscaped bool, w ht
 //
 // Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.
 //
-// GET /search
-func (s *Server) handleSearchItemsRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// GET /projects/{project}/search
+func (s *Server) handleSearchItemsRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("searchItems"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/search"),
+		semconv.HTTPRouteKey.String("/projects/{project}/search"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1411,7 +1605,7 @@ func (s *Server) handleSearchItemsRequest(args [0]string, argsEscaped bool, w ht
 
 	var rawBody []byte
 
-	var response *SearchItemsOK
+	var response SearchItemsRes
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -1425,6 +1619,10 @@ func (s *Server) handleSearchItemsRequest(args [0]string, argsEscaped bool, w ht
 					Name: "q",
 					In:   "query",
 				}: params.Q,
+				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
 			},
 			Raw: r,
 		}
@@ -1432,7 +1630,7 @@ func (s *Server) handleSearchItemsRequest(args [0]string, argsEscaped bool, w ht
 		type (
 			Request  = struct{}
 			Params   = SearchItemsParams
-			Response = *SearchItemsOK
+			Response = SearchItemsRes
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -1480,14 +1678,14 @@ func (s *Server) handleSearchItemsRequest(args [0]string, argsEscaped bool, w ht
 //
 // Transition, or transition-and-place when position is given.
 //
-// POST /items/{filename}/state
-func (s *Server) handleTransitionItemRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+// POST /projects/{project}/items/{filename}/state
+func (s *Server) handleTransitionItemRequest(args [2]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	statusWriter := &codeRecorder{ResponseWriter: w}
 	w = statusWriter
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("transitionItem"),
 		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/items/{filename}/state"),
+		semconv.HTTPRouteKey.String("/projects/{project}/items/{filename}/state"),
 	}
 	// Add attributes from config.
 	otelAttrs = append(otelAttrs, s.cfg.Attributes...)
@@ -1590,6 +1788,10 @@ func (s *Server) handleTransitionItemRequest(args [1]string, argsEscaped bool, w
 			Body:             request,
 			RawBody:          rawBody,
 			Params: middleware.Parameters{
+				{
+					Name: "project",
+					In:   "path",
+				}: params.Project,
 				{
 					Name: "filename",
 					In:   "path",

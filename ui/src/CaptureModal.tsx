@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { capture, type Outcome } from "./api";
+import { type Api, type Outcome } from "./api";
 
 // capture keeps everything typed on screen through every refusal: a
 // validation message shows inline (nothing was written), and a
@@ -7,9 +7,11 @@ import { capture, type Outcome } from "./api";
 // destination, so the operator can retitle and retry knowing exactly where
 // the words live.
 export function CaptureModal({
+  api,
   onOutcome,
   onClose,
 }: {
+  api: Api;
   onOutcome: (o: Outcome) => boolean;
   onClose: () => void;
 }) {
@@ -18,7 +20,7 @@ export function CaptureModal({
   const [local, setLocal] = useState<string | null>(null);
 
   const submit = async () => {
-    const outcome = await capture(title, body);
+    const outcome = await api.capture(title, body);
     if (outcome.kind === "invalid") {
       setLocal(outcome.message);
       return;

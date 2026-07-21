@@ -1,17 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { roadmapUrl } from "./markdown";
-import {
-  deleteItem,
-  fetchItem,
-  renameToSlug,
-  retitle,
-  saveContent,
-  type Conflict,
-  type ItemDetail,
-  type Outcome,
-} from "./api";
+import { makeRoadmapUrl } from "./markdown";
+import { type Api, type Conflict, type ItemDetail, type Outcome } from "./api";
 import { CloseIcon, DeleteIcon, EditIcon } from "./icons";
 import { labelColor, sortedTags, subsystemColor } from "./labels";
 
@@ -21,12 +12,14 @@ import { labelColor, sortedTags, subsystemColor } from "./labels";
 // save's conflicts bubble to the board, but a rename's slug_collision
 // carries recovery paths the operator needs to see right here.
 export function ItemModal({
+  api,
   filename,
   orderVersion,
   onOutcome,
   onRename,
   onClose,
 }: {
+  api: Api;
   filename: string;
   orderVersion: string;
   onOutcome: (o: Outcome) => boolean;
@@ -44,7 +37,7 @@ export function ItemModal({
 
   const load = useCallback(async () => {
     try {
-      const detail = await fetchItem(filename);
+      const detail = await api.fetchItem(filename);
       setItem(detail);
       setContent(detail.content);
       setTitle(detail.card.title);
@@ -52,7 +45,7 @@ export function ItemModal({
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : String(err));
     }
-  }, [filename]);
+  }, [api, filename]);
 
   useEffect(() => {
     void load();
@@ -95,7 +88,7 @@ export function ItemModal({
   };
 
   const save = async () => {
-    if (handle(await saveContent(filename, content, item.hash, orderVersion))) {
+    if (handle(await api.saveContent(filename, content, item.hash, orderVersion))) {
       setEditing(false);
       void load();
     }
@@ -107,7 +100,7 @@ export function ItemModal({
       setTitle(item.card.title);
       return;
     }
-    const outcome = await retitle(filename, title, item.hash, orderVersion);
+    const outcome = await api.retitle(filename, title, item.hash, orderVersion);
     if (handle(outcome) && outcome.kind === "ok" && outcome.filename) {
       if (outcome.filename === filename) {
         // an empty-slug retitle keeps the filename; refresh in place
@@ -119,7 +112,7 @@ export function ItemModal({
   };
 
   const doRenameToSlug = async () => {
-    const outcome = await renameToSlug(filename, item.hash, orderVersion);
+    const outcome = await api.renameToSlug(filename, item.hash, orderVersion);
     if (handle(outcome) && outcome.kind === "ok" && outcome.filename) {
       onRename(outcome.filename);
     }
@@ -127,7 +120,7 @@ export function ItemModal({
 
   const doDelete = async () => {
     setConfirmingDelete(false);
-    if (handle(await deleteItem(filename, item.hash, orderVersion))) {
+    if (handle(await api.deleteItem(filename, item.hash, orderVersion))) {
       onClose();
     }
   };
@@ -271,7 +264,7 @@ export function ItemModal({
         <>
           <div className="item-body">
             {bodyOf(item.content).trim() ? (
-              <Markdown remarkPlugins={[remarkGfm]} urlTransform={roadmapUrl}>{bodyOf(item.content)}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]} urlTransform={makeRoadmapUrl(api.project)}>{bodyOf(item.content)}</Markdown>
             ) : (
               <p className="dim">no body.</p>
             )}

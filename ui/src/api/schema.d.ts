@@ -4,11 +4,30 @@
  */
 
 export interface paths {
-    "/board": {
+    "/projects": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        /** the configured project index — each project's name and availability, judged by a fresh load at request time, plus the default. */
+        get: operations["getProjects"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project}/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         /** the computed board, rebuilt from a fresh read of the disk */
@@ -21,11 +40,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/search": {
+    "/projects/{project}/search": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         /** case-insensitive substring search over item titles and bodies, against a fresh read of the disk. */
@@ -38,11 +59,13 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items": {
+    "/projects/{project}/items": {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         get?: never;
@@ -55,11 +78,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}": {
+    "/projects/{project}/items/{filename}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -74,11 +98,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}/content": {
+    "/projects/{project}/items/{filename}/content": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -93,11 +118,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}/state": {
+    "/projects/{project}/items/{filename}/state": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -112,11 +138,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/order/{lane}": {
+    "/projects/{project}/order/{lane}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 lane: components["schemas"]["state"];
             };
             cookie?: never;
@@ -131,11 +158,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}/delete": {
+    "/projects/{project}/items/{filename}/delete": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -150,11 +178,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}/retitle": {
+    "/projects/{project}/items/{filename}/retitle": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -169,11 +198,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{filename}/rename-to-slug": {
+    "/projects/{project}/items/{filename}/rename-to-slug": {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -226,11 +256,21 @@ export interface components {
             rankedCount: number;
         };
         board: {
-            /** @description the discovered workspace root's name. */
+            /** @description the configured project name. */
             project: string;
             lanes: components["schemas"]["lane"][];
             /** @description order.yaml's hash, or the sentinel "absent". absence is a version. */
             orderVersion: string;
+        };
+        projectStatus: {
+            name: string;
+            available: boolean;
+            /** @description the repository-level error for an unavailable root. */
+            error?: string;
+        };
+        projectIndex: {
+            projects: components["schemas"]["projectStatus"][];
+            default: string;
         };
         itemLanded: {
             filename: string;
@@ -259,6 +299,15 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["board"];
+            };
+        };
+        /** @description no such project */
+        notFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["errorResponse"];
             };
         };
         /** @description guard refusal. item_conflict and order_conflict mean the view went stale — reload. slug_collision is a no-clobber refusal and carries structured recovery paths. */
@@ -290,6 +339,7 @@ export interface components {
         };
     };
     parameters: {
+        project: string;
         filename: string;
     };
     requestBodies: never;
@@ -298,11 +348,34 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    getBoard: {
+    getProjects: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description the project index */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["projectIndex"];
+                };
+            };
+            default: components["responses"]["serverError"];
+        };
+    };
+    getBoard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -316,6 +389,7 @@ export interface operations {
                     "application/json": components["schemas"]["board"];
                 };
             };
+            404: components["responses"]["notFound"];
             default: components["responses"]["serverError"];
         };
     };
@@ -325,7 +399,9 @@ export interface operations {
                 q: string;
             };
             header?: never;
-            path?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -341,6 +417,7 @@ export interface operations {
                     };
                 };
             };
+            404: components["responses"]["notFound"];
             default: components["responses"]["serverError"];
         };
     };
@@ -348,7 +425,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
             cookie?: never;
         };
         requestBody: {
@@ -370,6 +449,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["validationError"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -379,6 +459,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -398,7 +479,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description no such item */
+            /** @description no such project or item */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -415,6 +496,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -430,6 +512,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -439,6 +522,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -456,6 +540,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -465,6 +550,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 lane: components["schemas"]["state"];
             };
             cookie?: never;
@@ -480,6 +566,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -489,6 +576,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -503,6 +591,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -512,6 +601,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -536,6 +626,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["validationError"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };
@@ -545,6 +636,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                project: components["parameters"]["project"];
                 filename: components["parameters"]["filename"];
             };
             cookie?: never;
@@ -568,6 +660,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["validationError"];
+            404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
         };

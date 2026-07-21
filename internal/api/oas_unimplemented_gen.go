@@ -17,8 +17,8 @@ var _ Handler = UnimplementedHandler{}
 //
 // Capture a new item into inbox.
 //
-// POST /items
-func (UnimplementedHandler) CreateItem(ctx context.Context, req *CreateItemReq) (r CreateItemRes, _ error) {
+// POST /projects/{project}/items
+func (UnimplementedHandler) CreateItem(ctx context.Context, req *CreateItemReq, params CreateItemParams) (r CreateItemRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -27,7 +27,7 @@ func (UnimplementedHandler) CreateItem(ctx context.Context, req *CreateItemReq) 
 // Remove an item file — the operator's explicit curation gesture. the item's order.yaml entries go
 // in the same gesture.
 //
-// POST /items/{filename}/delete
+// POST /projects/{project}/items/{filename}/delete
 func (UnimplementedHandler) DeleteItem(ctx context.Context, req *DeleteItemReq, params DeleteItemParams) (r DeleteItemRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -36,8 +36,8 @@ func (UnimplementedHandler) DeleteItem(ctx context.Context, req *DeleteItemReq, 
 //
 // The computed board, rebuilt from a fresh read of the disk.
 //
-// GET /board
-func (UnimplementedHandler) GetBoard(ctx context.Context) (r *Board, _ error) {
+// GET /projects/{project}/board
+func (UnimplementedHandler) GetBoard(ctx context.Context, params GetBoardParams) (r GetBoardRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -45,8 +45,18 @@ func (UnimplementedHandler) GetBoard(ctx context.Context) (r *Board, _ error) {
 //
 // One item's raw content and parsed card.
 //
-// GET /items/{filename}
+// GET /projects/{project}/items/{filename}
 func (UnimplementedHandler) GetItem(ctx context.Context, params GetItemParams) (r GetItemRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetProjects implements getProjects operation.
+//
+// The configured project index — each project's name and availability, judged by a fresh load at
+// request time, plus the default.
+//
+// GET /projects
+func (UnimplementedHandler) GetProjects(ctx context.Context) (r *ProjectIndex, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -54,7 +64,7 @@ func (UnimplementedHandler) GetItem(ctx context.Context, params GetItemParams) (
 //
 // Repair the filename-mismatch flag with one rename.
 //
-// POST /items/{filename}/rename-to-slug
+// POST /projects/{project}/items/{filename}/rename-to-slug
 func (UnimplementedHandler) RenameToSlug(ctx context.Context, req *RenameToSlugReq, params RenameToSlugParams) (r RenameToSlugRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -63,7 +73,7 @@ func (UnimplementedHandler) RenameToSlug(ctx context.Context, req *RenameToSlugR
 //
 // Rewrite one lane's ranked prefix.
 //
-// PUT /order/{lane}
+// PUT /projects/{project}/order/{lane}
 func (UnimplementedHandler) ReorderLane(ctx context.Context, req *ReorderLaneReq, params ReorderLaneParams) (r ReorderLaneRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -72,7 +82,7 @@ func (UnimplementedHandler) ReorderLane(ctx context.Context, req *ReorderLaneReq
 //
 // Retitle and rename to the new slug, rank preserved.
 //
-// POST /items/{filename}/retitle
+// POST /projects/{project}/items/{filename}/retitle
 func (UnimplementedHandler) RetitleItem(ctx context.Context, req *RetitleItemReq, params RetitleItemParams) (r RetitleItemRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -81,7 +91,7 @@ func (UnimplementedHandler) RetitleItem(ctx context.Context, req *RetitleItemReq
 //
 // Raw save; a state-changing save runs the ranked-transition cleanup.
 //
-// PUT /items/{filename}/content
+// PUT /projects/{project}/items/{filename}/content
 func (UnimplementedHandler) SaveContent(ctx context.Context, req *SaveContentReq, params SaveContentParams) (r SaveContentRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -90,8 +100,8 @@ func (UnimplementedHandler) SaveContent(ctx context.Context, req *SaveContentReq
 //
 // Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.
 //
-// GET /search
-func (UnimplementedHandler) SearchItems(ctx context.Context, params SearchItemsParams) (r *SearchItemsOK, _ error) {
+// GET /projects/{project}/search
+func (UnimplementedHandler) SearchItems(ctx context.Context, params SearchItemsParams) (r SearchItemsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -99,7 +109,7 @@ func (UnimplementedHandler) SearchItems(ctx context.Context, params SearchItemsP
 //
 // Transition, or transition-and-place when position is given.
 //
-// POST /items/{filename}/state
+// POST /projects/{project}/items/{filename}/state
 func (UnimplementedHandler) TransitionItem(ctx context.Context, req *TransitionItemReq, params TransitionItemParams) (r TransitionItemRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

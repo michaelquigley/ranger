@@ -14,7 +14,7 @@ func (s *ServerErrorStatusCode) Error() string {
 
 // Ref: #/components/schemas/board
 type Board struct {
-	// The discovered workspace root's name.
+	// The configured project name.
 	Project string `json:"project"`
 	Lanes   []Lane `json:"lanes"`
 	// Order.yaml's hash, or the sentinel "absent". absence is a version.
@@ -52,6 +52,7 @@ func (s *Board) SetOrderVersion(val string) {
 }
 
 func (*Board) deleteItemRes()     {}
+func (*Board) getBoardRes()       {}
 func (*Board) reorderLaneRes()    {}
 func (*Board) saveContentRes()    {}
 func (*Board) transitionItemRes() {}
@@ -302,6 +303,14 @@ func (s *ConflictReason) UnmarshalText(data []byte) error {
 	}
 }
 
+type CreateItemBadRequest ErrorResponse
+
+func (*CreateItemBadRequest) createItemRes() {}
+
+type CreateItemNotFound ErrorResponse
+
+func (*CreateItemNotFound) createItemRes() {}
+
 type CreateItemReq struct {
 	Title string    `json:"title"`
 	Body  OptString `json:"body"`
@@ -367,10 +376,13 @@ func (s *ErrorResponse) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*ErrorResponse) createItemRes()   {}
-func (*ErrorResponse) getItemRes()      {}
-func (*ErrorResponse) renameToSlugRes() {}
-func (*ErrorResponse) retitleItemRes()  {}
+func (*ErrorResponse) deleteItemRes()     {}
+func (*ErrorResponse) getBoardRes()       {}
+func (*ErrorResponse) getItemRes()        {}
+func (*ErrorResponse) reorderLaneRes()    {}
+func (*ErrorResponse) saveContentRes()    {}
+func (*ErrorResponse) searchItemsRes()    {}
+func (*ErrorResponse) transitionItemRes() {}
 
 // Ref: #/components/schemas/flag
 type Flag struct {
@@ -709,6 +721,78 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// Ref: #/components/schemas/projectIndex
+type ProjectIndex struct {
+	Projects []ProjectStatus `json:"projects"`
+	Default  string          `json:"default"`
+}
+
+// GetProjects returns the value of Projects.
+func (s *ProjectIndex) GetProjects() []ProjectStatus {
+	return s.Projects
+}
+
+// GetDefault returns the value of Default.
+func (s *ProjectIndex) GetDefault() string {
+	return s.Default
+}
+
+// SetProjects sets the value of Projects.
+func (s *ProjectIndex) SetProjects(val []ProjectStatus) {
+	s.Projects = val
+}
+
+// SetDefault sets the value of Default.
+func (s *ProjectIndex) SetDefault(val string) {
+	s.Default = val
+}
+
+// Ref: #/components/schemas/projectStatus
+type ProjectStatus struct {
+	Name      string `json:"name"`
+	Available bool   `json:"available"`
+	// The repository-level error for an unavailable root.
+	Error OptString `json:"error"`
+}
+
+// GetName returns the value of Name.
+func (s *ProjectStatus) GetName() string {
+	return s.Name
+}
+
+// GetAvailable returns the value of Available.
+func (s *ProjectStatus) GetAvailable() bool {
+	return s.Available
+}
+
+// GetError returns the value of Error.
+func (s *ProjectStatus) GetError() OptString {
+	return s.Error
+}
+
+// SetName sets the value of Name.
+func (s *ProjectStatus) SetName(val string) {
+	s.Name = val
+}
+
+// SetAvailable sets the value of Available.
+func (s *ProjectStatus) SetAvailable(val bool) {
+	s.Available = val
+}
+
+// SetError sets the value of Error.
+func (s *ProjectStatus) SetError(val OptString) {
+	s.Error = val
+}
+
+type RenameToSlugBadRequest ErrorResponse
+
+func (*RenameToSlugBadRequest) renameToSlugRes() {}
+
+type RenameToSlugNotFound ErrorResponse
+
+func (*RenameToSlugNotFound) renameToSlugRes() {}
+
 type RenameToSlugReq struct {
 	ExpectedHash         string `json:"expectedHash"`
 	ExpectedOrderVersion string `json:"expectedOrderVersion"`
@@ -760,6 +844,14 @@ func (s *ReorderLaneReq) SetFilenames(val []string) {
 func (s *ReorderLaneReq) SetExpectedVersion(val string) {
 	s.ExpectedVersion = val
 }
+
+type RetitleItemBadRequest ErrorResponse
+
+func (*RetitleItemBadRequest) retitleItemRes() {}
+
+type RetitleItemNotFound ErrorResponse
+
+func (*RetitleItemNotFound) retitleItemRes() {}
 
 type RetitleItemReq struct {
 	Title                string `json:"title"`
@@ -846,6 +938,8 @@ func (s *SearchItemsOK) GetFilenames() []string {
 func (s *SearchItemsOK) SetFilenames(val []string) {
 	s.Filenames = val
 }
+
+func (*SearchItemsOK) searchItemsRes() {}
 
 // ServerErrorStatusCode wraps ErrorResponse with StatusCode.
 type ServerErrorStatusCode struct {

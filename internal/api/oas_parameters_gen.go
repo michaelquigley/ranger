@@ -14,12 +14,85 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
+// CreateItemParams is parameters of createItem operation.
+type CreateItemParams struct {
+	Project string
+}
+
+func unpackCreateItemParams(packed middleware.Parameters) (params CreateItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
+	return params
+}
+
+func decodeCreateItemParams(args [1]string, argsEscaped bool, r *http.Request) (params CreateItemParams, _ error) {
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DeleteItemParams is parameters of deleteItem operation.
 type DeleteItemParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackDeleteItemParams(packed middleware.Parameters) (params DeleteItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -30,12 +103,57 @@ func unpackDeleteItemParams(packed middleware.Parameters) (params DeleteItemPara
 	return params
 }
 
-func decodeDeleteItemParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteItemParams, _ error) {
-	// Decode path: filename.
+func decodeDeleteItemParams(args [2]string, argsEscaped bool, r *http.Request) (params DeleteItemParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -79,12 +197,85 @@ func decodeDeleteItemParams(args [1]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
+// GetBoardParams is parameters of getBoard operation.
+type GetBoardParams struct {
+	Project string
+}
+
+func unpackGetBoardParams(packed middleware.Parameters) (params GetBoardParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetBoardParams(args [1]string, argsEscaped bool, r *http.Request) (params GetBoardParams, _ error) {
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // GetItemParams is parameters of getItem operation.
 type GetItemParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackGetItemParams(packed middleware.Parameters) (params GetItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -95,12 +286,57 @@ func unpackGetItemParams(packed middleware.Parameters) (params GetItemParams) {
 	return params
 }
 
-func decodeGetItemParams(args [1]string, argsEscaped bool, r *http.Request) (params GetItemParams, _ error) {
-	// Decode path: filename.
+func decodeGetItemParams(args [2]string, argsEscaped bool, r *http.Request) (params GetItemParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -146,10 +382,18 @@ func decodeGetItemParams(args [1]string, argsEscaped bool, r *http.Request) (par
 
 // RenameToSlugParams is parameters of renameToSlug operation.
 type RenameToSlugParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackRenameToSlugParams(packed middleware.Parameters) (params RenameToSlugParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -160,12 +404,57 @@ func unpackRenameToSlugParams(packed middleware.Parameters) (params RenameToSlug
 	return params
 }
 
-func decodeRenameToSlugParams(args [1]string, argsEscaped bool, r *http.Request) (params RenameToSlugParams, _ error) {
-	// Decode path: filename.
+func decodeRenameToSlugParams(args [2]string, argsEscaped bool, r *http.Request) (params RenameToSlugParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -211,10 +500,18 @@ func decodeRenameToSlugParams(args [1]string, argsEscaped bool, r *http.Request)
 
 // ReorderLaneParams is parameters of reorderLane operation.
 type ReorderLaneParams struct {
-	Lane State
+	Project string
+	Lane    State
 }
 
 func unpackReorderLaneParams(packed middleware.Parameters) (params ReorderLaneParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "lane",
@@ -225,12 +522,57 @@ func unpackReorderLaneParams(packed middleware.Parameters) (params ReorderLanePa
 	return params
 }
 
-func decodeReorderLaneParams(args [1]string, argsEscaped bool, r *http.Request) (params ReorderLaneParams, _ error) {
-	// Decode path: lane.
+func decodeReorderLaneParams(args [2]string, argsEscaped bool, r *http.Request) (params ReorderLaneParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: lane.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -284,10 +626,18 @@ func decodeReorderLaneParams(args [1]string, argsEscaped bool, r *http.Request) 
 
 // RetitleItemParams is parameters of retitleItem operation.
 type RetitleItemParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackRetitleItemParams(packed middleware.Parameters) (params RetitleItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -298,12 +648,57 @@ func unpackRetitleItemParams(packed middleware.Parameters) (params RetitleItemPa
 	return params
 }
 
-func decodeRetitleItemParams(args [1]string, argsEscaped bool, r *http.Request) (params RetitleItemParams, _ error) {
-	// Decode path: filename.
+func decodeRetitleItemParams(args [2]string, argsEscaped bool, r *http.Request) (params RetitleItemParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -349,10 +744,18 @@ func decodeRetitleItemParams(args [1]string, argsEscaped bool, r *http.Request) 
 
 // SaveContentParams is parameters of saveContent operation.
 type SaveContentParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackSaveContentParams(packed middleware.Parameters) (params SaveContentParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -363,12 +766,57 @@ func unpackSaveContentParams(packed middleware.Parameters) (params SaveContentPa
 	return params
 }
 
-func decodeSaveContentParams(args [1]string, argsEscaped bool, r *http.Request) (params SaveContentParams, _ error) {
-	// Decode path: filename.
+func decodeSaveContentParams(args [2]string, argsEscaped bool, r *http.Request) (params SaveContentParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}
@@ -414,7 +862,8 @@ func decodeSaveContentParams(args [1]string, argsEscaped bool, r *http.Request) 
 
 // SearchItemsParams is parameters of searchItems operation.
 type SearchItemsParams struct {
-	Q string
+	Q       string
+	Project string
 }
 
 func unpackSearchItemsParams(packed middleware.Parameters) (params SearchItemsParams) {
@@ -425,10 +874,17 @@ func unpackSearchItemsParams(packed middleware.Parameters) (params SearchItemsPa
 		}
 		params.Q = packed[key].(string)
 	}
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	return params
 }
 
-func decodeSearchItemsParams(args [0]string, argsEscaped bool, r *http.Request) (params SearchItemsParams, _ error) {
+func decodeSearchItemsParams(args [1]string, argsEscaped bool, r *http.Request) (params SearchItemsParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
 	// Decode query: q.
 	if err := func() error {
@@ -486,15 +942,68 @@ func decodeSearchItemsParams(args [0]string, argsEscaped bool, r *http.Request) 
 			Err:  err,
 		}
 	}
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
 	return params, nil
 }
 
 // TransitionItemParams is parameters of transitionItem operation.
 type TransitionItemParams struct {
+	Project  string
 	Filename string
 }
 
 func unpackTransitionItemParams(packed middleware.Parameters) (params TransitionItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
 	{
 		key := middleware.ParameterKey{
 			Name: "filename",
@@ -505,12 +1014,57 @@ func unpackTransitionItemParams(packed middleware.Parameters) (params Transition
 	return params
 }
 
-func decodeTransitionItemParams(args [1]string, argsEscaped bool, r *http.Request) (params TransitionItemParams, _ error) {
-	// Decode path: filename.
+func decodeTransitionItemParams(args [2]string, argsEscaped bool, r *http.Request) (params TransitionItemParams, _ error) {
+	// Decode path: project.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
 			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: filename.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
 			if err != nil {
 				return errors.Wrap(err, "unescape path")
 			}

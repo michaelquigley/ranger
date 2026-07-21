@@ -1,7 +1,7 @@
-// Package server implements the generated api.Handler over a workspace.
-// every handler call rebuilds from a fresh disk read — the server holds no
-// snapshot — and translation between model and wire types happens at this
-// edge only.
+// Package server implements the generated api.Handler over a project set.
+// every handler call resolves its project and rebuilds from a fresh disk
+// read — the server holds no snapshot — and translation between model and
+// wire types happens at this edge only.
 package server
 
 import (
@@ -15,15 +15,14 @@ import (
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
-// Server is the api.Handler implementation: a workspace root and nothing
-// else.
+// Server is the api.Handler implementation: a project set and nothing else.
 type Server struct {
-	w *workspace.Workspace
+	projects *Projects
 }
 
-// New returns a server over the given workspace.
-func New(w *workspace.Workspace) *Server {
-	return &Server{w: w}
+// New returns a server over the given project set.
+func New(projects *Projects) *Server {
+	return &Server{projects: projects}
 }
 
 var _ api.Handler = (*Server)(nil)
@@ -36,6 +35,21 @@ func (s *Server) NewError(_ context.Context, err error) *api.ServerErrorStatusCo
 		StatusCode: 500,
 		Response:   api.ErrorResponse{Message: err.Error()},
 	}
+}
+
+// resolve maps the {project} path segment to its workspace. an unknown
+// name returns the operation's 404 body; a config source failure is the
+// request's plain error, healed on the next good save.
+func (s *Server) resolve(name string) (*workspace.Workspace, *api.ErrorResponse, error) {
+	w, err := s.projects.Resolve(name)
+	if err != nil {
+		var unknown *UnknownProjectError
+		if errors.As(err, &unknown) {
+			return nil, &api.ErrorResponse{Message: err.Error()}, nil
+		}
+		return nil, nil, err
+	}
+	return w, nil, nil
 }
 
 // asConflict maps the document layer's typed refusals onto the wire's 409
@@ -112,11 +126,12 @@ func wireBoard(snap *workspace.Snapshot, project string) *api.Board {
 }
 
 // freshBoard reloads from disk after a mutation so the client repaints from
-// disk truth, never from what the mutation thinks it did.
-func (s *Server) freshBoard() (*api.Board, error) {
-	snap, err := s.w.Load()
+// disk truth, never from what the mutation thinks it did. project is the
+// configured name, carried onto the wire.
+func freshBoard(w *workspace.Workspace, project string) (*api.Board, error) {
+	snap, err := w.Load()
 	if err != nil {
 		return nil, err
 	}
-	return wireBoard(snap, filepath.Base(s.w.Root())), nil
+	return wireBoard(snap, project), nil
 }

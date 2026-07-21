@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -10,7 +10,8 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { fetchBoard, search, transition, reorder, type Board, type Card, type Conflict, type Outcome, type State } from "./api";
+import { fetchProjects, makeApi, type Board, type Card, type Conflict, type Outcome, type State } from "./api";
+import { projectFromPath } from "./project";
 import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import { CardBody, LaneColumn } from "./LaneColumn";
 import { ItemModal } from "./ItemModal";
@@ -18,7 +19,34 @@ import { CaptureModal } from "./CaptureModal";
 import { CaptureIcon, RangerMark } from "./icons";
 import { labelColor, subsystemColor } from "./labels";
 
+// the project comes from the URL; the bare / consults the project index
+// and lands on the default.
 export default function App() {
+  const project = projectFromPath(window.location.pathname);
+  return project ? <ProjectBoard project={project} /> : <DefaultRedirect />;
+}
+
+function DefaultRedirect() {
+  const [fatal, setFatal] = useState<string | null>(null);
+  useEffect(() => {
+    fetchProjects().then(
+      (idx) => window.location.replace(`/p/${idx.default}`),
+      (err) => setFatal(err instanceof Error ? err.message : String(err)),
+    );
+  }, []);
+  if (fatal) {
+    return (
+      <div className="fatal">
+        <h1>ranger</h1>
+        <p>{fatal}</p>
+      </div>
+    );
+  }
+  return <div className="fatal">loading…</div>;
+}
+
+function ProjectBoard({ project }: { project: string }) {
+  const api = useMemo(() => makeApi(project), [project]);
   const [board, setBoard] = useState<Board | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -37,12 +65,12 @@ export default function App() {
 
   const reload = useCallback(async () => {
     try {
-      setBoard(await fetchBoard());
+      setBoard(await api.fetchBoard());
       setFatal(null);
     } catch (err) {
       setFatal(err instanceof Error ? err.message : String(err));
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     void reload();
@@ -64,13 +92,13 @@ export default function App() {
     }
     const timer = setTimeout(async () => {
       try {
-        setSearchMatches(new Set(await search(q)));
+        setSearchMatches(new Set(await api.search(q)));
       } catch (err) {
         setNotice(err instanceof Error ? err.message : String(err));
       }
     }, 150);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [api, query]);
 
   // the shared outcome path for gestures resolved at board level:
   // item_conflict and order_conflict mean the view went stale — reload
@@ -188,7 +216,7 @@ export default function App() {
           return;
         }
         setBoard(optimisticRanked(working, origin.lane.state, filenames));
-        finishDrag(await reorder(origin.lane.state as State, filenames, snapshot.orderVersion), snapshot);
+        finishDrag(await api.reorder(origin.lane.state as State, filenames, snapshot.orderVersion), snapshot);
         return;
       }
 
@@ -200,11 +228,11 @@ export default function App() {
       // the lane reshuffles when the response lands.
       setBoard(optimisticPlaced(snapshot, activeId, cur.lane.state, position));
       finishDrag(
-        await transition(activeId, cur.lane.state as State, origin.lane.cards[origin.index].hash, snapshot.orderVersion, position),
+        await api.transition(activeId, cur.lane.state as State, origin.lane.cards[origin.index].hash, snapshot.orderVersion, position),
         snapshot,
       );
     },
-    [board, preDrag, finishDrag, tagFilter, subsystemFilter, milestoneFilter, searchMatches],
+    [api, board, preDrag, finishDrag, tagFilter, subsystemFilter, milestoneFilter, searchMatches],
   );
 
   const toggleTag = useCallback((tag: string) => {
@@ -343,6 +371,7 @@ export default function App() {
       </DndContext>
       {openItem && (
         <ItemModal
+          api={api}
           filename={openItem}
           orderVersion={board.orderVersion}
           onOutcome={applyOutcome}
@@ -350,7 +379,7 @@ export default function App() {
           onClose={() => setOpenItem(null)}
         />
       )}
-      {captureOpen && <CaptureModal onOutcome={applyOutcome} onClose={() => setCaptureOpen(false)} />}
+      {captureOpen && <CaptureModal api={api} onOutcome={applyOutcome} onClose={() => setCaptureOpen(false)} />}
     </div>
   );
 }

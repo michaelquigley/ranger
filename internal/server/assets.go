@@ -1,11 +1,41 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
+
+	"github.com/michaelquigley/ranger/internal/workspace"
 )
+
+// ProjectAssets resolves the leading path segment as a project name and
+// serves that root's roadmap files through Assets — a resolution addition
+// only; every containment property lives in Assets, unchanged.
+func ProjectAssets(projects *Projects) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		name, rest, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/"), "/")
+		if name == "" {
+			http.NotFound(rw, r)
+			return
+		}
+		w, err := projects.Resolve(name)
+		if err != nil {
+			var unknown *UnknownProjectError
+			if errors.As(err, &unknown) {
+				http.NotFound(rw, r)
+				return
+			}
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		scoped := r.Clone(r.Context())
+		scoped.URL.Path = "/" + rest
+		Assets(filepath.Join(w.Root(), filepath.FromSlash(workspace.RoadmapRel))).ServeHTTP(rw, scoped)
+	})
+}
 
 // Assets serves the roadmap directory's files read-only — the relative
 // images and attachments item bodies reference. fresh disk read per
