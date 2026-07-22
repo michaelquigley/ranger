@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -11,6 +11,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { fetchProjects, makeApi, type Board, type Card, type Conflict, type Outcome, type ProjectIndex, type State } from "./api";
+import { POLL_MS, freshest } from "./live";
 import { projectFromPath, projectPath } from "./project";
 import { selectorOptions } from "./selector";
 import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
@@ -70,26 +71,53 @@ function ProjectBoard({ project }: { project: string }) {
   // during the drag, and this is what gestures compute against and what a
   // canceled or failed drop restores.
   const [preDrag, setPreDrag] = useState<Board | null>(null);
+  // the optimistic board is sacred while the pointer is down: a poll that
+  // lands mid-drag is dropped at application time, races included.
+  const dragActive = useRef(false);
 
   // the index rides along with board loads and gesture outcomes — not
   // every optimistic repaint — so the selector's dirty markers and
   // availability stay as fresh as the board without a drag-hover storm.
   const refreshIndex = useCallback(() => {
-    fetchProjects().then(setIndex, (err) => setIndexFatal(err instanceof Error ? err.message : String(err)));
+    fetchProjects().then(
+      (idx) => setIndex((prev) => freshest(prev, idx)),
+      (err) => setIndexFatal(err instanceof Error ? err.message : String(err)),
+    );
   }, []);
 
   const reload = useCallback(async () => {
     refreshIndex();
     try {
-      setBoard(await api.fetchBoard());
+      const fresh = await api.fetchBoard();
+      if (dragActive.current) return;
+      setBoard((prev) => freshest(prev, fresh));
       setBoardError(null);
     } catch (err) {
+      if (dragActive.current) return;
       setBoardError(err instanceof Error ? err.message : String(err));
     }
   }, [api, refreshIndex]);
 
   useEffect(() => {
     void reload();
+  }, [reload]);
+
+  // live reload: the same fresh reads a manual refresh runs, on a quiet
+  // clock. visibility-gated — a hidden tab is silent, and coming back is
+  // an immediate tick, exactly the moment manual refresh used to serve —
+  // and never mid-drag. an unchanged read keeps its identity through
+  // freshest, so a quiet tick repaints nothing.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState !== "visible" || dragActive.current) return;
+      void reload();
+    };
+    const timer = setInterval(tick, POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, [reload]);
 
   useEffect(() => {
@@ -146,6 +174,7 @@ function ProjectBoard({ project }: { project: string }) {
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       if (!board) return;
+      dragActive.current = true;
       const source = locate(board, String(event.active.id));
       setDragging(source ? source.lane.cards[source.index] : null);
       setPreDrag(board);
@@ -182,6 +211,7 @@ function ProjectBoard({ project }: { project: string }) {
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      dragActive.current = false;
       setDragging(null);
       const snapshot = preDrag;
       setPreDrag(null);
@@ -265,6 +295,7 @@ function ProjectBoard({ project }: { project: string }) {
   }, []);
 
   const handleDragCancel = useCallback(() => {
+    dragActive.current = false;
     setDragging(null);
     if (preDrag) setBoard(preDrag);
     setPreDrag(null);

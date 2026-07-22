@@ -2,10 +2,11 @@ horizon:
   - specwork-order-management.md
   - cross-repo-aggregation.md
   - richer-log.md
+  - drop-the-js-yaml-override.md
 researching:
 inbox:
 building:
-  - live-board-reload.md
 evaluating:
+  - live-board-reload.md
   - dirty-git-highlights.md
   - desktop-integration.md

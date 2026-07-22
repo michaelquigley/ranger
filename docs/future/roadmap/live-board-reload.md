@@ -1,6 +1,6 @@
 ---
 title: live board reload
-state: building
+state: evaluating
 created: 2026-07-15
 tags: [enhancement, spike]
 milestone: v0.1.x
