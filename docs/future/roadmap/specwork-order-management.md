@@ -1,6 +1,6 @@
 ---
 title: spec+work-order management
-state: horizon
+state: researching
 created: 2026-07-20
 tags: [epic, spike]
 milestone: v0.1.x

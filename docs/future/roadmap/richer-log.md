@@ -1,5 +1,5 @@
 ---
-title: "richer log:"
+title: richer log
 state: horizon
 created: 2026-07-15
 tags: [epic, spike]

@@ -1,9 +1,9 @@
 horizon:
-  - specwork-order-management.md
   - cross-repo-aggregation.md
   - richer-log.md
   - drop-the-js-yaml-override.md
 researching:
+  - specwork-order-management.md
 inbox:
 building:
 evaluating:
