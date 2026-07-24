@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { shouldReloadItem } from "./live";
 import { makeRoadmapUrl } from "./markdown";
 import { type Api, type Conflict, type ItemDetail, type Outcome } from "./api";
 import { CloseIcon, DeleteIcon, EditIcon } from "./icons";
@@ -15,6 +16,7 @@ export function ItemModal({
   api,
   filename,
   orderVersion,
+  boardHash,
   onOutcome,
   onRename,
   onClose,
@@ -22,6 +24,7 @@ export function ItemModal({
   api: Api;
   filename: string;
   orderVersion: string;
+  boardHash: string | undefined;
   onOutcome: (o: Outcome) => boolean;
   onRename: (filename: string) => void;
   onClose: () => void;
@@ -50,6 +53,26 @@ export function ItemModal({
   useEffect(() => {
     void load();
   }, [load]);
+
+  // the board poll is the clock and the card's hash is the change signal:
+  // when the fresh board carries a different hash for this item — another
+  // hand changed it — the modal re-reads, in the quiet view state only.
+  // a vanished card reloads too, surfacing the 404 plainly.
+  useEffect(() => {
+    if (!item) return;
+    if (
+      shouldReloadItem({
+        editing,
+        retitling: editingTitle,
+        confirming: confirmingDelete,
+        noticed: local !== null,
+        loadedHash: item.hash,
+        boardHash,
+      })
+    ) {
+      void load();
+    }
+  }, [item, editing, editingTitle, confirmingDelete, local, boardHash, load]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

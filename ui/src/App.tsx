@@ -436,6 +436,7 @@ function ProjectBoard({ project }: { project: string }) {
           api={api}
           filename={openItem}
           orderVersion={board.orderVersion}
+          boardHash={hashOf(board, openItem)}
           onOutcome={applyOutcome}
           onRename={(filename) => setOpenItem(filename)}
           onClose={() => setOpenItem(null)}
@@ -474,6 +475,13 @@ function conflictNotice(conflict: Conflict): string {
 }
 
 type Located = { lane: Board["lanes"][number]; index: number };
+
+// hashOf is the open modal's change signal: the fresh board's hash for
+// the item, undefined when the board no longer carries the card.
+function hashOf(board: Board, filename: string): string | undefined {
+  const found = locate(board, filename);
+  return found ? found.lane.cards[found.index].hash : undefined;
+}
 
 function locate(board: Board, filename: string): Located | null {
   for (const lane of board.lanes) {
