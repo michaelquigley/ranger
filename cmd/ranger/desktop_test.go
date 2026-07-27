@@ -27,8 +27,8 @@ func TestDesktopDataHomeFromEnv(t *testing.T) {
 	}
 }
 
-func TestDesktopInstallPathsFor(t *testing.T) {
-	paths := desktopInstallPathsFor("/tmp/ranger-data")
+func TestNewDesktopInstallPaths(t *testing.T) {
+	paths := newDesktopInstallPaths("/tmp/ranger-data")
 
 	if want := filepath.Join("/tmp/ranger-data", "applications", desktopAppId+".desktop"); paths.desktopFile != want {
 		t.Errorf("desktop file = %q, want %q", paths.desktopFile, want)
@@ -81,7 +81,7 @@ func TestDesktopExecPathEscapesDesktopEntrySpecials(t *testing.T) {
 
 func TestInstallAndRemoveDesktopFiles(t *testing.T) {
 	dataHome := t.TempDir()
-	paths := desktopInstallPathsFor(dataHome)
+	paths := newDesktopInstallPaths(dataHome)
 
 	if err := installDesktopFiles(paths, "/opt/ranger"); err != nil {
 		t.Fatal(err)

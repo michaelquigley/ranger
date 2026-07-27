@@ -69,7 +69,7 @@ func TestDegradationAndHeal(t *testing.T) {
 		Default: "healthy",
 		Port:    config.DefaultPort,
 	}
-	s := New(NewProjects(constantSource(cfg)))
+	s := NewServer(NewProjects(constantSource(cfg)))
 
 	// the index reports one available and one flagged with its error
 	idx, err := s.GetProjects(ctx)

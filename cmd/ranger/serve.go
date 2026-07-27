@@ -72,7 +72,7 @@ func serveBootstrap(root string, port int) (*config.Config, http.Handler, error)
 // the ogen API at /api/v1, project-scoped roadmap assets at
 // /roadmap/{project}/, and the embedded SPA with index fallback.
 func buildMux(projects *server.Projects) (http.Handler, error) {
-	apiServer, err := api.NewServer(server.New(projects), api.WithPathPrefix("/api/v1"))
+	apiServer, err := api.NewServer(server.NewServer(projects), api.WithPathPrefix("/api/v1"))
 	if err != nil {
 		return nil, err
 	}

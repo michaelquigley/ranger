@@ -20,8 +20,9 @@ type Server struct {
 	projects *Projects
 }
 
-// New returns a server over the given project set.
-func New(projects *Projects) *Server {
+// NewServer returns a server over the given project set — type-named,
+// because the package constructs Projects beside it.
+func NewServer(projects *Projects) *Server {
 	return &Server{projects: projects}
 }
 

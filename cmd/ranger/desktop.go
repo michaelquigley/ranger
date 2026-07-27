@@ -91,7 +91,7 @@ func newDesktopIntegrateCmd() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		paths := desktopInstallPathsFor(dataHome)
+		paths := newDesktopInstallPaths(dataHome)
 		if err := installDesktopFiles(paths, executable); err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ func newDesktopRemoveCmd() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		paths := desktopInstallPathsFor(dataHome)
+		paths := newDesktopInstallPaths(dataHome)
 
 		out := cmd.OutOrStdout()
 		for _, file := range paths.allFiles() {
@@ -167,7 +167,7 @@ func desktopDataHomeFromEnv(xdgDataHome, home string) (string, error) {
 	return filepath.Join(home, ".local", "share"), nil
 }
 
-func desktopInstallPathsFor(dataHome string) desktopInstallPaths {
+func newDesktopInstallPaths(dataHome string) desktopInstallPaths {
 	paths := desktopInstallPaths{
 		desktopFile: filepath.Join(dataHome, "applications", desktopAppId+".desktop"),
 	}

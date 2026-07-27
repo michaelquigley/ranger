@@ -64,7 +64,7 @@ func fixture(t *testing.T, withOrder bool) (*Server, *workspace.Workspace) {
 		Default:  "test",
 		Port:     config.DefaultPort,
 	}
-	return New(NewProjects(constantSource(cfg))), w
+	return NewServer(NewProjects(constantSource(cfg))), w
 }
 
 func hashes(t *testing.T, w *workspace.Workspace, filename string) (string, string) {
