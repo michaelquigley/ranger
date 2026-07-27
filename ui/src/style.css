@@ -20,6 +20,9 @@ html {
   --dim: #69707d;
   --accent: #2563eb;
   --warn: #b45309;
+  /* the dirty-git accent: the accent blue's red-600 sibling, a pure red
+     rather than the warn amber — dirty is its own signal, not a warning */
+  --dirty: #dc2626;
 }
 
 body {
@@ -450,11 +453,11 @@ textarea {
 /* uncommitted in git: a quiet left-edge accent — information, not alarm.
    an inset shadow rather than a border, so nothing shifts */
 .card-dirty {
-  box-shadow: inset 3px 0 0 var(--warn), 0 1px 2px rgba(20, 24, 30, 0.07);
+  box-shadow: inset 3px 0 0 var(--dirty), 0 1px 2px rgba(20, 24, 30, 0.07);
 }
 
 .card-overlay.card-dirty {
-  box-shadow: inset 3px 0 0 var(--warn), 0 6px 18px rgba(20, 24, 30, 0.25);
+  box-shadow: inset 3px 0 0 var(--dirty), 0 6px 18px rgba(20, 24, 30, 0.25);
 }
 
 .card-tags {
