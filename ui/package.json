@@ -33,7 +33,10 @@
   },
   "overrides": {
     "@redocly/openapi-core": {
-      "js-yaml": "4.3.0"
+      "js-yaml": "4.3.0",
+      "minimatch": {
+        "brace-expansion": "5.0.8"
+      }
     }
   }
 }
