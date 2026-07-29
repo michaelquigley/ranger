@@ -334,6 +334,32 @@ textarea {
   margin: 1.3em 0 0.55em;
 }
 
+/* the prompt is everything above the first h2; the named sections below it
+   (## why, ## background) are supporting material and recede, so the prompt
+   reads first. sibling selectors over one markdown tree rather than a split
+   at render: splitting the source would strand a link reference definition
+   declared in one half and used in the other. must follow the heading rule
+   above — same specificity, so order decides. */
+.item-body > *:not(h2):not(h2 ~ *) {
+  font-size: 1.06em;
+}
+
+.item-body > h2,
+.item-body > h2 ~ * {
+  font-size: 0.88em;
+}
+
+.item-body > h2,
+.item-body > h2 ~ h3 {
+  color: var(--dim);
+}
+
+.item-body > h2:not(:first-child) {
+  border-top: 1px solid var(--card-edge);
+  margin-top: 1.6em;
+  padding-top: 1.1em;
+}
+
 .item-body p,
 .item-body ul,
 .item-body ol {
