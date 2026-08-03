@@ -13,9 +13,9 @@ export function LaneColumn({
 }: {
   lane: Lane;
   onOpen: (filename: string) => void;
-  onToggleTag?: (tag: string) => void;
-  onToggleSubsystem?: (subsystem: string) => void;
-  onToggleMilestone?: (milestone: string) => void;
+  onToggleTag?: (tag: string, exclude: boolean) => void;
+  onToggleSubsystem?: (subsystem: string, exclude: boolean) => void;
+  onToggleMilestone?: (milestone: string, exclude: boolean) => void;
 }) {
   const { setNodeRef } = useDroppable({ id: `lane:${lane.state}` });
   return (
@@ -52,9 +52,9 @@ function CardView({
 }: {
   card: Card;
   onOpen: (filename: string) => void;
-  onToggleTag?: (tag: string) => void;
-  onToggleSubsystem?: (subsystem: string) => void;
-  onToggleMilestone?: (milestone: string) => void;
+  onToggleTag?: (tag: string, exclude: boolean) => void;
+  onToggleSubsystem?: (subsystem: string, exclude: boolean) => void;
+  onToggleMilestone?: (milestone: string, exclude: boolean) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.filename,
@@ -85,7 +85,8 @@ function CardView({
 
 // CardBody is the card's presentation alone — shared by the sortable card
 // in its lane and the drag overlay that follows the pointer. tag chips and
-// the milestone badge toggle the board filter when handlers are given.
+// the milestone badge toggle the board filter when handlers are given —
+// plain click includes, alt-click excludes.
 export function CardBody({
   card,
   onToggleTag,
@@ -93,9 +94,9 @@ export function CardBody({
   onToggleMilestone,
 }: {
   card: Card;
-  onToggleTag?: (tag: string) => void;
-  onToggleSubsystem?: (subsystem: string) => void;
-  onToggleMilestone?: (milestone: string) => void;
+  onToggleTag?: (tag: string, exclude: boolean) => void;
+  onToggleSubsystem?: (subsystem: string, exclude: boolean) => void;
+  onToggleMilestone?: (milestone: string, exclude: boolean) => void;
 }) {
   return (
     <>
@@ -108,12 +109,12 @@ export function CardBody({
                 key={subsystem}
                 className={onToggleSubsystem ? "subsystem-text tag-click" : "subsystem-text"}
                 style={subsystemColor(subsystem)}
-                title={onToggleSubsystem ? `filter by ${subsystem}` : undefined}
+                title={onToggleSubsystem ? `filter by ${subsystem} (alt-click excludes)` : undefined}
                 onClick={
                   onToggleSubsystem
                     ? (e) => {
                         e.stopPropagation();
-                        onToggleSubsystem(subsystem);
+                        onToggleSubsystem(subsystem, e.altKey);
                       }
                     : undefined
                 }
@@ -131,12 +132,12 @@ export function CardBody({
               key={tag}
               className={onToggleTag ? "tag-pill tag-click" : "tag-pill"}
               style={labelColor(tag)}
-              title={onToggleTag ? `filter by ${tag}` : undefined}
+              title={onToggleTag ? `filter by ${tag} (alt-click excludes)` : undefined}
               onClick={
                 onToggleTag
                   ? (e) => {
                       e.stopPropagation();
-                      onToggleTag(tag);
+                      onToggleTag(tag, e.altKey);
                     }
                   : undefined
               }
@@ -158,12 +159,12 @@ export function CardBody({
       {card.milestone && (
         <div
           className={onToggleMilestone ? "card-milestone tag-click" : "card-milestone"}
-          title={onToggleMilestone ? `filter by ${card.milestone}` : undefined}
+          title={onToggleMilestone ? `filter by ${card.milestone} (alt-click excludes)` : undefined}
           onClick={
             onToggleMilestone
               ? (e) => {
                   e.stopPropagation();
-                  onToggleMilestone(card.milestone!);
+                  onToggleMilestone(card.milestone!, e.altKey);
                 }
               : undefined
           }
