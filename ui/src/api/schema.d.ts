@@ -278,6 +278,12 @@ export interface components {
             notSubsystems?: string[];
             milestone?: string;
             notMilestone?: string;
+            /** @description match only cards carrying no tags at all */
+            noTags?: boolean;
+            /** @description match only cards carrying no subsystems at all */
+            noSubsystems?: boolean;
+            /** @description match only cards with no milestone set */
+            noMilestone?: boolean;
         };
         lane: {
             state: components["schemas"]["state"];

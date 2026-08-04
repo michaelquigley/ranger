@@ -52,6 +52,12 @@ func TestSaveFiltersLifecycle(t *testing.T) {
 	if len(board.SavedFilters) != 2 || board.SavedFilters[1].NotMilestone.Or("") != "v0.1.x" {
 		t.Fatalf("savedFilters = %+v", board.SavedFilters)
 	}
+
+	third := api.SavedFilter{Name: "untriaged", NoTags: api.NewOptBool(true), NoMilestone: api.NewOptBool(true)}
+	board = mustBoard(t, saveFilters(t, s, []api.SavedFilter{first, second, third}, board.FiltersVersion.Or("")), nil)
+	if len(board.SavedFilters) != 3 || !board.SavedFilters[2].NoTags.Or(false) || !board.SavedFilters[2].NoMilestone.Or(false) {
+		t.Fatalf("savedFilters = %+v", board.SavedFilters)
+	}
 }
 
 func TestSaveFiltersStaleVersionConflicts(t *testing.T) {

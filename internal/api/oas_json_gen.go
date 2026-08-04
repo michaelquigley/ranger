@@ -3111,9 +3111,27 @@ func (s *SavedFilter) encodeFields(e *jx.Encoder) {
 			s.NotMilestone.Encode(e)
 		}
 	}
+	{
+		if s.NoTags.Set {
+			e.FieldStart("noTags")
+			s.NoTags.Encode(e)
+		}
+	}
+	{
+		if s.NoSubsystems.Set {
+			e.FieldStart("noSubsystems")
+			s.NoSubsystems.Encode(e)
+		}
+	}
+	{
+		if s.NoMilestone.Set {
+			e.FieldStart("noMilestone")
+			s.NoMilestone.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfSavedFilter = [7]string{
+var jsonFieldsNameOfSavedFilter = [10]string{
 	0: "name",
 	1: "tags",
 	2: "notTags",
@@ -3121,6 +3139,9 @@ var jsonFieldsNameOfSavedFilter = [7]string{
 	4: "notSubsystems",
 	5: "milestone",
 	6: "notMilestone",
+	7: "noTags",
+	8: "noSubsystems",
+	9: "noMilestone",
 }
 
 // Decode decodes SavedFilter from json.
@@ -3128,7 +3149,7 @@ func (s *SavedFilter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode SavedFilter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -3240,6 +3261,36 @@ func (s *SavedFilter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"notMilestone\"")
 			}
+		case "noTags":
+			if err := func() error {
+				s.NoTags.Reset()
+				if err := s.NoTags.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noTags\"")
+			}
+		case "noSubsystems":
+			if err := func() error {
+				s.NoSubsystems.Reset()
+				if err := s.NoSubsystems.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noSubsystems\"")
+			}
+		case "noMilestone":
+			if err := func() error {
+				s.NoMilestone.Reset()
+				if err := s.NoMilestone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noMilestone\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -3249,8 +3300,9 @@ func (s *SavedFilter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
+	for i, mask := range [2]uint8{
 		0b00000001,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

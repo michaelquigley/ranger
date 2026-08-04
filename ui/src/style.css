@@ -552,6 +552,17 @@ textarea {
   color: var(--text);
 }
 
+/* an absence filter names what isn't there — the dashed edge is the
+   outline of the missing thing. */
+.no-pill {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  background: var(--card);
+  border: 1px dashed var(--dim);
+  color: var(--text);
+}
+
 .save-name {
   width: 8rem;
   font-size: 0.8rem;

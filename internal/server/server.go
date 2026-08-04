@@ -159,6 +159,15 @@ func wireFilter(f document.SavedFilter) api.SavedFilter {
 	if f.NotMilestone != "" {
 		out.NotMilestone = api.NewOptString(f.NotMilestone)
 	}
+	if f.NoTags {
+		out.NoTags = api.NewOptBool(true)
+	}
+	if f.NoSubsystems {
+		out.NoSubsystems = api.NewOptBool(true)
+	}
+	if f.NoMilestone {
+		out.NoMilestone = api.NewOptBool(true)
+	}
 	return out
 }
 
@@ -167,10 +176,13 @@ func docFilter(f api.SavedFilter) document.SavedFilter {
 		Name:          f.Name,
 		Tags:          f.Tags,
 		NotTags:       f.NotTags,
+		NoTags:        f.NoTags.Or(false),
 		Subsystems:    f.Subsystems,
 		NotSubsystems: f.NotSubsystems,
+		NoSubsystems:  f.NoSubsystems.Or(false),
 		Milestone:     f.Milestone.Or(""),
 		NotMilestone:  f.NotMilestone.Or(""),
+		NoMilestone:   f.NoMilestone.Or(false),
 	}
 }
 

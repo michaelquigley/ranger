@@ -70,10 +70,13 @@ func RenderFilters(filters []SavedFilter) []byte {
 		b.WriteString("  - name: " + emitScalar(f.Name) + "\n")
 		renderList(&b, "tags", f.Tags)
 		renderList(&b, "not_tags", f.NotTags)
+		renderFlag(&b, "no_tags", f.NoTags)
 		renderList(&b, "subsystems", f.Subsystems)
 		renderList(&b, "not_subsystems", f.NotSubsystems)
+		renderFlag(&b, "no_subsystems", f.NoSubsystems)
 		renderScalar(&b, "milestone", f.Milestone)
 		renderScalar(&b, "not_milestone", f.NotMilestone)
+		renderFlag(&b, "no_milestone", f.NoMilestone)
 	}
 	return []byte(b.String())
 }
@@ -96,4 +99,13 @@ func renderScalar(b *strings.Builder, key, value string) {
 		return
 	}
 	b.WriteString("    " + key + ": " + emitScalar(value) + "\n")
+}
+
+// renderFlag emits an absence flag only when set — false is the absent
+// default, matching the omit-empty shape of every other field.
+func renderFlag(b *strings.Builder, key string, value bool) {
+	if !value {
+		return
+	}
+	b.WriteString("    " + key + ": true\n")
 }

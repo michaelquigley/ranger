@@ -51,10 +51,27 @@ func TestParseFiltersRefusals(t *testing.T) {
 	}
 }
 
+func TestParseFiltersAbsenceFlags(t *testing.T) {
+	raw := []byte(`filters:
+  - name: untriaged
+    no_milestone: true
+    no_tags: true
+`)
+	filters, err := ParseFilters(raw)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	want := []SavedFilter{{Name: "untriaged", NoTags: true, NoMilestone: true}}
+	if !reflect.DeepEqual(filters, want) {
+		t.Fatalf("got %+v, want %+v", filters, want)
+	}
+}
+
 func TestRenderFiltersRoundTrip(t *testing.T) {
 	filters := []SavedFilter{
 		{Name: "active work", Tags: []string{"feature", "story"}, NotTags: []string{"spike"}, Milestone: "v0.1.x"},
 		{Name: "needs: quoting", Subsystems: []string{"flo"}, NotMilestone: "v0.2.x"},
+		{Name: "untriaged", NoTags: true, NoSubsystems: true, NoMilestone: true},
 	}
 	parsed, err := ParseFilters(RenderFilters(filters))
 	if err != nil {

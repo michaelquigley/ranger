@@ -20,9 +20,11 @@ import {
   filterBoard,
   isApplied,
   isFiltering,
+  recognizeNo,
   toFilters,
   toSaved,
   toggleMilestone,
+  toggleNo,
   toggleSubsystem,
   toggleTag,
   upsert,
@@ -306,6 +308,17 @@ function ProjectBoard({ project }: { project: string }) {
     setFilters((cur) => toggleMilestone(cur, milestone, exclude));
   }, []);
 
+  // the search box is also the keyboard for filters with nothing to
+  // click: a complete `no:` token leaves the input and becomes filter
+  // state, the remaining text stays search.
+  const onSearchInput = useCallback((value: string) => {
+    const { dims, rest } = recognizeNo(value);
+    if (dims.length > 0) {
+      setFilters((cur) => dims.reduce(toggleNo, cur));
+    }
+    setQuery(rest);
+  }, []);
+
   // every saved-filter mutation replaces the set whole under the version
   // guard — the fresh board carries the resulting set back.
   const saveFilterSet = useCallback(
@@ -359,7 +372,7 @@ function ProjectBoard({ project }: { project: string }) {
           className="search-box"
           placeholder="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => onSearchInput(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Escape") setQuery("");
           }}
@@ -411,6 +424,15 @@ function ProjectBoard({ project }: { project: string }) {
                 not {filters.notMilestone} ×
               </span>
             )}
+            {filters.noMilestone && (
+              <span
+                className="no-pill tag-click"
+                title="stop filtering by absent milestone"
+                onClick={() => setFilters((cur) => toggleNo(cur, "milestone"))}
+              >
+                no milestone ×
+              </span>
+            )}
             {filters.subsystems.map((subsystem) => (
               <span
                 key={subsystem}
@@ -433,6 +455,15 @@ function ProjectBoard({ project }: { project: string }) {
                 not {subsystem} ×
               </span>
             ))}
+            {filters.noSubsystems && (
+              <span
+                className="no-pill tag-click"
+                title="stop filtering by absent subsystems"
+                onClick={() => setFilters((cur) => toggleNo(cur, "subsystems"))}
+              >
+                no subsystems ×
+              </span>
+            )}
             {filters.tags.map((tag) => (
               <span
                 key={tag}
@@ -455,6 +486,15 @@ function ProjectBoard({ project }: { project: string }) {
                 not {tag} ×
               </span>
             ))}
+            {filters.noTags && (
+              <span
+                className="no-pill tag-click"
+                title="stop filtering by absent tags"
+                onClick={() => setFilters((cur) => toggleNo(cur, "tags"))}
+              >
+                no tags ×
+              </span>
+            )}
             {board?.filtersVersion !== undefined &&
               (savingName === null ? (
                 <button onClick={() => setSavingName("")}>save</button>

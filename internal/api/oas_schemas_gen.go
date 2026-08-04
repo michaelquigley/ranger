@@ -1086,6 +1086,12 @@ type SavedFilter struct {
 	NotSubsystems []string  `json:"notSubsystems"`
 	Milestone     OptString `json:"milestone"`
 	NotMilestone  OptString `json:"notMilestone"`
+	// Match only cards carrying no tags at all.
+	NoTags OptBool `json:"noTags"`
+	// Match only cards carrying no subsystems at all.
+	NoSubsystems OptBool `json:"noSubsystems"`
+	// Match only cards with no milestone set.
+	NoMilestone OptBool `json:"noMilestone"`
 }
 
 // GetName returns the value of Name.
@@ -1123,6 +1129,21 @@ func (s *SavedFilter) GetNotMilestone() OptString {
 	return s.NotMilestone
 }
 
+// GetNoTags returns the value of NoTags.
+func (s *SavedFilter) GetNoTags() OptBool {
+	return s.NoTags
+}
+
+// GetNoSubsystems returns the value of NoSubsystems.
+func (s *SavedFilter) GetNoSubsystems() OptBool {
+	return s.NoSubsystems
+}
+
+// GetNoMilestone returns the value of NoMilestone.
+func (s *SavedFilter) GetNoMilestone() OptBool {
+	return s.NoMilestone
+}
+
 // SetName sets the value of Name.
 func (s *SavedFilter) SetName(val string) {
 	s.Name = val
@@ -1156,6 +1177,21 @@ func (s *SavedFilter) SetMilestone(val OptString) {
 // SetNotMilestone sets the value of NotMilestone.
 func (s *SavedFilter) SetNotMilestone(val OptString) {
 	s.NotMilestone = val
+}
+
+// SetNoTags sets the value of NoTags.
+func (s *SavedFilter) SetNoTags(val OptBool) {
+	s.NoTags = val
+}
+
+// SetNoSubsystems sets the value of NoSubsystems.
+func (s *SavedFilter) SetNoSubsystems(val OptBool) {
+	s.NoSubsystems = val
+}
+
+// SetNoMilestone sets the value of NoMilestone.
+func (s *SavedFilter) SetNoMilestone(val OptBool) {
+	s.NoMilestone = val
 }
 
 type SearchItemsOK struct {

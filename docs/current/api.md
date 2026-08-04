@@ -19,7 +19,7 @@ The contract is project-scoped: every operation except the index lives under `/p
 - `PUT /projects/{project}/items/{filename}/content` — raw save; a state-changing save runs the ranked-transition cleanup.
 - `POST /projects/{project}/items/{filename}/state` — transition, or transition-and-place with `position`, which indexes the destination lane's ranked list only.
 - `PUT /projects/{project}/order/{lane}` — `filenames` is only the resulting ranked prefix, never the whole displayed lane.
-- `PUT /projects/{project}/filters` — replace the saved-filter set whole under `expectedVersion`; filters.yaml is tool-rendered, so every mutation is the full resulting set. Empty and duplicate filter names are prevalidated to a typed 400.
+- `PUT /projects/{project}/filters` — replace the saved-filter set whole under `expectedVersion`; filters.yaml is tool-rendered, so every mutation is the full resulting set. Empty and duplicate filter names are prevalidated to a typed 400. A filter carries include/exclude values per dimension plus the optional absence flags (`noTags`, `noSubsystems`, `noMilestone` — match only cards where the dimension is unspecified), present on the wire only when true.
 - `POST /projects/{project}/items/{filename}/retitle`, `POST /projects/{project}/items/{filename}/rename-to-slug` — the rename gestures; both return the landing filename.
 - `POST /projects/{project}/items/{filename}/delete` — the operator's curation gesture: removes the file and its order.yaml entries in one hash-guarded gesture.
 

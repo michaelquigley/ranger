@@ -5,9 +5,11 @@ import {
   filterBoard,
   isApplied,
   isFiltering,
+  recognizeNo,
   toFilters,
   toSaved,
   toggleMilestone,
+  toggleNo,
   toggleSubsystem,
   toggleTag,
   upsert,
@@ -98,6 +100,36 @@ describe("isFiltering", () => {
   });
 });
 
+describe("absence filters", () => {
+  it("toggleNo displaces the dimension's values whole", () => {
+    const f = toggleTag(toggleTag(emptyFilters, "feature", false), "spike", true);
+    const no = toggleNo(f, "tags");
+    expect(no).toEqual({ ...emptyFilters, noTags: true });
+    expect(isFiltering(no)).toBe(true);
+  });
+
+  it("a value click displaces absence back", () => {
+    const no = toggleNo(emptyFilters, "milestone");
+    expect(toggleMilestone(no, "v0.1.x", false)).toEqual({ ...emptyFilters, milestone: "v0.1.x" });
+    expect(toggleSubsystem(toggleNo(emptyFilters, "subsystems"), "flo", false)).toEqual({
+      ...emptyFilters,
+      subsystems: ["flo"],
+    });
+  });
+
+  it("recognizeNo plucks complete tokens and keeps the rest as search", () => {
+    expect(recognizeNo("no:milestone")).toEqual({ dims: ["milestone"], rest: "" });
+    expect(recognizeNo("auth no:tags flow")).toEqual({ dims: ["tags"], rest: "auth flow" });
+    expect(recognizeNo("no:tags no:subsystems")).toEqual({ dims: ["tags", "subsystems"], rest: "" });
+  });
+
+  it("recognizeNo leaves non-tokens untouched, spacing included", () => {
+    expect(recognizeNo("no:mile")).toEqual({ dims: [], rest: "no:mile" });
+    expect(recognizeNo("kno:tags")).toEqual({ dims: [], rest: "kno:tags" });
+    expect(recognizeNo("  auth  flow ")).toEqual({ dims: [], rest: "  auth  flow " });
+  });
+});
+
 describe("saved filters", () => {
   it("toSaved omits empty dimensions", () => {
     const f = toggleTag(toggleMilestone(emptyFilters, "v0.1.x", true), "spike", true);
@@ -141,6 +173,13 @@ describe("saved filters", () => {
     expect(isApplied(toggleTag(applied, "a", false), s)).toBe(false);
     expect(isApplied(toggleTag(applied, "a", true), s)).toBe(false);
   });
+
+  it("absence flags round trip through toSaved and toFilters", () => {
+    const f = toggleNo(toggleNo(emptyFilters, "tags"), "milestone");
+    expect(toSaved("untriaged", f)).toEqual({ name: "untriaged", noTags: true, noMilestone: true });
+    expect(toFilters(toSaved("untriaged", f))).toEqual(f);
+    expect(isApplied(f, toSaved("untriaged", f))).toBe(true);
+  });
 });
 
 describe("filterBoard", () => {
@@ -180,5 +219,17 @@ describe("filterBoard", () => {
     const filtered = filterBoard(b, f, null);
     expect(shown(filtered)).toEqual(["b", "c"]);
     expect(filtered.lanes[0].rankedCount).toBe(1);
+  });
+
+  it("absence keeps only cards where the dimension is unspecified", () => {
+    const b = board(
+      0,
+      card("a", { tags: ["feature"], subsystems: ["flo"] }),
+      card("b", { milestone: "v0.1.x" }),
+      card("c"),
+    );
+    expect(shown(filterBoard(b, { ...emptyFilters, noTags: true }, null))).toEqual(["b", "c"]);
+    expect(shown(filterBoard(b, { ...emptyFilters, noSubsystems: true }, null))).toEqual(["b", "c"]);
+    expect(shown(filterBoard(b, { ...emptyFilters, noMilestone: true }, null))).toEqual(["a", "c"]);
   });
 });
