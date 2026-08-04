@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	rn17AllowedHeaders = map[string]string{
+		"PUT": "Content-Type",
+	}
 	rn3AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
@@ -26,7 +29,7 @@ var (
 	rn15AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
-	rn18AllowedHeaders = map[string]string{
+	rn19AllowedHeaders = map[string]string{
 		"POST": "Content-Type",
 	}
 	rn13AllowedHeaders = map[string]string{
@@ -149,6 +152,33 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								s.notAllowed(w, r, notAllowedParams{
 									allowedMethods: "GET",
 									allowedHeaders: nil,
+									acceptPost:     "",
+									acceptPatch:    "",
+								})
+							}
+
+							return
+						}
+
+					case 'f': // Prefix: "filters"
+
+						if l := len("filters"); len(elem) >= l && elem[0:l] == "filters" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "PUT":
+								s.handleSaveFiltersRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, notAllowedParams{
+									allowedMethods: "PUT",
+									allowedHeaders: rn17AllowedHeaders,
 									acceptPost:     "",
 									acceptPatch:    "",
 								})
@@ -376,7 +406,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										default:
 											s.notAllowed(w, r, notAllowedParams{
 												allowedMethods: "POST",
-												allowedHeaders: rn18AllowedHeaders,
+												allowedHeaders: rn19AllowedHeaders,
 												acceptPost:     "application/json",
 												acceptPatch:    "",
 											})
@@ -621,6 +651,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 								r.operationID = "getBoard"
 								r.operationGroup = ""
 								r.pathPattern = "/projects/{project}/board"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'f': // Prefix: "filters"
+
+						if l := len("filters"); len(elem) >= l && elem[0:l] == "filters" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "PUT":
+								r.name = SaveFiltersOperation
+								r.summary = "replace the saved-filter set whole — .ranger/filters.yaml is tool-rendered, so every mutation is the full resulting set.\n"
+								r.operationID = "saveFilters"
+								r.operationGroup = ""
+								r.pathPattern = "/projects/{project}/filters"
 								r.args = args
 								r.count = 1
 								return r, true

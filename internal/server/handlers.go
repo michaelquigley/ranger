@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/michaelquigley/ranger/internal/api"
+	"github.com/michaelquigley/ranger/internal/document"
 	"github.com/michaelquigley/ranger/internal/model"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
@@ -205,6 +206,41 @@ func (s *Server) ReorderLane(_ context.Context, req *api.ReorderLaneReq, params 
 		return notFound, nil
 	}
 	if err := w.Reorder(model.State(params.Lane), req.Filenames, req.ExpectedVersion); err != nil {
+		if conflict, ok := asConflict(err); ok {
+			return conflict, nil
+		}
+		return nil, err
+	}
+	board, err := freshBoard(w, params.Project)
+	if err != nil {
+		return nil, err
+	}
+	return board, nil
+}
+
+func (s *Server) SaveFilters(_ context.Context, req *api.SaveFiltersReq, params api.SaveFiltersParams) (api.SaveFiltersRes, error) {
+	w, notFound, err := s.resolve(params.Project)
+	if err != nil {
+		return nil, err
+	}
+	if notFound != nil {
+		return (*api.SaveFiltersNotFound)(notFound), nil
+	}
+	// prevalidated: a filter without a name has no identity to apply or
+	// delete by, and duplicate names would make both ambiguous.
+	seen := map[string]bool{}
+	filters := make([]document.SavedFilter, 0, len(req.Filters))
+	for _, f := range req.Filters {
+		if f.Name == "" {
+			return &api.SaveFiltersBadRequest{Message: "filter name must not be empty"}, nil
+		}
+		if seen[f.Name] {
+			return &api.SaveFiltersBadRequest{Message: fmt.Sprintf("duplicate filter name: %s", f.Name)}, nil
+		}
+		seen[f.Name] = true
+		filters = append(filters, docFilter(f))
+	}
+	if err := w.SaveFilters(filters, req.ExpectedVersion); err != nil {
 		if conflict, ok := asConflict(err); ok {
 			return conflict, nil
 		}

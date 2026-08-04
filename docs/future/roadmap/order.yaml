@@ -3,9 +3,8 @@ horizon:
   - richer-log.md
   - drop-the-js-yaml-override.md
 researching:
-  - not-filters.md
-  - saved-filters.md
   - specwork-order-management.md
 inbox:
 building:
+  - saved-filters.md
 evaluating:

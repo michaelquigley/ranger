@@ -96,6 +96,16 @@ func (UnimplementedHandler) SaveContent(ctx context.Context, req *SaveContentReq
 	return r, ht.ErrNotImplemented
 }
 
+// SaveFilters implements saveFilters operation.
+//
+// Replace the saved-filter set whole — .ranger/filters.yaml is tool-rendered, so every mutation is
+// the full resulting set.
+//
+// PUT /projects/{project}/filters
+func (UnimplementedHandler) SaveFilters(ctx context.Context, req *SaveFiltersReq, params SaveFiltersParams) (r SaveFiltersRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // SearchItems implements searchItems operation.
 //
 // Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.

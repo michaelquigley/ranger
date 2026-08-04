@@ -6,6 +6,7 @@ export type Lane = components["schemas"]["lane"];
 export type Card = components["schemas"]["card"];
 export type State = components["schemas"]["state"];
 export type Conflict = components["schemas"]["conflict"];
+export type SavedFilter = components["schemas"]["savedFilter"];
 export type ProjectIndex = components["schemas"]["projectIndex"];
 export type ProjectStatus = components["schemas"]["projectStatus"];
 
@@ -109,6 +110,15 @@ export function makeApi(project: string) {
       const { data, error, response } = await client.PUT("/projects/{project}/order/{lane}", {
         params: { path: { project, lane } },
         body: { filenames, expectedVersion },
+      });
+      if (data) return { kind: "ok", board: data };
+      return failure(response.status, error);
+    },
+
+    async saveFilters(filters: SavedFilter[], expectedVersion: string): Promise<Outcome> {
+      const { data, error, response } = await client.PUT("/projects/{project}/filters", {
+        params: { path: { project } },
+        body: { filters, expectedVersion },
       });
       if (data) return { kind: "ok", board: data };
       return failure(response.status, error);

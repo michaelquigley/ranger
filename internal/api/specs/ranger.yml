@@ -252,6 +252,40 @@ paths:
         default:
           $ref: "#/components/responses/serverError"
 
+  /projects/{project}/filters:
+    parameters:
+      - $ref: "#/components/parameters/project"
+    put:
+      operationId: saveFilters
+      summary: >
+        replace the saved-filter set whole — .ranger/filters.yaml is
+        tool-rendered, so every mutation is the full resulting set.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filters, expectedVersion]
+              properties:
+                filters:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/savedFilter"
+                expectedVersion:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/freshBoard"
+        "400":
+          $ref: "#/components/responses/validationError"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "409":
+          $ref: "#/components/responses/conflict"
+        default:
+          $ref: "#/components/responses/serverError"
+
   /projects/{project}/items/{filename}/delete:
     parameters:
       - $ref: "#/components/parameters/project"
@@ -475,6 +509,33 @@ components:
             staged, or untracked alike; absent when git can't answer (no
             git binary, no repository).
 
+    savedFilter:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        notTags:
+          type: array
+          items:
+            type: string
+        subsystems:
+          type: array
+          items:
+            type: string
+        notSubsystems:
+          type: array
+          items:
+            type: string
+        milestone:
+          type: string
+        notMilestone:
+          type: string
+
     lane:
       type: object
       required: [state, cards, rankedCount]
@@ -511,6 +572,20 @@ components:
             true when anything under the roadmap directory is uncommitted
             in git — items, order.yaml, and assets alike; absent when git
             can't answer.
+        savedFilters:
+          type: array
+          items:
+            $ref: "#/components/schemas/savedFilter"
+          description: >
+            the saved-filter set from .ranger/filters.yaml, empty
+            included; absent (with filtersVersion) when the file exists
+            but can't be read.
+        filtersVersion:
+          type: string
+          description: >
+            filters.yaml's hash, or the sentinel "absent". absent as a
+            field when the file exists but can't be read — degraded,
+            never a board failure.
 
     projectStatus:
       type: object
@@ -555,7 +630,7 @@ components:
       properties:
         reason:
           type: string
-          enum: [item_conflict, order_conflict, slug_collision]
+          enum: [item_conflict, order_conflict, filters_conflict, slug_collision]
         message:
           type: string
         tempPath:

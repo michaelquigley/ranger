@@ -519,6 +519,38 @@ textarea {
   font-size: 0.8rem;
 }
 
+.saved-filters {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.saved-pill {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  color: var(--text);
+}
+
+.saved-delete {
+  margin-left: 0.35rem;
+  color: var(--dim);
+}
+
+.saved-delete:hover {
+  color: var(--text);
+}
+
+.save-name {
+  width: 8rem;
+  font-size: 0.8rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+}
+
 .tag-click {
   cursor: pointer;
 }

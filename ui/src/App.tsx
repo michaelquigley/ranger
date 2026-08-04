@@ -19,11 +19,16 @@ import {
   emptyFilters,
   filterBoard,
   isFiltering,
+  toFilters,
+  toSaved,
   toggleMilestone,
   toggleSubsystem,
   toggleTag,
+  upsert,
+  withoutName,
   type BoardFilters,
 } from "./filter";
+import type { SavedFilter } from "./api";
 import { CardBody, LaneColumn } from "./LaneColumn";
 import { ItemModal } from "./ItemModal";
 import { CaptureModal } from "./CaptureModal";
@@ -72,6 +77,8 @@ function ProjectBoard({ project }: { project: string }) {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [dragging, setDragging] = useState<Card | null>(null);
   const [filters, setFilters] = useState<BoardFilters>(emptyFilters);
+  // null: no save in flight; a string: the inline name input's content.
+  const [savingName, setSavingName] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [searchMatches, setSearchMatches] = useState<Set<string> | null>(null);
   // server truth as of drag start: the optimistic board mutates freely
@@ -298,6 +305,17 @@ function ProjectBoard({ project }: { project: string }) {
     setFilters((cur) => toggleMilestone(cur, milestone, exclude));
   }, []);
 
+  // every saved-filter mutation replaces the set whole under the version
+  // guard — the fresh board carries the resulting set back.
+  const saveFilterSet = useCallback(
+    async (next: SavedFilter[]) => {
+      const version = board?.filtersVersion;
+      if (version === undefined) return;
+      applyOutcome(await api.saveFilters(next, version));
+    },
+    [api, board, applyOutcome],
+  );
+
   const handleDragCancel = useCallback(() => {
     dragActive.current = false;
     setDragging(null);
@@ -346,6 +364,31 @@ function ProjectBoard({ project }: { project: string }) {
           }}
         />
         <CaptureIcon onClick={() => setCaptureOpen(true)} />
+        {board && (board.savedFilters ?? []).length > 0 && (
+          <div className="saved-filters">
+            <span className="dim">saved:</span>
+            {(board.savedFilters ?? []).map((s) => (
+              <span
+                key={s.name}
+                className="saved-pill tag-click"
+                title={`apply ${s.name}`}
+                onClick={() => setFilters(toFilters(s))}
+              >
+                {s.name}
+                <span
+                  className="saved-delete"
+                  title={`delete ${s.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void saveFilterSet(withoutName(board.savedFilters ?? [], s.name));
+                  }}
+                >
+                  ×
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
         {filtering && (
           <div className="filter-bar">
             <span className="dim">filtering:</span>
@@ -411,7 +454,34 @@ function ProjectBoard({ project }: { project: string }) {
                 not {tag} ×
               </span>
             ))}
-            <button onClick={() => setFilters(emptyFilters)}>clear</button>
+            {board?.filtersVersion !== undefined &&
+              (savingName === null ? (
+                <button onClick={() => setSavingName("")}>save</button>
+              ) : (
+                <input
+                  className="save-name"
+                  placeholder="name"
+                  autoFocus
+                  value={savingName}
+                  onChange={(e) => setSavingName(e.target.value)}
+                  onBlur={() => setSavingName(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSavingName(null);
+                    if (e.key === "Enter" && savingName.trim()) {
+                      void saveFilterSet(upsert(board.savedFilters ?? [], toSaved(savingName.trim(), filters)));
+                      setSavingName(null);
+                    }
+                  }}
+                />
+              ))}
+            <button
+              onClick={() => {
+                setFilters(emptyFilters);
+                setSavingName(null);
+              }}
+            >
+              clear
+            </button>
           </div>
         )}
       </header>
@@ -493,7 +563,7 @@ function ProjectSelector({ index, current }: { index: ProjectIndex; current: str
 }
 
 function conflictNotice(conflict: Conflict): string {
-  if (conflict.reason === "item_conflict" || conflict.reason === "order_conflict") {
+  if (conflict.reason === "item_conflict" || conflict.reason === "order_conflict" || conflict.reason === "filters_conflict") {
     return `changed on disk — reloaded (${conflict.message})`;
   }
   return conflict.message;

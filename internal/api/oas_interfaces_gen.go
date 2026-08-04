@@ -33,6 +33,10 @@ type SaveContentRes interface {
 	saveContentRes()
 }
 
+type SaveFiltersRes interface {
+	saveFiltersRes()
+}
+
 type SearchItemsRes interface {
 	searchItemsRes()
 }

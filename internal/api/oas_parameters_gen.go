@@ -860,6 +860,71 @@ func decodeSaveContentParams(args [2]string, argsEscaped bool, r *http.Request) 
 	return params, nil
 }
 
+// SaveFiltersParams is parameters of saveFilters operation.
+type SaveFiltersParams struct {
+	Project string
+}
+
+func unpackSaveFiltersParams(packed middleware.Parameters) (params SaveFiltersParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
+	return params
+}
+
+func decodeSaveFiltersParams(args [1]string, argsEscaped bool, r *http.Request) (params SaveFiltersParams, _ error) {
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // SearchItemsParams is parameters of searchItems operation.
 type SearchItemsParams struct {
 	Q       string

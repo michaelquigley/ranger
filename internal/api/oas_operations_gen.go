@@ -15,6 +15,7 @@ const (
 	ReorderLaneOperation    OperationName = "ReorderLane"
 	RetitleItemOperation    OperationName = "RetitleItem"
 	SaveContentOperation    OperationName = "SaveContent"
+	SaveFiltersOperation    OperationName = "SaveFilters"
 	SearchItemsOperation    OperationName = "SearchItems"
 	TransitionItemOperation OperationName = "TransitionItem"
 )

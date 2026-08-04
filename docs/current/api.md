@@ -12,13 +12,14 @@ The contract is project-scoped: every operation except the index lives under `/p
 ## the surface
 
 - `GET /projects` — the project index: each configured project's name and availability (`available` plus an `error` diagnostic for a root that failed its load, judged by a fresh load at request time), its `dirty` verdict where git can answer, and which project is the default. This is what the selector renders, and what the bare `/` consults to redirect.
-- `GET /projects/{project}/board` — lanes in lifecycle order; each card carries filename, title (empty when unreadable — show the filename), its readable state and created date when they exist, tags/subsystems/milestone/source/log, flags, and its content `hash`; each lane carries `rankedCount`, the boundary between the ranked prefix and the computed unranked tail. The board carries `orderVersion` — order.yaml's hash or the `"absent"` sentinel, because absence is a version — and `project`, the configured name (slug-shaped everywhere, serve's synthesized entry included).
+- `GET /projects/{project}/board` — lanes in lifecycle order; each card carries filename, title (empty when unreadable — show the filename), its readable state and created date when they exist, tags/subsystems/milestone/source/log, flags, and its content `hash`; each lane carries `rankedCount`, the boundary between the ranked prefix and the computed unranked tail. The board carries `orderVersion` — order.yaml's hash or the `"absent"` sentinel, because absence is a version — and `project`, the configured name (slug-shaped everywhere, serve's synthesized entry included). It also carries the saved-filter set: `savedFilters` (from `.ranger/filters.yaml`, empty included) and `filtersVersion` (its hash or the `"absent"` sentinel); when the file exists but can't be read, both fields are absent — degraded, never a board failure.
 - `GET /projects/{project}/search?q=` — case-insensitive substring search over titles and bodies, computed against a fresh disk read per query; returns matching filenames.
 - `GET /projects/{project}/items/{filename}` — raw `content` + parsed card + `hash`; 404 for a name that doesn't exist.
 - `POST /projects/{project}/items` — capture into inbox. Empty and empty-slug titles are prevalidated to a typed 400 with no draft file written. A fresh-load preflight runs between project resolution and the draft write, so a degraded project refuses capture with its repository error, bytes untouched. A slug collision is a 409 carrying the preserved `.capture-` temp path.
 - `PUT /projects/{project}/items/{filename}/content` — raw save; a state-changing save runs the ranked-transition cleanup.
 - `POST /projects/{project}/items/{filename}/state` — transition, or transition-and-place with `position`, which indexes the destination lane's ranked list only.
 - `PUT /projects/{project}/order/{lane}` — `filenames` is only the resulting ranked prefix, never the whole displayed lane.
+- `PUT /projects/{project}/filters` — replace the saved-filter set whole under `expectedVersion`; filters.yaml is tool-rendered, so every mutation is the full resulting set. Empty and duplicate filter names are prevalidated to a typed 400.
 - `POST /projects/{project}/items/{filename}/retitle`, `POST /projects/{project}/items/{filename}/rename-to-slug` — the rename gestures; both return the landing filename.
 - `POST /projects/{project}/items/{filename}/delete` — the operator's curation gesture: removes the file and its order.yaml entries in one hash-guarded gesture.
 
@@ -32,7 +33,7 @@ Three surfaces carry an optional `dirty` boolean: each card (this item's file is
 
 The typed conflict (409) carries a machine-readable `reason`:
 
-- `item_conflict` / `order_conflict` — a guard refusal: the view went stale; the client reloads. Split by which file's guard tripped.
+- `item_conflict` / `order_conflict` / `filters_conflict` — a guard refusal: the view went stale; the client reloads. Split by which file's guard tripped.
 - `slug_collision` — a no-clobber refusal, carrying structured recovery paths: `tempPath` (capture: the preserved draft), `sourcePath`/`destPath` (retitle, rename-to-slug) — so the collision affordance the workspace guarantees survives to the browser surface.
 
 An unknown `{project}` is a 404 `errorResponse` on every scoped operation. Refusals that are neither conflicts nor server faults — rename-to-slug against an unreadable or empty-slug title — are typed 400s. Everything else, including partial two-file failure and repository-level errors on a degraded project, lands in the default error response with the server's message verbatim.

@@ -5,7 +5,7 @@ created: 2026-07-14
 
 # the document layer
 
-`internal/document` owns everything byte-shaped. One discipline governs it: dd/yaml.v3 read, hand-patched writes — no ranger write ever passes through a YAML encoder, because a decode-and-encode cycle is exactly the reformat the surgical-edit commitment forbids. `gopkg.in/yaml.v3` is imported here and nowhere else, for the read-side node pass.
+`internal/document` owns everything byte-shaped. One discipline governs it: dd/yaml.v3 read, hand-built writes — no ranger write ever passes through a YAML encoder, because a decode-and-encode cycle is exactly the reformat the surgical-edit commitment forbids. Operator-authored files (items, order.yaml) are patched surgically, line by line; the tool-rendered filters file is re-emitted whole, still by hand-built strings. `gopkg.in/yaml.v3` is imported here and nowhere else, for the read-side node pass.
 
 ## the two-pass parse
 
@@ -26,6 +26,10 @@ Patches: `SetState` and `SetTitle` replace the field's complete mapped line rang
 `ParseOrder` returns an error for the repository-level tier: YAML syntax failure, a duplicate recognized lane key, a lane that isn't a list of filename strings (shape-validated through dd, like every claimed read), or a lane entry spanning multiple lines — the convention's entries are single lines, and an entry that spans more would strand bytes under every line-targeted op, so it fails loud at parse instead of corrupting on a later write. Duplicate or singular *unknown* keys are ignored per the claimed/unknown split. Unknown-lane blocks are classified prunable — removed on the next opportunistic prune so a misspelled lane heals — with one guard: when any surviving recognized node aliases an anchor in unknown territory, *every* unknown block is kept that write. The guard is deliberately coarse because unknown blocks may alias each other: either all of them go (their cross-references die together) or none do, so a prune can never orphan an alias and render our own write unreadable.
 
 Surgical ops, each returning new bytes: `Prune` (prunable entries and unknown blocks; the one sanctioned multi-line side effect, applied only when the file is already being written), `RewriteLane` (one lane's active entries; inert lines stay in place), `RemoveEntry`, `InsertEntry` (position indexes the ranked list only, skipping inert lines), `ReplaceFilename` (every retained occurrence across all lanes, active and inert alike, positions and inline comments preserved), `NewOrder` (the first-ever ranking). A flow-style lane (`building: [a.md, b.md]`) materializes as block form when an op targets it; everything else survives byte-for-byte.
+
+## filters documents
+
+`.ranger/filters.yaml` is the third document kind and the first that is *tool-rendered*: items and order.yaml are operator-authored bytes the tool patches surgically, but a filters file is born from a board gesture, so `RenderFilters` re-emits the whole document — deterministically, by hand-built strings, never an encoder — on every save. A hand edit is honored on read; the next save re-renders the file in canonical form (flow-style lists, snake_case keys, empty dimensions omitted). `ParseFilters` reads whole or not at all — a filter without a name has no identity to degrade to, and empty or duplicate names refuse for the same reason duplicate lane keys do in order.yaml. Unlike order.yaml, an unreadable filters file is never repository-level: the workspace degrades it to an unknown version and the board sails on.
 
 ## guarded writes
 

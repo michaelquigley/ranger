@@ -22,6 +22,12 @@ type Board struct {
 	// True when anything under the roadmap directory is uncommitted in git — items, order.yaml, and
 	// assets alike; absent when git can't answer.
 	Dirty OptBool `json:"dirty"`
+	// The saved-filter set from .ranger/filters.yaml, empty included; absent (with filtersVersion) when
+	// the file exists but can't be read.
+	SavedFilters []SavedFilter `json:"savedFilters"`
+	// Filters.yaml's hash, or the sentinel "absent". absent as a field when the file exists but can't be
+	// read — degraded, never a board failure.
+	FiltersVersion OptString `json:"filtersVersion"`
 }
 
 // GetProject returns the value of Project.
@@ -44,6 +50,16 @@ func (s *Board) GetDirty() OptBool {
 	return s.Dirty
 }
 
+// GetSavedFilters returns the value of SavedFilters.
+func (s *Board) GetSavedFilters() []SavedFilter {
+	return s.SavedFilters
+}
+
+// GetFiltersVersion returns the value of FiltersVersion.
+func (s *Board) GetFiltersVersion() OptString {
+	return s.FiltersVersion
+}
+
 // SetProject sets the value of Project.
 func (s *Board) SetProject(val string) {
 	s.Project = val
@@ -64,10 +80,21 @@ func (s *Board) SetDirty(val OptBool) {
 	s.Dirty = val
 }
 
+// SetSavedFilters sets the value of SavedFilters.
+func (s *Board) SetSavedFilters(val []SavedFilter) {
+	s.SavedFilters = val
+}
+
+// SetFiltersVersion sets the value of FiltersVersion.
+func (s *Board) SetFiltersVersion(val OptString) {
+	s.FiltersVersion = val
+}
+
 func (*Board) deleteItemRes()     {}
 func (*Board) getBoardRes()       {}
 func (*Board) reorderLaneRes()    {}
 func (*Board) saveContentRes()    {}
+func (*Board) saveFiltersRes()    {}
 func (*Board) transitionItemRes() {}
 
 // Ref: #/components/schemas/card
@@ -279,14 +306,16 @@ func (*Conflict) renameToSlugRes()   {}
 func (*Conflict) reorderLaneRes()    {}
 func (*Conflict) retitleItemRes()    {}
 func (*Conflict) saveContentRes()    {}
+func (*Conflict) saveFiltersRes()    {}
 func (*Conflict) transitionItemRes() {}
 
 type ConflictReason string
 
 const (
-	ConflictReasonItemConflict  ConflictReason = "item_conflict"
-	ConflictReasonOrderConflict ConflictReason = "order_conflict"
-	ConflictReasonSlugCollision ConflictReason = "slug_collision"
+	ConflictReasonItemConflict    ConflictReason = "item_conflict"
+	ConflictReasonOrderConflict   ConflictReason = "order_conflict"
+	ConflictReasonFiltersConflict ConflictReason = "filters_conflict"
+	ConflictReasonSlugCollision   ConflictReason = "slug_collision"
 )
 
 // AllValues returns all ConflictReason values.
@@ -294,6 +323,7 @@ func (ConflictReason) AllValues() []ConflictReason {
 	return []ConflictReason{
 		ConflictReasonItemConflict,
 		ConflictReasonOrderConflict,
+		ConflictReasonFiltersConflict,
 		ConflictReasonSlugCollision,
 	}
 }
@@ -304,6 +334,8 @@ func (s ConflictReason) MarshalText() ([]byte, error) {
 	case ConflictReasonItemConflict:
 		return []byte(s), nil
 	case ConflictReasonOrderConflict:
+		return []byte(s), nil
+	case ConflictReasonFiltersConflict:
 		return []byte(s), nil
 	case ConflictReasonSlugCollision:
 		return []byte(s), nil
@@ -320,6 +352,9 @@ func (s *ConflictReason) UnmarshalText(data []byte) error {
 		return nil
 	case ConflictReasonOrderConflict:
 		*s = ConflictReasonOrderConflict
+		return nil
+	case ConflictReasonFiltersConflict:
+		*s = ConflictReasonFiltersConflict
 		return nil
 	case ConflictReasonSlugCollision:
 		*s = ConflictReasonSlugCollision
@@ -1007,6 +1042,120 @@ func (s *SaveContentReq) SetExpectedHash(val string) {
 // SetExpectedOrderVersion sets the value of ExpectedOrderVersion.
 func (s *SaveContentReq) SetExpectedOrderVersion(val string) {
 	s.ExpectedOrderVersion = val
+}
+
+type SaveFiltersBadRequest ErrorResponse
+
+func (*SaveFiltersBadRequest) saveFiltersRes() {}
+
+type SaveFiltersNotFound ErrorResponse
+
+func (*SaveFiltersNotFound) saveFiltersRes() {}
+
+type SaveFiltersReq struct {
+	Filters         []SavedFilter `json:"filters"`
+	ExpectedVersion string        `json:"expectedVersion"`
+}
+
+// GetFilters returns the value of Filters.
+func (s *SaveFiltersReq) GetFilters() []SavedFilter {
+	return s.Filters
+}
+
+// GetExpectedVersion returns the value of ExpectedVersion.
+func (s *SaveFiltersReq) GetExpectedVersion() string {
+	return s.ExpectedVersion
+}
+
+// SetFilters sets the value of Filters.
+func (s *SaveFiltersReq) SetFilters(val []SavedFilter) {
+	s.Filters = val
+}
+
+// SetExpectedVersion sets the value of ExpectedVersion.
+func (s *SaveFiltersReq) SetExpectedVersion(val string) {
+	s.ExpectedVersion = val
+}
+
+// Ref: #/components/schemas/savedFilter
+type SavedFilter struct {
+	Name          string    `json:"name"`
+	Tags          []string  `json:"tags"`
+	NotTags       []string  `json:"notTags"`
+	Subsystems    []string  `json:"subsystems"`
+	NotSubsystems []string  `json:"notSubsystems"`
+	Milestone     OptString `json:"milestone"`
+	NotMilestone  OptString `json:"notMilestone"`
+}
+
+// GetName returns the value of Name.
+func (s *SavedFilter) GetName() string {
+	return s.Name
+}
+
+// GetTags returns the value of Tags.
+func (s *SavedFilter) GetTags() []string {
+	return s.Tags
+}
+
+// GetNotTags returns the value of NotTags.
+func (s *SavedFilter) GetNotTags() []string {
+	return s.NotTags
+}
+
+// GetSubsystems returns the value of Subsystems.
+func (s *SavedFilter) GetSubsystems() []string {
+	return s.Subsystems
+}
+
+// GetNotSubsystems returns the value of NotSubsystems.
+func (s *SavedFilter) GetNotSubsystems() []string {
+	return s.NotSubsystems
+}
+
+// GetMilestone returns the value of Milestone.
+func (s *SavedFilter) GetMilestone() OptString {
+	return s.Milestone
+}
+
+// GetNotMilestone returns the value of NotMilestone.
+func (s *SavedFilter) GetNotMilestone() OptString {
+	return s.NotMilestone
+}
+
+// SetName sets the value of Name.
+func (s *SavedFilter) SetName(val string) {
+	s.Name = val
+}
+
+// SetTags sets the value of Tags.
+func (s *SavedFilter) SetTags(val []string) {
+	s.Tags = val
+}
+
+// SetNotTags sets the value of NotTags.
+func (s *SavedFilter) SetNotTags(val []string) {
+	s.NotTags = val
+}
+
+// SetSubsystems sets the value of Subsystems.
+func (s *SavedFilter) SetSubsystems(val []string) {
+	s.Subsystems = val
+}
+
+// SetNotSubsystems sets the value of NotSubsystems.
+func (s *SavedFilter) SetNotSubsystems(val []string) {
+	s.NotSubsystems = val
+}
+
+// SetMilestone sets the value of Milestone.
+func (s *SavedFilter) SetMilestone(val OptString) {
+	s.Milestone = val
+}
+
+// SetNotMilestone sets the value of NotMilestone.
+func (s *SavedFilter) SetNotMilestone(val OptString) {
+	s.NotMilestone = val
 }
 
 type SearchItemsOK struct {

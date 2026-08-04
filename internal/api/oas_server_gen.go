@@ -64,6 +64,13 @@ type Handler interface {
 	//
 	// PUT /projects/{project}/items/{filename}/content
 	SaveContent(ctx context.Context, req *SaveContentReq, params SaveContentParams) (SaveContentRes, error)
+	// SaveFilters implements saveFilters operation.
+	//
+	// Replace the saved-filter set whole — .ranger/filters.yaml is tool-rendered, so every mutation is
+	// the full resulting set.
+	//
+	// PUT /projects/{project}/filters
+	SaveFilters(ctx context.Context, req *SaveFiltersReq, params SaveFiltersParams) (SaveFiltersRes, error)
 	// SearchItems implements searchItems operation.
 	//
 	// Case-insensitive substring search over item titles and bodies, against a fresh read of the disk.

@@ -136,6 +136,8 @@ func (s ConflictReason) Validate() error {
 		return nil
 	case "order_conflict":
 		return nil
+	case "filters_conflict":
+		return nil
 	case "slug_collision":
 		return nil
 	default:
@@ -311,6 +313,29 @@ func (s *ReorderLaneReq) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "filenames",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *SaveFiltersReq) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Filters == nil {
+			return errors.New("nil is invalid value")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "filters",
 			Error: err,
 		})
 	}

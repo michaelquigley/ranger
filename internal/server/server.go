@@ -60,8 +60,11 @@ func asConflict(err error) (*api.Conflict, bool) {
 	var conflict *document.ConflictError
 	if errors.As(err, &conflict) {
 		reason := api.ConflictReasonItemConflict
-		if filepath.Base(conflict.Path) == "order.yaml" {
+		switch filepath.Base(conflict.Path) {
+		case "order.yaml":
 			reason = api.ConflictReasonOrderConflict
+		case "filters.yaml":
+			reason = api.ConflictReasonFiltersConflict
 		}
 		return &api.Conflict{Reason: reason, Message: err.Error()}, true
 	}
@@ -119,6 +122,15 @@ func wireBoard(snap *workspace.Snapshot, git workspace.GitStatus, project string
 	if git.Known {
 		out.Dirty = api.NewOptBool(git.Dirty)
 	}
+	// an unreadable filters.yaml leaves both fields absent: the saved
+	// lenses vanish from the header rather than failing the board.
+	if snap.FiltersVersion != "" {
+		out.FiltersVersion = api.NewOptString(snap.FiltersVersion)
+		out.SavedFilters = make([]api.SavedFilter, 0, len(snap.Filters))
+		for _, f := range snap.Filters {
+			out.SavedFilters = append(out.SavedFilters, wireFilter(f))
+		}
+	}
 	for _, lane := range board.Lanes {
 		wl := api.Lane{
 			State:       api.State(lane.State),
@@ -131,6 +143,35 @@ func wireBoard(snap *workspace.Snapshot, git workspace.GitStatus, project string
 		out.Lanes = append(out.Lanes, wl)
 	}
 	return out
+}
+
+func wireFilter(f document.SavedFilter) api.SavedFilter {
+	out := api.SavedFilter{
+		Name:          f.Name,
+		Tags:          f.Tags,
+		NotTags:       f.NotTags,
+		Subsystems:    f.Subsystems,
+		NotSubsystems: f.NotSubsystems,
+	}
+	if f.Milestone != "" {
+		out.Milestone = api.NewOptString(f.Milestone)
+	}
+	if f.NotMilestone != "" {
+		out.NotMilestone = api.NewOptString(f.NotMilestone)
+	}
+	return out
+}
+
+func docFilter(f api.SavedFilter) document.SavedFilter {
+	return document.SavedFilter{
+		Name:          f.Name,
+		Tags:          f.Tags,
+		NotTags:       f.NotTags,
+		Subsystems:    f.Subsystems,
+		NotSubsystems: f.NotSubsystems,
+		Milestone:     f.Milestone.Or(""),
+		NotMilestone:  f.NotMilestone.Or(""),
+	}
 }
 
 // freshBoard reloads from disk after a mutation so the client repaints from

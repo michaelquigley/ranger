@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { Board, Card } from "./api";
-import { emptyFilters, filterBoard, isFiltering, toggleMilestone, toggleSubsystem, toggleTag } from "./filter";
+import {
+  emptyFilters,
+  filterBoard,
+  isFiltering,
+  toFilters,
+  toSaved,
+  toggleMilestone,
+  toggleSubsystem,
+  toggleTag,
+  upsert,
+  withoutName,
+} from "./filter";
 
 function card(filename: string, extra: Partial<Card> = {}): Card {
   return { filename, title: filename, flags: [], hash: "x", ...extra };
@@ -83,6 +94,37 @@ describe("isFiltering", () => {
     expect(isFiltering(toggleTag(emptyFilters, "feature", true))).toBe(true);
     expect(isFiltering(toggleSubsystem(emptyFilters, "flo", true))).toBe(true);
     expect(isFiltering(toggleMilestone(emptyFilters, "v0.1.x", true))).toBe(true);
+  });
+});
+
+describe("saved filters", () => {
+  it("toSaved omits empty dimensions", () => {
+    const f = toggleTag(toggleMilestone(emptyFilters, "v0.1.x", true), "spike", true);
+    expect(toSaved("quiet", f)).toEqual({ name: "quiet", notTags: ["spike"], notMilestone: "v0.1.x" });
+  });
+
+  it("toSaved and toFilters round trip", () => {
+    const f = toggleSubsystem(toggleTag(emptyFilters, "feature", false), "flo", true);
+    expect(toFilters(toSaved("x", f))).toEqual(f);
+  });
+
+  it("an all-empty saved filter applies as no filter", () => {
+    expect(toFilters({ name: "empty" })).toEqual(emptyFilters);
+    expect(isFiltering(toFilters({ name: "empty" }))).toBe(false);
+  });
+
+  it("upsert replaces a same-named filter in place", () => {
+    const list = [{ name: "a", tags: ["feature"] }, { name: "b" }];
+    const next = upsert(list, { name: "a", tags: ["defect"] });
+    expect(next).toEqual([{ name: "a", tags: ["defect"] }, { name: "b" }]);
+  });
+
+  it("upsert appends a new name at the end", () => {
+    expect(upsert([{ name: "a" }], { name: "b" })).toEqual([{ name: "a" }, { name: "b" }]);
+  });
+
+  it("withoutName removes only the named filter", () => {
+    expect(withoutName([{ name: "a" }, { name: "b" }], "a")).toEqual([{ name: "b" }]);
   });
 });
 

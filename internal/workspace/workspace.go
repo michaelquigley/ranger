@@ -45,6 +45,13 @@ func (w *Workspace) orderPath() string {
 	return filepath.Join(w.roadmapDir(), "order.yaml")
 }
 
+// filtersPath is the saved-filters sidecar, inside the roadmap's .ranger/
+// tool-state directory — published with the roadmap so the operator's
+// saved lenses travel with the cards.
+func (w *Workspace) filtersPath() string {
+	return filepath.Join(w.roadmapDir(), ".ranger", "filters.yaml")
+}
+
 // DiscoverRoot finds the repository root by a single upward walk from
 // startDir: at each ancestor, a docs/future/roadmap/ directory claims the
 // root; failing that, any entry named .git — file or directory, never
@@ -83,6 +90,14 @@ type Snapshot struct {
 	Order        *document.OrderDoc
 	OrderRaw     []byte
 	OrderVersion string
+
+	// Filters is the saved-filter set from .ranger/filters.yaml, and
+	// FiltersVersion its guard token, the absent sentinel included. an
+	// unreadable file degrades to FiltersVersion "" — unknown, never a
+	// board failure, because a broken lens must not take down the board
+	// it views.
+	Filters        []document.SavedFilter
+	FiltersVersion string
 
 	byName map[string]*Item
 }
@@ -134,7 +149,28 @@ func (w *Workspace) Load() (*Snapshot, error) {
 	default:
 		return nil, fmt.Errorf("order.yaml: %w", err)
 	}
+
+	filtersRaw, err := os.ReadFile(w.filtersPath())
+	switch {
+	case err == nil:
+		if filters, err := document.ParseFilters(filtersRaw); err == nil {
+			s.Filters = filters
+			s.FiltersVersion = document.Hash(filtersRaw)
+		}
+	case os.IsNotExist(err):
+		s.FiltersVersion = document.VersionAbsent
+	}
 	return s, nil
+}
+
+// SaveFilters replaces the saved-filter set whole. filters.yaml is
+// tool-rendered, so the write is a fresh render under the version guard,
+// never a patch; the .ranger directory is created on first save.
+func (w *Workspace) SaveFilters(filters []document.SavedFilter, expectedVersion string) error {
+	if err := os.MkdirAll(filepath.Dir(w.filtersPath()), 0o755); err != nil {
+		return err
+	}
+	return document.CompareAndWrite(w.filtersPath(), expectedVersion, document.RenderFilters(filters))
 }
 
 // Item returns the named item from the snapshot.

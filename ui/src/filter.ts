@@ -1,4 +1,4 @@
-import type { Board, Card } from "./api";
+import type { Board, Card, SavedFilter } from "./api";
 
 // the board filter carries polarity per dimension: a card must carry
 // every included tag and subsystem, none of the excluded ones, and match
@@ -63,6 +63,48 @@ export function toggleMilestone(f: BoardFilters, milestone: string, exclude: boo
   const active = exclude ? f.notMilestone : f.milestone;
   const next = active === milestone ? null : milestone;
   return exclude ? { ...f, milestone: null, notMilestone: next } : { ...f, milestone: next, notMilestone: null };
+}
+
+// toSaved shapes the active filter as a named wire filter, empty
+// dimensions omitted — the rendered filters.yaml carries only what the
+// filter actually says. the search query is deliberately not part of a
+// saved filter; it is a different gesture with its own lifecycle.
+export function toSaved(name: string, f: BoardFilters): SavedFilter {
+  return {
+    name,
+    ...(f.tags.length > 0 ? { tags: f.tags } : {}),
+    ...(f.notTags.length > 0 ? { notTags: f.notTags } : {}),
+    ...(f.subsystems.length > 0 ? { subsystems: f.subsystems } : {}),
+    ...(f.notSubsystems.length > 0 ? { notSubsystems: f.notSubsystems } : {}),
+    ...(f.milestone !== null ? { milestone: f.milestone } : {}),
+    ...(f.notMilestone !== null ? { notMilestone: f.notMilestone } : {}),
+  };
+}
+
+// toFilters applies a saved filter as the whole active filter state.
+export function toFilters(s: SavedFilter): BoardFilters {
+  return {
+    tags: s.tags ?? [],
+    notTags: s.notTags ?? [],
+    subsystems: s.subsystems ?? [],
+    notSubsystems: s.notSubsystems ?? [],
+    milestone: s.milestone ?? null,
+    notMilestone: s.notMilestone ?? null,
+  };
+}
+
+// upsert replaces the same-named filter in place — saving under an
+// existing name updates it without changing its position — and appends a
+// new name at the end.
+export function upsert(list: SavedFilter[], saved: SavedFilter): SavedFilter[] {
+  if (list.some((s) => s.name === saved.name)) {
+    return list.map((s) => (s.name === saved.name ? saved : s));
+  }
+  return [...list, saved];
+}
+
+export function withoutName(list: SavedFilter[], name: string): SavedFilter[] {
+  return list.filter((s) => s.name !== name);
 }
 
 // filterBoard narrows every lane to cards satisfying the filter and, when

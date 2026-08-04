@@ -15,6 +15,8 @@ created: 2026-07-14
 
 `Load` enumerates `roadmap/*.md` flat — skipping directories, non-markdown, and `.capture-` temps — and reads `order.yaml`. Error tiers per the spec: a missing or unreadable roadmap directory and an unreadable `order.yaml` are repository-level errors; a single bad item degrades to a flagged card. The snapshot carries each item's raw bytes, guard hash, and parsed document, plus the order document and its version (absence is the `absent` sentinel). `Cards()` classifies everything for `ComputeBoard`, attaching the malformed and filename-mismatch flags.
 
+`Load` also reads `.ranger/filters.yaml` — the saved-filter sidecar, tool state published with the roadmap. Its error tier is softer than order.yaml's: an unreadable filters file degrades to an unknown version (`FiltersVersion` empty) rather than failing the board, because a broken lens must not take down the board it views. `SaveFilters` replaces the set whole — a fresh render under the version guard, creating `.ranger/` on first save — the one write that is a re-render rather than a patch, because the file is tool-rendered rather than operator-authored.
+
 ## the gesture discipline
 
 Every gesture follows one shape: load fresh, verify every affected guard token against that fresh read (a mismatch is a typed conflict — reload, don't retry), compute the minimal bytes that express the gesture, then write — item first, order second, any partial failure reported plainly. Opportunistic pruning rides along only when `order.yaml` is already being written.

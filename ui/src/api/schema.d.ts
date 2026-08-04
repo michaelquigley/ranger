@@ -158,6 +158,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects/{project}/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** replace the saved-filter set whole — .ranger/filters.yaml is tool-rendered, so every mutation is the full resulting set. */
+        put: operations["saveFilters"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{project}/items/{filename}/delete": {
         parameters: {
             query?: never;
@@ -251,6 +270,15 @@ export interface components {
             /** @description true when the item's file is uncommitted in git — modified, staged, or untracked alike; absent when git can't answer (no git binary, no repository). */
             dirty?: boolean;
         };
+        savedFilter: {
+            name: string;
+            tags?: string[];
+            notTags?: string[];
+            subsystems?: string[];
+            notSubsystems?: string[];
+            milestone?: string;
+            notMilestone?: string;
+        };
         lane: {
             state: components["schemas"]["state"];
             cards: components["schemas"]["card"][];
@@ -265,6 +293,10 @@ export interface components {
             orderVersion: string;
             /** @description true when anything under the roadmap directory is uncommitted in git — items, order.yaml, and assets alike; absent when git can't answer. */
             dirty?: boolean;
+            /** @description the saved-filter set from .ranger/filters.yaml, empty included; absent (with filtersVersion) when the file exists but can't be read. */
+            savedFilters?: components["schemas"]["savedFilter"][];
+            /** @description filters.yaml's hash, or the sentinel "absent". absent as a field when the file exists but can't be read — degraded, never a board failure. */
+            filtersVersion?: string;
         };
         projectStatus: {
             name: string;
@@ -284,7 +316,7 @@ export interface components {
         };
         conflict: {
             /** @enum {string} */
-            reason: "item_conflict" | "order_conflict" | "slug_collision";
+            reason: "item_conflict" | "order_conflict" | "filters_conflict" | "slug_collision";
             message: string;
             /** @description capture collisions; the preserved .capture- draft. */
             tempPath?: string;
@@ -572,6 +604,31 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            404: components["responses"]["notFound"];
+            409: components["responses"]["conflict"];
+            default: components["responses"]["serverError"];
+        };
+    };
+    saveFilters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    filters: components["schemas"]["savedFilter"][];
+                    expectedVersion: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["freshBoard"];
+            400: components["responses"]["validationError"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
