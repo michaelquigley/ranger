@@ -535,6 +535,15 @@ components:
           type: string
         notMilestone:
           type: string
+        noTags:
+          type: boolean
+          description: match only cards carrying no tags at all
+        noSubsystems:
+          type: boolean
+          description: match only cards carrying no subsystems at all
+        noMilestone:
+          type: boolean
+          description: match only cards with no milestone set
 
     lane:
       type: object

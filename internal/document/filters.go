@@ -9,16 +9,20 @@ import (
 
 // SavedFilter is one named board filter from .ranger/filters.yaml: the
 // operator's saved lens over the board, each dimension carrying include
-// and exclude values. empty milestone fields mean unset, matching the
-// item schema's convention.
+// and exclude values plus an absence flag — match only cards where the
+// dimension is not specified at all. empty milestone fields mean unset,
+// matching the item schema's convention.
 type SavedFilter struct {
 	Name          string
 	Tags          []string
 	NotTags       []string
+	NoTags        bool
 	Subsystems    []string
 	NotSubsystems []string
+	NoSubsystems  bool
 	Milestone     string
 	NotMilestone  string
+	NoMilestone   bool
 }
 
 // filtersSchema is the dd-bind target for the whole document.
