@@ -3,6 +3,7 @@ import type { Board, Card } from "./api";
 import {
   emptyFilters,
   filterBoard,
+  isApplied,
   isFiltering,
   toFilters,
   toSaved,
@@ -125,6 +126,20 @@ describe("saved filters", () => {
 
   it("withoutName removes only the named filter", () => {
     expect(withoutName([{ name: "a" }, { name: "b" }], "a")).toEqual([{ name: "b" }]);
+  });
+
+  it("isApplied matches the applied filter and ignores member order", () => {
+    const s = { name: "x", tags: ["a", "b"], milestone: "v0.1.x" };
+    expect(isApplied(toFilters(s), s)).toBe(true);
+    expect(isApplied({ ...emptyFilters, tags: ["b", "a"], milestone: "v0.1.x" }, s)).toBe(true);
+  });
+
+  it("isApplied drops when the filter is edited past the saved shape", () => {
+    const s = { name: "x", tags: ["a"] };
+    const applied = toFilters(s);
+    expect(isApplied(toggleTag(applied, "b", false), s)).toBe(false);
+    expect(isApplied(toggleTag(applied, "a", false), s)).toBe(false);
+    expect(isApplied(toggleTag(applied, "a", true), s)).toBe(false);
   });
 });
 

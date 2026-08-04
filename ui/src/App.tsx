@@ -18,6 +18,7 @@ import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import {
   emptyFilters,
   filterBoard,
+  isApplied,
   isFiltering,
   toFilters,
   toSaved,
@@ -370,8 +371,8 @@ function ProjectBoard({ project }: { project: string }) {
             {(board.savedFilters ?? []).map((s) => (
               <span
                 key={s.name}
-                className="saved-pill tag-click"
-                title={`apply ${s.name}`}
+                className={isApplied(filters, s) ? "saved-pill tag-click saved-active" : "saved-pill tag-click"}
+                title={isApplied(filters, s) ? `${s.name} is applied` : `apply ${s.name}`}
                 onClick={() => setFilters(toFilters(s))}
               >
                 {s.name}

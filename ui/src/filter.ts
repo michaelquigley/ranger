@@ -93,6 +93,25 @@ export function toFilters(s: SavedFilter): BoardFilters {
   };
 }
 
+// isApplied reports whether a saved filter is what the board is showing
+// right now — same members per dimension, order aside. derived rather
+// than remembered, so the highlight can't lie: edit the filter after
+// applying and the match drops; rebuild the same lens by hand and its
+// pill lights. the search query stays outside the comparison, as it
+// stays outside the saved filter.
+export function isApplied(f: BoardFilters, s: SavedFilter): boolean {
+  const same = (a: string[], b: string[]) => a.length === b.length && a.every((v) => b.includes(v));
+  const saved = toFilters(s);
+  return (
+    same(f.tags, saved.tags) &&
+    same(f.notTags, saved.notTags) &&
+    same(f.subsystems, saved.subsystems) &&
+    same(f.notSubsystems, saved.notSubsystems) &&
+    f.milestone === saved.milestone &&
+    f.notMilestone === saved.notMilestone
+  );
+}
+
 // upsert replaces the same-named filter in place — saving under an
 // existing name updates it without changing its position — and appends a
 // new name at the end.

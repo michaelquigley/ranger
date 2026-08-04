@@ -535,6 +535,14 @@ textarea {
   color: var(--text);
 }
 
+/* the pill whose filter the board is currently showing — derived from
+   the filter state itself, not a memory of the last click, so it lights
+   and clears honestly. */
+.saved-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .saved-delete {
   margin-left: 0.35rem;
   color: var(--dim);
