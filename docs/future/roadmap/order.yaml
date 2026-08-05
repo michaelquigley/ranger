@@ -3,6 +3,7 @@ horizon:
   - richer-log.md
   - drop-the-js-yaml-override.md
 researching:
+  - orderyaml-rangerorderyaml.md
   - larger-card-editor.md
   - specwork-order-management.md
 inbox:
