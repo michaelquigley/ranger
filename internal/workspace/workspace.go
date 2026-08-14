@@ -4,6 +4,7 @@
 package workspace
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,6 +20,20 @@ const RoadmapRel = "docs/future/roadmap"
 
 // capturePrefix marks in-flight capture temp files; enumeration skips them.
 const capturePrefix = ".capture-"
+
+// rangerRel is the tool-state subdirectory inside the roadmap directory —
+// ranger's own files, published with the roadmap so ranking and saved
+// lenses travel with the cards.
+const rangerRel = ".ranger"
+
+// orderName is the ranking sidecar's filename. it lives in .ranger/; before
+// that directory existed it sat beside the items at the roadmap root, which
+// is the only thing legacy about a legacy order file — the name never moved.
+const orderName = "order.yaml"
+
+// orderRel names the order document in errors the operator reads, so a
+// repository-level refusal points at the file it means.
+const orderRel = rangerRel + "/" + orderName
 
 // Workspace is a discovered root and nothing more — no snapshot lives here.
 type Workspace struct {
@@ -41,15 +56,31 @@ func (w *Workspace) itemPath(filename string) string {
 	return filepath.Join(w.roadmapDir(), filename)
 }
 
-func (w *Workspace) orderPath() string {
-	return filepath.Join(w.roadmapDir(), "order.yaml")
+// rangerDir is the roadmap's tool-state subdirectory, created on demand by
+// the two writes that put files in it.
+func (w *Workspace) rangerDir() string {
+	return filepath.Join(w.roadmapDir(), rangerRel)
 }
 
-// filtersPath is the saved-filters sidecar, inside the roadmap's .ranger/
-// tool-state directory — published with the roadmap so the operator's
-// saved lenses travel with the cards.
+func (w *Workspace) orderPath() string {
+	return filepath.Join(w.rangerDir(), orderName)
+}
+
+// legacyOrderPath is where the ranking sat before .ranger/ existed.
+func (w *Workspace) legacyOrderPath() string {
+	return filepath.Join(w.roadmapDir(), orderName)
+}
+
+// filtersPath is the saved-filters sidecar, beside order.yaml in .ranger/.
 func (w *Workspace) filtersPath() string {
-	return filepath.Join(w.roadmapDir(), ".ranger", "filters.yaml")
+	return filepath.Join(w.rangerDir(), "filters.yaml")
+}
+
+// mkRangerDir creates the tool-state directory for a write that needs it.
+// nothing else creates it: a roadmap with neither ranking nor saved filters
+// never grows a .ranger/ it has no use for.
+func (w *Workspace) mkRangerDir() error {
+	return os.MkdirAll(w.rangerDir(), 0o755)
 }
 
 // DiscoverRoot finds the repository root by a single upward walk from
@@ -85,8 +116,8 @@ type Item struct {
 // Snapshot is one fresh read of the workspace.
 type Snapshot struct {
 	Items []Item
-	// Order is nil when no order.yaml exists; OrderVersion is its guard
-	// token, the absent sentinel included.
+	// Order is nil when no .ranger/order.yaml exists; OrderVersion is its
+	// guard token, the absent sentinel included.
 	Order        *document.OrderDoc
 	OrderRaw     []byte
 	OrderVersion string
@@ -102,14 +133,47 @@ type Snapshot struct {
 	byName map[string]*Item
 }
 
+// migrateOrder relocates a pre-.ranger/ order.yaml from the roadmap root
+// into .ranger/, in place, once. it is a move, never a rewrite: the
+// operator's bytes cross unchanged, so comments, spacing, and inert lines
+// all survive and git reads the working-tree change as the rename it is.
+// this is the one write ranger performs without being asked for it — the
+// alternative is a board that silently drops the ranking of every roadmap
+// written before the move.
+//
+// the move goes through the no-clobber funnel, so a .ranger/order.yaml
+// already in place wins by refusal rather than by a hopeful check: a
+// collision leaves the stray legacy file exactly where it sits, for the
+// operator to resolve, because past this migration that state can only be
+// hand-made. a collision and a vanished source are both success — the
+// ranking arrived, whether by our hand or a concurrent loader's.
+func (w *Workspace) migrateOrder() error {
+	if _, err := os.Lstat(w.legacyOrderPath()); err != nil {
+		return nil
+	}
+	if err := w.mkRangerDir(); err != nil {
+		return err
+	}
+	var collision *document.CollisionError
+	if err := document.FinalizeLink(w.legacyOrderPath(), w.orderPath()); err != nil &&
+		!errors.As(err, &collision) && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
 // Load enumerates roadmap/*.md (flat, skipping capture temps and
-// directories) and reads order.yaml. a missing or unreadable roadmap
-// directory and an unreadable order.yaml are repository-level errors; any
-// single bad item degrades to a flagged card instead.
+// directories) and reads .ranger/order.yaml, migrating a legacy one into
+// place first. a missing or unreadable roadmap directory, an unreadable
+// order.yaml, and a migration that can't complete are repository-level
+// errors; any single bad item degrades to a flagged card instead.
 func (w *Workspace) Load() (*Snapshot, error) {
 	entries, err := os.ReadDir(w.roadmapDir())
 	if err != nil {
 		return nil, fmt.Errorf("roadmap directory: %w", err)
+	}
+	if err := w.migrateOrder(); err != nil {
+		return nil, fmt.Errorf("migrating order.yaml into %s: %w", rangerRel, err)
 	}
 
 	s := &Snapshot{byName: map[string]*Item{}, OrderVersion: document.VersionAbsent}
@@ -139,7 +203,7 @@ func (w *Workspace) Load() (*Snapshot, error) {
 	case err == nil:
 		doc, err := document.ParseOrder(orderRaw)
 		if err != nil {
-			return nil, fmt.Errorf("order.yaml: %w", err)
+			return nil, fmt.Errorf("%s: %w", orderRel, err)
 		}
 		s.Order = doc
 		s.OrderRaw = orderRaw
@@ -147,7 +211,7 @@ func (w *Workspace) Load() (*Snapshot, error) {
 	case os.IsNotExist(err):
 		// absence is a version
 	default:
-		return nil, fmt.Errorf("order.yaml: %w", err)
+		return nil, fmt.Errorf("%s: %w", orderRel, err)
 	}
 
 	filtersRaw, err := os.ReadFile(w.filtersPath())
@@ -167,7 +231,7 @@ func (w *Workspace) Load() (*Snapshot, error) {
 // tool-rendered, so the write is a fresh render under the version guard,
 // never a patch; the .ranger directory is created on first save.
 func (w *Workspace) SaveFilters(filters []document.SavedFilter, expectedVersion string) error {
-	if err := os.MkdirAll(filepath.Dir(w.filtersPath()), 0o755); err != nil {
+	if err := w.mkRangerDir(); err != nil {
 		return err
 	}
 	return document.CompareAndWrite(w.filtersPath(), expectedVersion, document.RenderFilters(filters))

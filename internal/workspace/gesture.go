@@ -77,8 +77,20 @@ func pruneOrder(raw []byte, cards []model.CardInput) ([]byte, error) {
 	return doc.Prune(board.Dispositions), nil
 }
 
+// compareAndWriteOrder is the single funnel for order writes. it creates
+// .ranger/ first, because the first-ever ranking would otherwise be refused
+// for want of a directory rather than for want of a guard match; where
+// order.yaml already exists so does its directory, making the call a no-op
+// on every path but creation.
+func (w *Workspace) compareAndWriteOrder(orderBytes []byte, expectedVersion string) error {
+	if err := w.mkRangerDir(); err != nil {
+		return err
+	}
+	return document.CompareAndWrite(w.orderPath(), expectedVersion, orderBytes)
+}
+
 func (w *Workspace) writeOrder(orderBytes []byte, expectedVersion, context string) error {
-	if err := document.CompareAndWrite(w.orderPath(), expectedVersion, orderBytes); err != nil {
+	if err := w.compareAndWriteOrder(orderBytes, expectedVersion); err != nil {
 		return fmt.Errorf("%s, but order.yaml was not updated: %w", context, err)
 	}
 	return nil
@@ -166,7 +178,7 @@ func (w *Workspace) Reorder(lane model.State, filenames []string, expectedOrderV
 		if len(filenames) == 0 {
 			return nil
 		}
-		return document.CompareAndWrite(w.orderPath(), expectedOrderVersion, document.NewOrder(lane, filenames))
+		return w.compareAndWriteOrder(document.NewOrder(lane, filenames), expectedOrderVersion)
 	}
 
 	board := snap.Board()
@@ -175,7 +187,7 @@ func (w *Workspace) Reorder(lane model.State, filenames []string, expectedOrderV
 	if err != nil {
 		return err
 	}
-	return document.CompareAndWrite(w.orderPath(), expectedOrderVersion, orderBytes)
+	return w.compareAndWriteOrder(orderBytes, expectedOrderVersion)
 }
 
 // Retitle patches the title and renames to the new slug, replacing the old

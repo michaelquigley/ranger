@@ -1,11 +1,11 @@
 horizon:
   - cross-repo-aggregation.md
   - richer-log.md
-  - drop-the-js-yaml-override.md
 researching:
-  - orderyaml-rangerorderyaml.md
   - larger-card-editor.md
   - specwork-order-management.md
 inbox:
 building:
+  - drop-the-js-yaml-override.md
 evaluating:
+  - orderyaml-rangerorderyaml.md

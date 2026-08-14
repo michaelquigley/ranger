@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+CHANGE: ranking moved into `.ranger/` — the roadmap's order file now lives at `docs/future/roadmap/.ranger/order.yaml`, beside the saved filters, so ranger's own two files sit together and the roadmap directory is items and assets again. Existing roadmaps need no action: ranger notices a legacy `order.yaml` at the roadmap root and relocates it on the next load, a move that carries the operator's bytes across unchanged — comments, spacing, and inert lines intact — and shows up in `git status` as the rename it is. This is the one write ranger performs without being asked; the alternative was a board that silently dropped the ranking of every roadmap written before the move. A migration that can't complete is a repository-level error like any unreadable order.yaml, and there is no fallback that reads the old location, so the file has one home from then on.
+
 ## v0.1.2
 
 FEATURE: absence filters — typing `no:tags`, `no:subsystems`, or `no:milestone` into the search box narrows the board to cards where that dimension is not specified at all. Absence has no chip to click, so the search box doubles as its keyboard: a complete token leaves the input and becomes ordinary filter state (a dashed `no x` pill in the filter bar; any remaining text stays a plain search), so absence filters compose, save, and highlight exactly like clicked ones. Absence occupies its dimension exclusively — toggling it displaces that dimension's includes and excludes, and any value click displaces it back. Saved filters carry the flags as `no_tags`/`no_subsystems`/`no_milestone` in filters.yaml and `noTags`/`noSubsystems`/`noMilestone` on the wire, present only when true.

@@ -47,7 +47,7 @@ func fixture(t *testing.T, withOrder bool) (*Server, *workspace.Workspace) {
 		"board-capture.md":   captureItem,
 	}
 	if withOrder {
-		files["order.yaml"] = orderFixture
+		files[".ranger/order.yaml"] = orderFixture
 	}
 	for name, content := range files {
 		path := filepath.Join(root, "docs", "future", "roadmap", name)
@@ -291,7 +291,7 @@ func TestTransitionReturnsFreshBoard(t *testing.T) {
 func TestPartialTwoFileFailureIsReportedVerbatim(t *testing.T) {
 	s, w := fixture(t, true)
 	hash, orderVersion := hashes(t, w, "retry-semantics.md")
-	orderPath := filepath.Join(w.Root(), "docs", "future", "roadmap", "order.yaml")
+	orderPath := filepath.Join(w.Root(), "docs", "future", "roadmap", ".ranger", "order.yaml")
 	if err := os.Chmod(orderPath, 0o444); err != nil {
 		t.Fatal(err)
 	}

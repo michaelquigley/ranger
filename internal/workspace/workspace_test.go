@@ -134,11 +134,11 @@ func TestDiscoverRoot(t *testing.T) {
 func TestLoad(t *testing.T) {
 	root := t.TempDir()
 	writeFiles(t, root, map[string]string{
-		"docs/future/roadmap/good.md":         "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n",
-		"docs/future/roadmap/broken.md":       "---\ntitle: broken\nstate: nonsense\ncreated: 2026-07-01\n---\n",
-		"docs/future/roadmap/.capture-x.md":   "in flight",
-		"docs/future/roadmap/notes.txt":       "not an item",
-		"docs/future/roadmap/nested/deep.md":  "not enumerated",
+		"docs/future/roadmap/good.md":        "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n",
+		"docs/future/roadmap/broken.md":      "---\ntitle: broken\nstate: nonsense\ncreated: 2026-07-01\n---\n",
+		"docs/future/roadmap/.capture-x.md":  "in flight",
+		"docs/future/roadmap/notes.txt":      "not an item",
+		"docs/future/roadmap/nested/deep.md": "not enumerated",
 	})
 	w := New(root)
 	snap, err := w.Load()
@@ -177,11 +177,92 @@ func TestLoadRepositoryTiers(t *testing.T) {
 	t.Run("unreadable order.yaml is repository-level", func(t *testing.T) {
 		root := t.TempDir()
 		writeFiles(t, root, map[string]string{
-			"docs/future/roadmap/good.md":    "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n",
-			"docs/future/roadmap/order.yaml": "researching:\n  - a.md\nresearching:\n  - b.md\n",
+			"docs/future/roadmap/good.md":            "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n",
+			"docs/future/roadmap/.ranger/order.yaml": "researching:\n  - a.md\nresearching:\n  - b.md\n",
 		})
 		if _, err := New(root).Load(); err == nil {
 			t.Error("want error for duplicate lane key")
+		}
+	})
+	t.Run("a migration that cannot complete is repository-level", func(t *testing.T) {
+		root := t.TempDir()
+		writeFiles(t, root, map[string]string{
+			"docs/future/roadmap/good.md":    "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n",
+			"docs/future/roadmap/order.yaml": "inbox:\n  - good.md\n",
+		})
+		dir := filepath.Join(root, "docs", "future", "roadmap")
+		if err := os.Chmod(dir, 0o555); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { os.Chmod(dir, 0o755) })
+		if _, err := New(root).Load(); err == nil {
+			t.Error("want error when the legacy order.yaml cannot be moved into place")
+		}
+	})
+}
+
+// the legacy order.yaml — beside the items, before .ranger/ existed — is
+// relocated in place by Load itself, so a roadmap written before the move
+// keeps its ranking without anyone being asked to run anything.
+func TestOrderMigration(t *testing.T) {
+	const legacy = "docs/future/roadmap/order.yaml"
+	const migrated = "docs/future/roadmap/.ranger/order.yaml"
+	const ranking = "# hand-tended\ninbox:\n  - good.md   # hot\n"
+	const goodItem = "---\ntitle: good\nstate: inbox\ncreated: 2026-07-01\n---\n"
+
+	t.Run("Load moves it and the bytes cross unchanged", func(t *testing.T) {
+		root := t.TempDir()
+		writeFiles(t, root, map[string]string{
+			"docs/future/roadmap/good.md": goodItem,
+			legacy:                        ranking,
+		})
+		snap, err := New(root).Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		tree := treeState(t, root)
+		if _, still := tree[legacy]; still {
+			t.Error("the legacy order.yaml must not survive its own migration")
+		}
+		if got := tree[migrated]; got != ranking {
+			t.Errorf("migrated bytes = %q, want the operator's file verbatim %q", got, ranking)
+		}
+		if snap.OrderVersion != document.Hash([]byte(ranking)) {
+			t.Error("the migrated file's guard token must hash the same bytes")
+		}
+		if lanes := snap.Lanes(); len(lanes[model.Inbox]) != 1 {
+			t.Errorf("ranking must survive the move, got lanes %v", lanes)
+		}
+	})
+
+	t.Run("an existing .ranger/order.yaml wins and the stray is left alone", func(t *testing.T) {
+		root := t.TempDir()
+		writeFiles(t, root, map[string]string{
+			"docs/future/roadmap/good.md": goodItem,
+			legacy:                        "inbox:\n  - stale.md\n",
+			migrated:                      ranking,
+		})
+		before := treeState(t, root)
+		snap, err := New(root).Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snap.OrderVersion != document.Hash([]byte(ranking)) {
+			t.Error(".ranger/order.yaml must be the one that is read")
+		}
+		if diff := treeState(t, root); diff[legacy] != before[legacy] {
+			t.Error("a stray legacy file is nobody's to clobber; it must be left byte-for-byte")
+		}
+	})
+
+	t.Run("a roadmap with no ranking never grows a .ranger directory", func(t *testing.T) {
+		root := t.TempDir()
+		writeFiles(t, root, map[string]string{"docs/future/roadmap/good.md": goodItem})
+		if _, err := New(root).Load(); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(filepath.Join(root, "docs", "future", "roadmap", ".ranger")); !os.IsNotExist(err) {
+			t.Error("Load must not create .ranger/ for a roadmap that has nothing to put in it")
 		}
 	})
 }

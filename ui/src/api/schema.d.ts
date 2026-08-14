@@ -295,7 +295,7 @@ export interface components {
             /** @description the configured project name. */
             project: string;
             lanes: components["schemas"]["lane"][];
-            /** @description order.yaml's hash, or the sentinel "absent". absence is a version. */
+            /** @description .ranger/order.yaml's hash, or the sentinel "absent". absence is a version. */
             orderVersion: string;
             /** @description true when anything under the roadmap directory is uncommitted in git — items, order.yaml, and assets alike; absent when git can't answer. */
             dirty?: boolean;

@@ -17,7 +17,7 @@ type Board struct {
 	// The configured project name.
 	Project string `json:"project"`
 	Lanes   []Lane `json:"lanes"`
-	// Order.yaml's hash, or the sentinel "absent". absence is a version.
+	// .ranger/order.yaml's hash, or the sentinel "absent". absence is a version.
 	OrderVersion string `json:"orderVersion"`
 	// True when anything under the roadmap directory is uncommitted in git — items, order.yaml, and
 	// assets alike; absent when git can't answer.

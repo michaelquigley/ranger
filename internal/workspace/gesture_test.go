@@ -57,7 +57,7 @@ func gestureFixture(t *testing.T) (*Workspace, *Snapshot, map[string]string) {
 		"docs/future/roadmap/second-thread.md":     secondItem,
 		"docs/future/roadmap/frame-composition.md": frameItem,
 		"docs/future/roadmap/board-capture.md":     captureItem,
-		"docs/future/roadmap/order.yaml":           orderFixture,
+		"docs/future/roadmap/.ranger/order.yaml":   orderFixture,
 	})
 	w := New(root)
 	snap, err := w.Load()
@@ -95,7 +95,7 @@ func TestTransitionRankedRemovesOldLaneEntry(t *testing.T) {
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
 		"docs/future/roadmap/retry-semantics.md": strings.Replace(retryItem, "state: researching", "state: building", 1),
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
 horizon:
@@ -113,7 +113,7 @@ func TestTransitionAndPlaceMovesTheEntry(t *testing.T) {
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
 		"docs/future/roadmap/board-capture.md": strings.Replace(captureItem, "state: inbox", "state: researching", 1),
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - board-capture.md
   - retry-semantics.md   # hot
@@ -133,7 +133,7 @@ func TestTransitionAndPlaceRankedMovesAcrossLanes(t *testing.T) {
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
 		"docs/future/roadmap/retry-semantics.md": strings.Replace(retryItem, "state: researching", "state: horizon", 1),
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
 horizon:
@@ -164,7 +164,7 @@ func TestTransitionAndPlaceWithinLaneMovesTheEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
   - retry-semantics.md   # hot
@@ -191,8 +191,8 @@ func TestTransitionWithPlaceCreatesAbsentOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertTreeDiff(t, before, treeState(t, root), map[string]string{
-		"docs/future/roadmap/board-capture.md": strings.Replace(captureItem, "state: inbox", "state: researching", 1),
-		"docs/future/roadmap/order.yaml":       "researching:\n  - board-capture.md\n",
+		"docs/future/roadmap/board-capture.md":   strings.Replace(captureItem, "state: inbox", "state: researching", 1),
+		"docs/future/roadmap/.ranger/order.yaml": "researching:\n  - board-capture.md\n",
 	})
 }
 
@@ -203,7 +203,7 @@ func TestReorderMovesOriginalLines(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
   - retry-semantics.md   # hot
@@ -225,7 +225,7 @@ func TestRetitleRankedIsATwoFileGesture(t *testing.T) {
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
 		"docs/future/roadmap/retry-semantics-v2.md": strings.Replace(retryItem, "title: retry semantics", "title: retry semantics v2", 1),
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - retry-semantics-v2.md # hot
   - second-thread.md
@@ -304,8 +304,8 @@ func TestMalformedRankedRepairKeepsPriority(t *testing.T) {
 	root := t.TempDir()
 	mangled := "---\ntitle: mangled item\nstate: researchin\ncreated: 2026-07-01\n---\n"
 	writeFiles(t, root, map[string]string{
-		"docs/future/roadmap/x.md":       mangled,
-		"docs/future/roadmap/order.yaml": "researching:\n  - x.md\n",
+		"docs/future/roadmap/x.md":               mangled,
+		"docs/future/roadmap/.ranger/order.yaml": "researching:\n  - x.md\n",
 	})
 	w := New(root)
 
@@ -318,8 +318,8 @@ func TestMalformedRankedRepairKeepsPriority(t *testing.T) {
 	}
 	renamed := strings.Replace(mangled, "title: mangled item", "title: repaired item", 1)
 	assertTreeDiff(t, before, treeState(t, root), map[string]string{
-		"docs/future/roadmap/repaired-item.md": renamed,
-		"docs/future/roadmap/order.yaml":       "researching:\n  - repaired-item.md\n",
+		"docs/future/roadmap/repaired-item.md":   renamed,
+		"docs/future/roadmap/.ranger/order.yaml": "researching:\n  - repaired-item.md\n",
 	}, "docs/future/roadmap/x.md")
 
 	snap, _ = w.Load()
@@ -365,7 +365,7 @@ func TestSaveContentStateChangeIsATransition(t *testing.T) {
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
 		"docs/future/roadmap/retry-semantics.md": content,
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
 horizon:
@@ -381,8 +381,8 @@ func TestSaveContentRepairOutOfInboxCostsTheInboxRank(t *testing.T) {
 	root := t.TempDir()
 	mangled := "---\ntitle: mangled\nstate: bogus\ncreated: 2026-07-01\n---\n"
 	writeFiles(t, root, map[string]string{
-		"docs/future/roadmap/y.md":       mangled,
-		"docs/future/roadmap/order.yaml": "inbox:\n  - y.md\n",
+		"docs/future/roadmap/y.md":               mangled,
+		"docs/future/roadmap/.ranger/order.yaml": "inbox:\n  - y.md\n",
 	})
 	w := New(root)
 	snap, _ := w.Load()
@@ -393,8 +393,8 @@ func TestSaveContentRepairOutOfInboxCostsTheInboxRank(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertTreeDiff(t, before, treeState(t, root), map[string]string{
-		"docs/future/roadmap/y.md":       repaired,
-		"docs/future/roadmap/order.yaml": "inbox:\n",
+		"docs/future/roadmap/y.md":               repaired,
+		"docs/future/roadmap/.ranger/order.yaml": "inbox:\n",
 	})
 }
 
@@ -414,7 +414,7 @@ func TestDeleteRankedRemovesEntries(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertTreeDiff(t, before, treeState(t, w.Root()), map[string]string{
-		"docs/future/roadmap/order.yaml": `# hand-tended
+		"docs/future/roadmap/.ranger/order.yaml": `# hand-tended
 researching:
   - second-thread.md
 horizon:

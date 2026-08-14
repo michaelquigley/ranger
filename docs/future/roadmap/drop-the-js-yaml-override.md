@@ -1,6 +1,6 @@
 ---
 title: drop the js-yaml override
-state: horizon
+state: building
 created: 2026-07-22
 tags: [chore]
 ---

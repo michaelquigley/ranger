@@ -36,7 +36,7 @@ The filename is the slug of the title (`live board reload` → `live-board-reloa
 
 `state` is one of five lifecycle lanes: **inbox → horizon → researching → building → evaluating**. The lifecycle ends at evaluating — there are no `done` or `dropped` lanes. A realized prompt doesn't park in a trophy lane; it gets deleted, its information synthesized into the project it produced, and the board never accumulates terminal residue.
 
-Ranking is a separate file, `order.yaml`, holding each lane's ranked prefix:
+Ranking is a separate file, `.ranger/order.yaml`, holding each lane's ranked prefix:
 
 ```yaml
 horizon:
