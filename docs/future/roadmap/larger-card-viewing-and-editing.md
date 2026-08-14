@@ -1,5 +1,5 @@
 ---
-title: larger card editor
+title: larger card viewing and editing
 state: researching
 created: 2026-08-04
 tags: [enhancement, spike]

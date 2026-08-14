@@ -2,8 +2,10 @@ horizon:
   - cross-repo-aggregation.md
   - richer-log.md
 researching:
-  - larger-card-editor.md
+  - larger-card-viewing-and-editing.md
+  - improved-capture-metadata.md
   - specwork-order-management.md
+  - broker-management-mercurius-terminus.md
 inbox:
 building:
 evaluating:
