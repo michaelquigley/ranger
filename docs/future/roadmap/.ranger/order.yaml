@@ -2,6 +2,7 @@ horizon:
   - cross-repo-aggregation.md
   - richer-log.md
 researching:
+  - linking.md
   - larger-card-viewing-and-editing.md
   - improved-capture-metadata.md
   - specwork-order-management.md
