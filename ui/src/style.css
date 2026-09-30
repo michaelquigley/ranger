@@ -80,6 +80,12 @@ header h1 {
   color: var(--warn);
 }
 
+.project-selector optgroup {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dim);
+}
+
 /* a repository-level failure renders here, in the body region, under the
    live header — never as a page-replacing panel */
 .board-error {

@@ -13,7 +13,7 @@ import {
 import { fetchProjects, makeApi, type Board, type Card, type Conflict, type Outcome, type ProjectIndex, type State } from "./api";
 import { POLL_MS, freshest } from "./live";
 import { projectFromPath, projectPath } from "./project";
-import { selectorOptions } from "./selector";
+import { selectorGroups } from "./selector";
 import { anchorFor, positionAfterDrop, rankedAfterDrop } from "./reorder";
 import {
   emptyFilters,
@@ -594,11 +594,14 @@ function ProjectSelector({ index, current }: { index: ProjectIndex; current: str
       aria-label="project"
       onChange={(e) => window.location.assign(projectPath(e.target.value))}
     >
-      {selectorOptions(index, current).map((o) => (
-        <option key={o.name} value={o.name} disabled={o.disabled} title={o.title ?? undefined}>
-          {o.label}
-        </option>
-      ))}
+      {selectorGroups(index, current).map((g) => {
+        const options = g.options.map((o) => (
+          <option key={o.name} value={o.name} disabled={o.disabled} title={o.title ?? undefined}>
+            {o.label}
+          </option>
+        ));
+        return g.label === null ? options : <optgroup key={g.label} label={g.label}>{options}</optgroup>;
+      })}
     </select>
   );
 }

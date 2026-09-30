@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+CHANGE: dirty projects first — the project selector lists boards with uncommitted changes first, under an `uncommitted` option group with the rest under `other`, config order kept within each, so the open list leads with what still needs a commit. The groups appear only when both halves are non-empty; a wholly clean index renders as the plain list it always was. Presentation only: the project index on the wire stays in config order.
+
 CHANGE: ranking moved into `.ranger/` — the roadmap's order file now lives at `docs/future/roadmap/.ranger/order.yaml`, beside the saved filters, so ranger's own two files sit together and the roadmap directory is items and assets again. Existing roadmaps need no action: ranger notices a legacy `order.yaml` at the roadmap root and relocates it on the next load, a move that carries the operator's bytes across unchanged — comments, spacing, and inert lines intact — and shows up in `git status` as the rename it is. This is the one write ranger performs without being asked; the alternative was a board that silently dropped the ranking of every roadmap written before the move. A migration that can't complete is a repository-level error like any unreadable order.yaml, and there is no fallback that reads the old location, so the file has one home from then on.
 
 ## v0.1.2

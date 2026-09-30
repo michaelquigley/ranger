@@ -2,7 +2,6 @@ horizon:
   - cross-repo-aggregation.md
   - richer-log.md
 researching:
-  - dirty-projects-first.md
   - linking.md
   - larger-card-viewing-and-editing.md
   - improved-capture-metadata.md
@@ -10,5 +9,6 @@ researching:
   - broker-management-mercurius-terminus.md
 inbox:
 building:
+  - dirty-projects-first.md
 evaluating:
   - orderyaml-rangerorderyaml.md

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectorOptions } from "./selector";
+import { selectorGroups, selectorOptions } from "./selector";
 import { projectPath } from "./project";
 
 describe("selectorOptions", () => {
@@ -68,6 +68,70 @@ describe("selectorOptions", () => {
     );
     expect(options[0]).toEqual({ name: "ranger", label: "ranger *", disabled: false, title: "uncommitted changes" });
     expect(options[1]).toEqual({ name: "archive", label: "archive", disabled: false, title: null });
+  });
+
+  it("sorts dirty projects first, config order kept within each half", () => {
+    const options = selectorOptions(
+      {
+        projects: [
+          { name: "clean-a", available: true, dirty: false },
+          { name: "dirty-a", available: true, dirty: true },
+          { name: "unknown", available: true },
+          { name: "dirty-b", available: true, dirty: true },
+          { name: "clean-b", available: true, dirty: false },
+        ],
+        default: "clean-a",
+      },
+      "clean-a",
+    );
+    expect(options.map((o) => o.name)).toEqual(["dirty-a", "dirty-b", "clean-a", "unknown", "clean-b"]);
+  });
+
+  it("groups the halves as uncommitted and other when both are present", () => {
+    const groups = selectorGroups(
+      {
+        projects: [
+          { name: "clean-a", available: true, dirty: false },
+          { name: "dirty-a", available: true, dirty: true },
+          { name: "clean-b", available: true, dirty: false },
+        ],
+        default: "clean-a",
+      },
+      "clean-a",
+    );
+    expect(groups.map((g) => [g.label, g.options.map((o) => o.name)])).toEqual([
+      ["uncommitted", ["dirty-a"]],
+      ["other", ["clean-a", "clean-b"]],
+    ]);
+  });
+
+  it("renders a wholly clean index as one bare group", () => {
+    const groups = selectorGroups(
+      { projects: [{ name: "ranger", available: true }, { name: "archive", available: true, dirty: false }], default: "ranger" },
+      "ranger",
+    );
+    expect(groups.map((g) => [g.label, g.options.map((o) => o.name)])).toEqual([[null, ["ranger", "archive"]]]);
+  });
+
+  it("renders a wholly dirty index as one bare group", () => {
+    const groups = selectorGroups(
+      { projects: [{ name: "ranger", available: true, dirty: true }, { name: "archive", available: true, dirty: true }], default: "ranger" },
+      "ranger",
+    );
+    expect(groups.map((g) => [g.label, g.options.map((o) => o.label)])).toEqual([[null, ["ranger *", "archive *"]]]);
+  });
+
+  it("keeps the unknown current as a bare entry above the groups", () => {
+    const groups = selectorGroups(
+      { projects: [{ name: "ranger", available: true, dirty: true }, { name: "archive", available: true }], default: "ranger" },
+      "nope",
+    );
+    expect(groups.map((g) => [g.label, g.options.map((o) => o.name)])).toEqual([
+      [null, ["nope"]],
+      ["uncommitted", ["ranger"]],
+      ["other", ["archive"]],
+    ]);
+    expect(groups[0].options[0].disabled).toBe(true);
   });
 
   it("lets an unavailable project's diagnostic dominate its dirty verdict", () => {

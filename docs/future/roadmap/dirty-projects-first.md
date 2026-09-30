@@ -1,6 +1,6 @@
 ---
 title: dirty projects first
-state: researching
+state: building
 created: 2026-09-29
 tags: [enhancement]
 milestone: v0.1.x
