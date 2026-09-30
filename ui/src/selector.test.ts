@@ -87,7 +87,7 @@ describe("selectorOptions", () => {
     expect(options.map((o) => o.name)).toEqual(["dirty-a", "dirty-b", "clean-a", "unknown", "clean-b"]);
   });
 
-  it("groups the halves as uncommitted and other when both are present", () => {
+  it("groups the halves as uncommitted and projects when both are present", () => {
     const groups = selectorGroups(
       {
         projects: [
@@ -101,7 +101,7 @@ describe("selectorOptions", () => {
     );
     expect(groups.map((g) => [g.label, g.options.map((o) => o.name)])).toEqual([
       ["uncommitted", ["dirty-a"]],
-      ["other", ["clean-a", "clean-b"]],
+      ["projects", ["clean-a", "clean-b"]],
     ]);
   });
 
@@ -129,7 +129,7 @@ describe("selectorOptions", () => {
     expect(groups.map((g) => [g.label, g.options.map((o) => o.name)])).toEqual([
       [null, ["nope"]],
       ["uncommitted", ["ranger"]],
-      ["other", ["archive"]],
+      ["projects", ["archive"]],
     ]);
     expect(groups[0].options[0].disabled).toBe(true);
   });

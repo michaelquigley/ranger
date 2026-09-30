@@ -28,8 +28,9 @@ export type SelectorGroup = {
 // (" *") — and because the closed control renders the current option's
 // label, the marker on the current project is the board-level glance for
 // free. dirty projects come first, under an "uncommitted" group with the
-// rest under "other" — never "committed", because an absent verdict means
-// git couldn't answer, not cleanliness — config order kept within each; the groups only
+// rest under "projects" — never "committed", because an absent verdict
+// means git couldn't answer, not cleanliness — config order kept within
+// each; the groups only
 // appear when both halves are non-empty, so a wholly clean (or wholly
 // dirty) index renders as the plain list. the ordering is presentation
 // only — the index on the wire stays in config order.
@@ -42,13 +43,13 @@ export function selectorGroups(index: ProjectIndex, current: string): SelectorGr
     dirty: p.dirty ?? false,
   }));
   const strip = ({ dirty: _, ...o }: (typeof options)[number]): SelectorOption => o;
-  const dirty = options.filter((o) => o.dirty).map(strip);
-  const other = options.filter((o) => !o.dirty).map(strip);
+  const dirtyProjects = options.filter((o) => o.dirty).map(strip);
+  const projects = options.filter((o) => !o.dirty).map(strip);
   const groups: SelectorGroup[] =
-    dirty.length > 0 && other.length > 0
+    dirtyProjects.length > 0 && projects.length > 0
       ? [
-          { label: "uncommitted", options: dirty },
-          { label: "other", options: other },
+          { label: "uncommitted", options: dirtyProjects },
+          { label: "projects", options: projects },
         ]
       : [{ label: null, options: options.map(strip) }];
   if (!options.some((o) => o.name === current)) {
