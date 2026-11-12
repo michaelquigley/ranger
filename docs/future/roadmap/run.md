@@ -1,6 +1,0 @@
----
-title: run
-state: inbox
-created: 2026-09-29
----
-
