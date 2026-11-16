@@ -13,3 +13,4 @@ tsconfig.tsbuildinfo
 /ranger
 ui/dist/
 ui/node_modules/
+/.mega/environment.yaml

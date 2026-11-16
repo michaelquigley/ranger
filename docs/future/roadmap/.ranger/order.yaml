@@ -2,6 +2,7 @@ horizon:
   - cross-repo-aggregation.md
   - richer-log.md
 researching:
+  - field-notes-from-megas-roadmap.md
   - issues-or-punchlist.md
   - batches-slices-and-follow-ups.md
   - linking.md
@@ -12,4 +13,3 @@ researching:
 inbox:
 building:
 evaluating:
-  - dirty-projects-first.md
