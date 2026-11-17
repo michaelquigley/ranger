@@ -39,3 +39,9 @@ A running record of what working mega's roadmap shows about ranger and about roa
 
 - **Lanes were right and contents were not.** Every card was in the correct lane. Ten cards said things that had stopped being true because other cards had been built: a requirement that no longer exists, a dependency now met, a finding since fixed, a measurement four days old. Each got a dated "where this stands" section by hand. A card has no way to know that something it mentions has changed.
 - **A card's claims about another card are the fragile part.** "Depends on X", "written after Y", "the rehearsal found Z" all went stale the moment X, Y or Z moved. The claims that stayed true were the ones about the card's own subject.
+
+## 2026-11-17
+
+- **Closing two cards left references behind again.** The demo's card and the remote-access card were removed once done. The epic still listed both as stories, one as "next", and two other cards named them. The same thing happened on 2026-11-13 with a different card. Each time it was found by a later pass over the board, not at the moment of closing.
+- **A new feature quietly depended on something an older card plans to remove.** The marker for the agent last instructed reads its time from the full scan of each log at start-up. A horizon card exists to stop that scan. Nothing connected the two until a review noticed, and the connection is now a paragraph on the older card.
+- **The first pull request from outside brought issues the roadmap had no door for.** Its description listed five failing tests it had not fixed, two of them real product gaps. They arrived on the forge, in prose, on someone else's pull request. They reached the roadmap because the planning agent read the description and copied them onto an existing card. Bears on `issues-or-punchlist`: an outside report is neither a card nor yet an issue of ours, and the link from the card back to the pull request is a sentence.
