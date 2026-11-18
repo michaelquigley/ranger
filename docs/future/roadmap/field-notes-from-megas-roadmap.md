@@ -45,3 +45,26 @@ A running record of what working mega's roadmap shows about ranger and about roa
 - **Closing two cards left references behind again.** The demo's card and the remote-access card were removed once done. The epic still listed both as stories, one as "next", and two other cards named them. The same thing happened on 2026-11-13 with a different card. Each time it was found by a later pass over the board, not at the moment of closing.
 - **A new feature quietly depended on something an older card plans to remove.** The marker for the agent last instructed reads its time from the full scan of each log at start-up. A horizon card exists to stop that scan. Nothing connected the two until a review noticed, and the connection is now a paragraph on the older card.
 - **The first pull request from outside brought issues the roadmap had no door for.** Its description listed five failing tests it had not fixed, two of them real product gaps. They arrived on the forge, in prose, on someone else's pull request. They reached the roadmap because the planning agent read the description and copied them onto an existing card. Bears on `issues-or-punchlist`: an outside report is neither a card nor yet an issue of ours, and the link from the card back to the pull request is a sentence.
+
+## 2026-11-18: trimming the board to show it
+
+Michael wanted the roadmap in its clearest shape for a presentation. The board went from 48 cards to 29 in one pass.
+
+- **Three different ways a card left the board, and one act for all of them.** Twelve were closed after real use. Four were folded into another card. Three were taken off because the spec already holds the idea. One was done on the spot and closed. On disk each is the same thing: a deleted file. Only the journal says which was which.
+- **Closing needs evidence, and the evidence was outside the board.** "Has this had enough use to close" was answered by reading installed versions, counting snapshots and recalling what the operator had confirmed. A card in evaluating does not know what it is waiting for or whether it has happened.
+- **Twenty deletions meant rewording references in ten other files,** including the spec, the system description and a research report. A scan for backticked names with no card behind them found the rest. That scan is the tool this board has lacked every time a card was closed.
+- **A fold loses the folded card's history unless it is written into the survivor by hand.** Each survivor got a dated section saying what joined it and why.
+- **An epic's place was explained in words.** It sits in evaluating because external operators have built the thing several times while its last stories stay open. No lane says "the aim is being met and work remains".
+
+## 2026-11-18: where ranger is headed, in Michael's words
+
+From his presentation of mega, the seventh of seven future directions: "ranger grows an extensive metadata model. today ranger is just a roadmap board. future ranger manages roadmap epics, punchlists, defects, specs+work orders, and other structured project artifacts."
+
+Everything on this card is evidence for that. The notes group under the things he names:
+
+- **Epics.** An epic with nowhere to sit; its list of stories going stale in two days; a card becoming an epic within the hour; an epic's place in a lane explained in words.
+- **Punchlists and defects.** A follow-ups card whose items age unevenly; an outside pull request whose five reported failures had no door into the roadmap.
+- **Specs and work orders.** A new feature that leaned on something an older card plans to remove, with nothing connecting the two; a deferred idea that lives in the spec and on a card at once, until a trim had to say which.
+- **Structure a card lacks.** No way to say what it waits for, who it waits on, or what it has been evidenced by; position meaning something different in each lane; closing, folding and removing all being the deletion of a file.
+
+On the same day the same idea was recorded from mega's side: its hub epic lists this as the seventh direction and points here.
