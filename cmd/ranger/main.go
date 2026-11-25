@@ -11,8 +11,9 @@ import (
 
 	"github.com/michaelquigley/df/dl"
 	"github.com/michaelquigley/push/build"
-	"github.com/spf13/cobra"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 	"github.com/michaelquigley/ranger/internal/workspace"
+	"github.com/spf13/cobra"
 )
 
 func main() {
@@ -42,6 +43,7 @@ func newRootCmd() *cobra.Command {
 	}
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
 	cmd.AddCommand(newServeCmd(), newDaemonCmd(), newDesktopCmd(), newListCmd(), newStateCmd(), build.NewVersionCmd("ranger"))
+	cmd.AddCommand(v2Commands()...)
 	return cmd
 }
 
@@ -58,6 +60,18 @@ func discovered() (*workspace.Workspace, error) {
 }
 
 func runCapture(args []string) error {
+	w, err := discovered()
+	if err != nil {
+		return err
+	}
+	convention, err := v2.Detect(w.Root())
+	if err != nil {
+		return err
+	}
+	if convention == v2.V2 {
+		return fmt.Errorf("capture is not built yet for ranger v2")
+	}
+
 	editor := os.Getenv("RANGER_EDITOR")
 	if editor == "" {
 		editor = os.Getenv("EDITOR")
@@ -66,10 +80,6 @@ func runCapture(args []string) error {
 		return fmt.Errorf("no editor configured: set RANGER_EDITOR or EDITOR")
 	}
 
-	w, err := discovered()
-	if err != nil {
-		return err
-	}
 	temp, err := w.CreateDraft(strings.Join(args, " "), "")
 	if err != nil {
 		return err

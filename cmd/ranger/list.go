@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/michaelquigley/ranger/internal/model"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
+	"github.com/spf13/cobra"
 )
 
 // newListCmd renders the board as plain text: lanes in lifecycle order,
@@ -19,6 +20,13 @@ func newListCmd() *cobra.Command {
 			w, err := discovered()
 			if err != nil {
 				return err
+			}
+			convention, err := v2.Detect(w.Root())
+			if err != nil {
+				return err
+			}
+			if convention == v2.V2 {
+				return fmt.Errorf("use ranger roadmap or ranger queue in a v2 project")
 			}
 			snap, err := w.Load()
 			if err != nil {

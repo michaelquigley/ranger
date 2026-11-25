@@ -1,6 +1,6 @@
 # Ranger v2 work order
 
-status: reviewed and ready to build. Mercurius session `s_Fm1UH1qg9BAU` reviewed both documents over six rounds and returned `ready_to_build` on 2026-11-24. Implementation has not started.
+status: reviewed and ready to build. Mercurius session `s_Fm1UH1qg9BAU` reviewed both documents over six rounds and returned `ready_to_build` on 2026-11-24. Stage 1 implementation is in the working tree for operator review.
 
 Paired with the [spec](ranger-v2.md). Its "The first design" section is the authority on behavior. This document holds the mechanism: where the code goes, in what order, and what each stage has to prove.
 
@@ -18,8 +18,8 @@ One precondition sits outside this repository. Stage 2 widens the status read's 
 
 What exists, and what v2 builds beside.
 
-- `internal/model` is the pure v1 domain: five states including `researching`, `Slug`, the flags, and `ComputeBoard`. v2 uses `Slug` and nothing else from it.
-- `internal/document` is the only production package that imports `gopkg.in/yaml.v3`, which the terminus quality `surgical-writes` requires. The contract census test imports it too, to inspect the API spec. Its two-pass parse (`parseMapping`, `scanSpans`, `nodeToPlain`), its scalar emission (`emitScalar`) and its span patch are unexported. `Hash`, `CompareAndWrite`, `FinalizeLink`, `VersionAbsent`, `ConflictError` and `CollisionError` are exported.
+- `internal/model` is the pure v1 domain: five states including `researching`, `Slug`, the flags, and `ComputeBoard`. `internal/slug` owns the shared slug rule. `model.Slug` is the compatibility entry point used by v1, `internal/config` and the server.
+- `internal/document` is the only package that imports `gopkg.in/yaml.v3`, which the terminus quality `surgical-writes` requires. Its two-pass parse (`parseMapping`, `scanSpans`, `nodeToPlain`), its scalar emission (`emitScalar`) and its span patch are unexported. `Hash`, `CompareAndWrite`, `FinalizeLink`, `VersionAbsent`, `ConflictError` and `CollisionError` are exported.
 - `internal/workspace` holds v1's load and gestures against `docs/future/roadmap/`, `DiscoverRoot`, and the program's one `git status` invocation in `gitstatus.go`.
 - `internal/server` resolves a project name to a v1 workspace (`Projects.Resolve`), judges availability by a v1 load (`Projects.Index`), and translates model to wire in its handlers. `buildMux` in `cmd/ranger/serve.go` mounts the API, the `/roadmap/` asset route and the SPA.
 - `internal/api/specs/ranger.yml` is the contract. `projectStatus` has no convention field. `census_test.go` requires every operation except `GET /projects` to sit under `/projects/{project}`.
@@ -28,11 +28,13 @@ What exists, and what v2 builds beside.
 
 ## shared mechanism
 
-**Packages.** v2 lives in `internal/v2/document`, `internal/v2/model` and `internal/v2/workspace`. `internal/document` gains one new file that exports the convention-neutral primitives v2 needs: the two-pass field parse with write spans, a top-level sequence parse with line numbers, scalar emission, and span replacement. No existing function in `internal/document` changes, and its byte-exact fixture suite passing untouched is the proof. v2 packages never import `yaml.v3`.
+**Packages.** v2 lives in `internal/v2/document`, `internal/v2/model` and `internal/v2/workspace`. `internal/document` gains one new file that exports the convention-neutral primitives v2 needs: the two-pass field parse with write spans, a top-level sequence parse with line numbers, scalar emission, and span replacement. No existing function in `internal/document` changes, and its byte-exact fixture suite passing untouched is the proof. v2 packages never import `yaml.v3`. The slug rule moves to a leaf package of its own. `model.Slug` stays as a pass-through, so no v1 call site or test changes, and `internal/v2/model` imports nothing from `internal/model`.
 
 **Detection.** When `docs/future/.ranger/version.yaml` exists and reads `version: 2` the project is v2. Without a `docs/future/.ranger/` directory it is v1, including the no-roadmap-yet case v1 already handles. A `.ranger/` directory with no `version.yaml`, a `version.yaml` that cannot be read, and any version other than 2 are each a project error naming the file. `version.yaml` wins: in a v2 project a `docs/future/roadmap/` directory is an item when it holds an `index.md`, and is otherwise left alone like anything else there. Ranger never writes `version.yaml`. One function answers this for the CLI and the server. `DiscoverRoot` gains `docs/future/.ranger/` as a claim beside `docs/future/roadmap/`. In a tree without that directory it walks exactly as before, and the `.git` check stays `Lstat` only.
 
 **Reading a project.** Items are the directories directly under `docs/future/` whose name does not begin with `.` and that hold an `index.md`. An item's key is its directory name: views, links and every lookup use it. The slug of the title is used at capture and for the mismatch flag, and nowhere else. For each, read `index.md` (raw bytes, hash, parsed), whether `design.md` exists, `plan.md` if present, the stage files, and the names of its other files. Then read `.ranger/roadmap.yaml` and `.ranger/queue.yaml`. A view file holds one slug per line. A flow-style list is read as well, and becomes one per line when a write targets the file, as v1 does for a flow lane. An absent view file is an empty list with the absent version, and so is an empty or comment-only one with its own version. An unreadable one is that view's error and nothing else's. Every load is a fresh read, and a load writes nothing.
+
+**Symlinks.** The v2 reader follows none. Before it opens or lists anything it checks each project-relative component with `Lstat`, as the asset handler does. A symlink at `docs`, `docs/future`, `.ranger` or `version.yaml` is a project error naming it, and a symlinked view file is that view's error. A symlinked directory under `docs/future` is not an item. A symlinked `index.md`, `design.md`, `plan.md`, `stages` directory or stage file counts as missing. `DiscoverRoot` tests the `.ranger` claim with `Lstat`, so a symlinked one still claims the root and detection reports it. v1's reader does not change. The check is best-effort against the tree as found: a path swapped for a symlink between the check and the open is out of scope, root discovery's existence probes are not reads, and the asset route keeps checking from the directory it serves.
 
 **Item fields.** The claimed keys are v1's plus `since`, `kind`, `includes`, `requires`, `blocked_on` and `needs`. `title`, `state` and `created` stay required. Each field validates independently, as in v1: a bad `kind` is a malformed flag and the item keeps its lane. An unreadable `state` is Inbox. A link entry is `slug` or `project:slug`, split at the first colon.
 
@@ -59,7 +61,7 @@ What exists, and what v2 builds beside.
 - `internal/v2/document`: the item, plan, stage and view parsers, and the body scan.
 - `internal/v2/model`.
 - `internal/v2/workspace`: detection, discovery and load.
-- The CLI reads: `ranger roadmap`, `ranger queue`, `ranger needs`, `ranger show <item>` and `ranger flags`, each a plain renderer over the model. In a v2 project `list` names `roadmap` and `queue` and stops, and capture and `state` say they are not built yet. In a v1 project the five new commands name the convention and stop. Registering them reserves their names as first words in every project, which the spec records as the one v1 change; a quoted title is one argument, matches no command, and still reaches capture.
+- The CLI reads: `ranger roadmap`, `ranger queue`, `ranger needs`, `ranger show <item>` and `ranger flags`, each a plain renderer over the model. In a v2 project `list` names `roadmap` and `queue` and stops, and capture and `state` say they are not built yet. In a v1 project the five new commands name the convention and stop. Registering them reserves their names as first words in every project, which the spec records as the one v1 change. A quoted multiword title reaches capture as one argument. A quoted reserved word on its own still invokes the command.
 - `docs/current/v2-convention.md`: the convention as built, written for an agent with a text editor, ending with the paragraph a trial project's `AGENTS.md` carries. It shows `version.yaml`, and the one link form ranger reads, with an example.
 - Fixtures: the spec's two rehearsals as testdata trees, the BAAB item with its plan and one stage and the Screeningroom punchlist with its broken-out item.
 
@@ -77,8 +79,9 @@ Acceptance:
 - A checkbox under a `##` heading in the Screeningroom fixture does not change the count.
 - One fixture removes an item that a body link, a typed link and a view file all name, and asserts each flag: two on the referring item and one on the view line.
 - v1's suites pass unmodified, and a v1 fixture project behaves as before under every v1 command.
-- In a v1 project, a quoted title that begins with a new command word is captured, and the same words unquoted reach the command.
+- In a v1 project, a quoted multiword title that begins with a new command word is captured, and the same words unquoted reach the command.
 - A fixture holding only `version.yaml` and Inbox items, with no view files, is read as v2. A v2 fixture with an item named `roadmap` is read as v2, with that item in its lane. A `.ranger/` directory without `version.yaml` errors, naming the file.
+- Symlinks are refused, and the fixture is hostile: a symlinked item directory, a symlinked `index.md` and a symlinked view file each point at real content elsewhere, and none of that content or its names reaches any CLI output. A symlinked `.ranger/` or `version.yaml` is a project error naming it.
 
 ## stage 2: serve the reads
 

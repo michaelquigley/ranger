@@ -115,6 +115,8 @@ An item is a directory under `docs/future/` that holds an `index.md`. The direct
 
 The directory name is the item's name everywhere: in the view files, in links, and on the command line. When a title edit leaves the two out of step, the item keeps its directory name and its place, and the mismatch is flagged.
 
+Ranger follows no symlink in a v2 project. A symlink on the way to the project's files, at `docs/`, `docs/future/`, `.ranger/` or `version.yaml`, is a project error that names it, and a symlinked view file is that view's error. Below that, a symlinked directory is not an item, and a symlinked file inside an item counts as missing, so the existing flags report it.
+
 ```text
 docs/future/
   .ranger/
@@ -320,7 +322,7 @@ This is content, not layout. Placement is worked out in use.
 
 The CLI prints the same five for an agent: `ranger roadmap`, `ranger queue`, `ranger needs`, `ranger show <item>` and `ranger flags`.
 
-These five names become reserved first words on the command line in every project, v1 included, as v1's own command names already are. `ranger queue follow-up` no longer captures a card. A title that starts with one of them is captured by quoting it: `ranger "queue follow-up"`. This is the one place v1's behavior changes.
+These five names become reserved first words on the command line in every project, v1 included, as v1's own command names already are. `ranger queue follow-up` no longer captures a card. Quote a multiword title to capture it, as in `ranger "queue follow-up"`. A quoted reserved word on its own still invokes the command. This is the one place v1's behavior changes.
 
 ### Gestures
 
@@ -354,7 +356,7 @@ Ranger reads no file contents from git, and the first build has no review surfac
 
 The boundary calls for the code, recorded so review can check against them.
 
-- **v1 and v2 code: separate.** v2 is new packages beside v1's, and v1's packages do not change behavior. The one change a v1 project sees is the five reserved command names, recorded under Surfaces. v2 may use v1's convention-neutral pieces from where they live: the slug rule, the hash guard, the guarded write, and the frontmatter parse. There is one CLI, one server, one API contract and one UI, each telling a v1 project from a v2 project. v1 has to stay in service unchanged through the trial, and retiring it should be a deletion.
+- **v1 and v2 code: separate.** v2 is new packages beside v1's, and v1's packages do not change behavior. The one change a v1 project sees is the five reserved command names, recorded under Surfaces. The slug rule moves to a leaf package of its own that both conventions use, with v1's entry point kept. v2 uses the hash guard, the guarded write and the frontmatter parse from `internal/document`, where they live. There is one CLI, one server, one API contract and one UI, each telling a v1 project from a v2 project. v1 has to stay in service unchanged through the trial, and retiring it should be a deletion.
 - **Model and rendering: separate.** Views, links, Needs you and flags are computed with no files and no rendering. Two renderers read them, the CLI and the UI.
 - **Model and transport: separate.** Wire types exist only at the server's edge.
 - **Reads and writes.** Reads go through `dd`. Writes are line patches, never a YAML encoder. The reviewable diff is the safety property.
@@ -362,6 +364,7 @@ The boundary calls for the code, recorded so review can check against them.
 - **No unprompted writes.** Ranger marks and never fixes. v1's one exception, the `order.yaml` migration, has no counterpart.
 - **The body.** Ranger reads inline links and checkboxes there, and nothing else. Revisit if a kind needs more structure than a checklist.
 - **Git.** One read-only `git status`, scoped to `docs/future/`. Revisit if the trial shows the IDE is not enough for review.
+- **Symlinks.** The v2 reader refuses the symlinks it finds where it reads. It is a plain refusal, checked when read, and not a guarantee against a tree that changes underneath it. v1's reader is unchanged.
 - **Errors by tier.** An unreadable view file fails its own view, and the other view still shows. This differs from v1, where an unreadable `order.yaml` fails the project; agents now hand-edit these files, so a slip should cost less. A bad `index.md` is a flagged item, never a failed project. A bad plan or stage file is a flag on its item.
 
 ### The trial

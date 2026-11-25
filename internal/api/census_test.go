@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v3"
+	"github.com/michaelquigley/df/dd"
 )
 
 // TestContractCensus proves the project scoping over the parsed spec
@@ -18,9 +18,9 @@ func TestContractCensus(t *testing.T) {
 		t.Fatal(err)
 	}
 	var spec struct {
-		Paths map[string]any `yaml:"paths"`
+		Paths map[string]struct{}
 	}
-	if err := yaml.Unmarshal(raw, &spec); err != nil {
+	if err := dd.BindYAML(&spec, raw); err != nil {
 		t.Fatal(err)
 	}
 	if len(spec.Paths) < 2 {

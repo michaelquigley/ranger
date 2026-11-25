@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/michaelquigley/ranger/internal/model"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
+	"github.com/spf13/cobra"
 )
 
 // newStateCmd is the transition gesture from the terminal: no placement,
@@ -16,13 +17,20 @@ func newStateCmd() *cobra.Command {
 		Short: "transition an item to a new state",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(_ *cobra.Command, args []string) error {
-			state, ok := model.ParseState(args[1])
-			if !ok {
-				return fmt.Errorf("unknown state %q; states are %s", args[1], laneNames())
-			}
 			w, err := discovered()
 			if err != nil {
 				return err
+			}
+			convention, err := v2.Detect(w.Root())
+			if err != nil {
+				return err
+			}
+			if convention == v2.V2 {
+				return fmt.Errorf("state is not built yet for ranger v2")
+			}
+			state, ok := model.ParseState(args[1])
+			if !ok {
+				return fmt.Errorf("unknown state %q; states are %s", args[1], laneNames())
 			}
 			snap, err := w.Load()
 			if err != nil {

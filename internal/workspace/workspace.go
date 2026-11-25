@@ -13,6 +13,7 @@ import (
 
 	"github.com/michaelquigley/ranger/internal/document"
 	"github.com/michaelquigley/ranger/internal/model"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 )
 
 // RoadmapRel is the roadmap directory, relative to the root.
@@ -84,14 +85,16 @@ func (w *Workspace) mkRangerDir() error {
 }
 
 // DiscoverRoot finds the repository root by a single upward walk from
-// startDir: at each ancestor, a docs/future/roadmap/ directory claims the
-// root; failing that, any entry named .git — file or directory, never
-// opened — claims it and walls the walk, because a repo boundary is a wall,
-// not a waypoint. exhaustion falls back to startDir.
+// startDir. at each ancestor, docs/future/roadmap/ or docs/future/.ranger/
+// claims the root. failing that, an entry named .git stops the walk at the
+// repository boundary. exhaustion falls back to startDir.
 func DiscoverRoot(startDir string) string {
 	dir := startDir
 	for {
 		if info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(RoadmapRel))); err == nil && info.IsDir() {
+			return dir
+		}
+		if info, err := os.Lstat(filepath.Join(dir, v2.RangerRel)); err == nil && (info.IsDir() || info.Mode()&os.ModeSymlink != 0) {
 			return dir
 		}
 		if _, err := os.Lstat(filepath.Join(dir, ".git")); err == nil {
