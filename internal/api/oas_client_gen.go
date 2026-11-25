@@ -59,6 +59,18 @@ type Invoker interface {
 	//
 	// GET /projects
 	GetProjects(ctx context.Context) (*ProjectIndex, error)
+	// GetV2Item invokes getV2Item operation.
+	//
+	// One v2 item's raw content, relationships, plan, and files.
+	//
+	// GET /projects/{project}/v2/items/{slug}
+	GetV2Item(ctx context.Context, params GetV2ItemParams) (GetV2ItemRes, error)
+	// GetV2Project invokes getV2Project operation.
+	//
+	// Both v2 views and their shared item summaries from a fresh load.
+	//
+	// GET /projects/{project}/v2/project
+	GetV2Project(ctx context.Context, params GetV2ProjectParams) (GetV2ProjectRes, error)
 	// RenameToSlug invokes renameToSlug operation.
 	//
 	// Repair the filename-mismatch flag with one rename.
@@ -627,6 +639,210 @@ func (c *Client) sendGetProjects(ctx context.Context) (res *ProjectIndex, err er
 
 	stage = "DecodeResponse"
 	result, err := decodeGetProjectsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV2Item invokes getV2Item operation.
+//
+// One v2 item's raw content, relationships, plan, and files.
+//
+// GET /projects/{project}/v2/items/{slug}
+func (c *Client) GetV2Item(ctx context.Context, params GetV2ItemParams) (GetV2ItemRes, error) {
+	res, err := c.sendGetV2Item(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetV2Item(ctx context.Context, params GetV2ItemParams) (res GetV2ItemRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV2Item"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/projects/{project}/v2/items/{slug}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV2ItemOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/v2/items/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Slug))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV2ItemResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetV2Project invokes getV2Project operation.
+//
+// Both v2 views and their shared item summaries from a fresh load.
+//
+// GET /projects/{project}/v2/project
+func (c *Client) GetV2Project(ctx context.Context, params GetV2ProjectParams) (GetV2ProjectRes, error) {
+	res, err := c.sendGetV2Project(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetV2Project(ctx context.Context, params GetV2ProjectParams) (res GetV2ProjectRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getV2Project"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/projects/{project}/v2/project"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetV2ProjectOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/projects/"
+	{
+		// Encode "project" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "project",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.Project))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/v2/project"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetV2ProjectResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

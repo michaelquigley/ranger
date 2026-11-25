@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+FEATURE: the Ranger API serves v2 projects and item details. The project index reports the detected convention and checks availability with the corresponding reader. A v2 project read supplies both views, item summaries, Needs you, flags, view versions, and staged, unstaged, and new marks from one Git status under `docs/future/`. An unreadable view carries its own error. The item read supplies raw text, hash, links, plan and stage facts, and the sidecar list. The `/future/{project}/` route serves attachments from the same project directory.
+
 FEATURE: the Ranger v2 reader recognizes projects marked by `docs/future/.ranger/version.yaml`. The `roadmap`, `queue`, `needs`, `show <item>`, and `flags` commands read item directories, flat view files, and posted plan and stage facts. These commands reserve their names in v1 too. Quote a multiword v1 capture title that starts with one of them. A quoted reserved word on its own still invokes the command.
 
 CHANGE: dirty projects first — the project selector lists boards with uncommitted changes first, under an `uncommitted` option group with the rest under `projects`, config order kept within each, so the open list leads with what still needs a commit. The groups appear only when both halves are non-empty; a wholly clean index renders as the plain list it always was. Presentation only: the project index on the wire stays in config order.

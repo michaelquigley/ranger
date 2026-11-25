@@ -1,9 +1,6 @@
 package workspace
 
-import (
-	"os/exec"
-	"strings"
-)
+import "github.com/michaelquigley/ranger/internal/gitstatus"
 
 // GitStatus is one fresh read of the roadmap directory's uncommitted
 // state. read is the operative word: the 2026-07-21 design change opened
@@ -27,28 +24,13 @@ type GitStatus struct {
 // directory — read-only, fresh per call, and modified, staged, and
 // untracked all count: every one is work the operator hasn't committed.
 func (w *Workspace) GitStatus() GitStatus {
-	out, err := exec.Command("git", "-C", w.root, "status", "--porcelain", "-z", "--untracked-files=all", "--", RoadmapRel).Output()
-	if err != nil {
+	git := gitstatus.Read(w.root, RoadmapRel)
+	if !git.Known {
 		return GitStatus{}
 	}
-	status := GitStatus{Known: true, Files: map[string]bool{}}
-	fields := strings.Split(string(out), "\x00")
-	for i := 0; i < len(fields); i++ {
-		entry := fields[i]
-		if len(entry) < 4 {
-			continue
-		}
-		xy, path := entry[:2], entry[3:]
-		// a rename or copy entry carries the original path as its own
-		// NUL-separated field; consume it without recording — the file it
-		// names no longer exists to highlight.
-		if strings.ContainsAny(xy, "RC") {
-			i++
-		}
-		if rel, ok := strings.CutPrefix(path, RoadmapRel+"/"); ok {
-			status.Files[rel] = true
-			status.Dirty = true
-		}
+	status := GitStatus{Known: true, Dirty: len(git.Paths) != 0, Files: make(map[string]bool, len(git.Paths))}
+	for path := range git.Paths {
+		status.Files[path] = true
 	}
 	return status
 }

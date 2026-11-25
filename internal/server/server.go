@@ -7,11 +7,13 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/michaelquigley/ranger/internal/api"
 	"github.com/michaelquigley/ranger/internal/document"
 	"github.com/michaelquigley/ranger/internal/model"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
@@ -38,19 +40,22 @@ func (s *Server) NewError(_ context.Context, err error) *api.ServerErrorStatusCo
 	}
 }
 
-// resolve maps the {project} path segment to its workspace. an unknown
-// name returns the operation's 404 body; a config source failure is the
-// request's plain error, healed on the next good save.
-func (s *Server) resolve(name string) (*workspace.Workspace, *api.ErrorResponse, error) {
-	w, err := s.projects.Resolve(name)
+// resolve checks the convention before an operation can load or write.
+func (s *Server) resolve(name string, want v2.Convention) (Project, *api.ErrorResponse, *api.ConventionMismatch, error) {
+	project, err := s.projects.Resolve(name)
 	if err != nil {
 		var unknown *UnknownProjectError
 		if errors.As(err, &unknown) {
-			return nil, &api.ErrorResponse{Message: err.Error()}, nil
+			return Project{}, &api.ErrorResponse{Message: err.Error()}, nil, nil
 		}
-		return nil, nil, err
+		return Project{}, nil, nil, err
 	}
-	return w, nil, nil
+	if project.Convention != want {
+		return Project{}, nil, &api.ConventionMismatch{
+			Message: fmt.Sprintf("project %q uses convention v%d (operation requires v%d)", name, project.Convention, want),
+		}, nil
+	}
+	return project, nil, nil, nil
 }
 
 // asConflict maps the document layer's typed refusals onto the wire's 409

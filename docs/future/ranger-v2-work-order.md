@@ -1,6 +1,6 @@
 # Ranger v2 work order
 
-status: reviewed and ready to build. Mercurius session `s_Fm1UH1qg9BAU` reviewed both documents over six rounds and returned `ready_to_build` on 2026-11-24. Stage 1 implementation is in the working tree for operator review.
+status: reviewed and ready to build. Mercurius session `s_Fm1UH1qg9BAU` reviewed both documents over six rounds and returned `ready_to_build` on 2026-11-24. Stage 1 is accepted, committed as `69229b0` on 2026-11-25. Stage 2 is next and has not started.
 
 Paired with the [spec](ranger-v2.md). Its "The first design" section is the authority on behavior. This document holds the mechanism: where the code goes, in what order, and what each stage has to prove.
 

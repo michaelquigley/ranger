@@ -40,6 +40,18 @@ type Handler interface {
 	//
 	// GET /projects
 	GetProjects(ctx context.Context) (*ProjectIndex, error)
+	// GetV2Item implements getV2Item operation.
+	//
+	// One v2 item's raw content, relationships, plan, and files.
+	//
+	// GET /projects/{project}/v2/items/{slug}
+	GetV2Item(ctx context.Context, params GetV2ItemParams) (GetV2ItemRes, error)
+	// GetV2Project implements getV2Project operation.
+	//
+	// Both v2 views and their shared item summaries from a fresh load.
+	//
+	// GET /projects/{project}/v2/project
+	GetV2Project(ctx context.Context, params GetV2ProjectParams) (GetV2ProjectRes, error)
 	// RenameToSlug implements renameToSlug operation.
 	//
 	// Repair the filename-mismatch flag with one rename.

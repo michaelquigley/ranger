@@ -5,7 +5,7 @@ created: 2026-07-21
 
 # the daemon
 
-`ranger daemon` is the resident serving story: a tray process that knows every root the operator cares about, serves all of them from one HTTP server on `127.0.0.1:{port}`, and opens browser windows on request. The convention does not move — the daemon is still just a reader over files in working trees, it never touches git, and every write is the same guarded, surgical gesture against whichever project the operator is working. The daemon changes where the reader lives, not what it is.
+`ranger daemon` is the resident serving story: a tray process that knows every root the operator cares about, serves all of them from one HTTP server on `127.0.0.1:{port}`, and opens browser windows on request. The daemon reads each root using its detected convention, including availability checks and Git status in the project index. It shares the single read-only status command and both asset routes with `ranger serve`. Operator gestures use the same v1 guards and surgical file edits.
 
 ## the config
 
@@ -19,7 +19,7 @@ default: ranger
 port: 4114
 ```
 
-Each entry names a repository root — the directory whose `docs/future/roadmap/` is the project's roadmap. A project's name defaults to the slug of its root's basename (`My Repo` → `my-repo`, the same ASCII-mechanical rule item filenames live by), overridable with an explicit `name:` for the rare collision. Because names are slug-shaped, they drop into `/p/{name}`, the API's `{project}` segment, and `/roadmap/{name}/…` verbatim — no encoding rule exists anywhere in the system. `default:` names the project the bare board URL lands on (absent, the first entry); `port:` is the listen port (absent, 4114; an explicit `--port` flag wins — cobra's `Changed`, not a zero-value check).
+Each `root` is a repository directory. Ranger reads v1 roadmaps from `docs/future/roadmap/` and recognizes v2 projects by `docs/future/.ranger/version.yaml`. A project's name defaults to the slug of its root's basename (`My Repo` → `my-repo`, the same ASCII-mechanical rule item filenames live by), overridable with an explicit `name:` for the rare collision. Because names are slug-shaped, they drop into `/p/{name}`, the API's `{project}` segment, and `/roadmap/{name}/…` verbatim — no encoding rule exists anywhere in the system. `default:` names the project the bare board URL lands on (absent, the first entry); `port:` is the listen port (absent, 4114; an explicit `--port` flag wins — cobra's `Changed`, not a zero-value check).
 
 Normalization is fail-loud at load: an absent or empty `projects` list, a root still relative after `~` expansion (a tray daemon's cwd is whatever the desktop session felt like), a basename that slugifies to nothing, a `name:` that isn't slug-shaped, duplicate names, or a `default:` naming no configured project — each is a load error naming the fix. There is no discovery, no registration gesture, no auto-detection: the config is a hand-edited file, judgment-gated by the same editor-and-eyes discipline as everything else in the practice.
 
@@ -45,7 +45,7 @@ Recorded deliberately; a failure handled at the wrong tier is a review finding.
 
 ## serve, the degenerate case
 
-`ranger serve` survives as the ad-hoc, zero-config path: run it anywhere inside a repo and get that one project's board. Under the covers it is the daemon's server with a synthesized one-project config from the discovered root — built through the *same* normalization the file-backed loader runs, so the name grammar holds — no tray, foreground, fail-fast at startup. One server implementation, two entry commands, no divergence to maintain.
+`ranger serve` runs the server for one discovered project without a config file. It serves the v1 board for v1 projects. For v2 projects it serves the read API and future assets. Under the covers it is the daemon's server with a synthesized one-project config from the discovered root — built through the *same* normalization the file-backed loader runs, so the name grammar holds — no tray, foreground, fail-fast at startup. One server implementation, two entry commands, no divergence to maintain.
 
 Port collision between a running daemon and an ad-hoc serve is handled by nobody: the bind fails, the error says so plainly, the operator picks another port. No single-instance enforcement, no port scanning.
 

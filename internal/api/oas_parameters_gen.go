@@ -380,6 +380,189 @@ func decodeGetItemParams(args [2]string, argsEscaped bool, r *http.Request) (par
 	return params, nil
 }
 
+// GetV2ItemParams is parameters of getV2Item operation.
+type GetV2ItemParams struct {
+	Project string
+	Slug    string
+}
+
+func unpackGetV2ItemParams(packed middleware.Parameters) (params GetV2ItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "slug",
+			In:   "path",
+		}
+		params.Slug = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetV2ItemParams(args [2]string, argsEscaped bool, r *http.Request) (params GetV2ItemParams, _ error) {
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: slug.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "slug",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Slug = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "slug",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetV2ProjectParams is parameters of getV2Project operation.
+type GetV2ProjectParams struct {
+	Project string
+}
+
+func unpackGetV2ProjectParams(packed middleware.Parameters) (params GetV2ProjectParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "project",
+			In:   "path",
+		}
+		params.Project = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetV2ProjectParams(args [1]string, argsEscaped bool, r *http.Request) (params GetV2ProjectParams, _ error) {
+	// Decode path: project.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "project",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.Project = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "project",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // RenameToSlugParams is parameters of renameToSlug operation.
 type RenameToSlugParams struct {
 	Project  string

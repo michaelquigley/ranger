@@ -364,6 +364,32 @@ func (s *ConflictReason) UnmarshalText(data []byte) error {
 	}
 }
 
+// Ref: #/components/schemas/conventionMismatch
+type ConventionMismatch struct {
+	// Names the project's actual and required conventions.
+	Message string `json:"message"`
+}
+
+// GetMessage returns the value of Message.
+func (s *ConventionMismatch) GetMessage() string {
+	return s.Message
+}
+
+// SetMessage sets the value of Message.
+func (s *ConventionMismatch) SetMessage(val string) {
+	s.Message = val
+}
+
+func (*ConventionMismatch) deleteItemRes()     {}
+func (*ConventionMismatch) getBoardRes()       {}
+func (*ConventionMismatch) getItemRes()        {}
+func (*ConventionMismatch) getV2ItemRes()      {}
+func (*ConventionMismatch) getV2ProjectRes()   {}
+func (*ConventionMismatch) reorderLaneRes()    {}
+func (*ConventionMismatch) saveContentRes()    {}
+func (*ConventionMismatch) searchItemsRes()    {}
+func (*ConventionMismatch) transitionItemRes() {}
+
 type CreateItemBadRequest ErrorResponse
 
 func (*CreateItemBadRequest) createItemRes() {}
@@ -440,6 +466,8 @@ func (s *ErrorResponse) SetMessage(val string) {
 func (*ErrorResponse) deleteItemRes()     {}
 func (*ErrorResponse) getBoardRes()       {}
 func (*ErrorResponse) getItemRes()        {}
+func (*ErrorResponse) getV2ItemRes()      {}
+func (*ErrorResponse) getV2ProjectRes()   {}
 func (*ErrorResponse) reorderLaneRes()    {}
 func (*ErrorResponse) saveContentRes()    {}
 func (*ErrorResponse) searchItemsRes()    {}
@@ -736,6 +764,52 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
+// NewOptProjectStatusConvention returns new OptProjectStatusConvention with value set to v.
+func NewOptProjectStatusConvention(v ProjectStatusConvention) OptProjectStatusConvention {
+	return OptProjectStatusConvention{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptProjectStatusConvention is optional ProjectStatusConvention.
+type OptProjectStatusConvention struct {
+	Value ProjectStatusConvention
+	Set   bool
+}
+
+// IsSet returns true if OptProjectStatusConvention was set.
+func (o OptProjectStatusConvention) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptProjectStatusConvention) Reset() {
+	var v ProjectStatusConvention
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptProjectStatusConvention) SetTo(v ProjectStatusConvention) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptProjectStatusConvention) Get() (v ProjectStatusConvention, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptProjectStatusConvention) Or(d ProjectStatusConvention) ProjectStatusConvention {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptState returns new OptState with value set to v.
 func NewOptState(v State) OptState {
 	return OptState{
@@ -828,6 +902,374 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// NewOptV2FlagView returns new OptV2FlagView with value set to v.
+func NewOptV2FlagView(v V2FlagView) OptV2FlagView {
+	return OptV2FlagView{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2FlagView is optional V2FlagView.
+type OptV2FlagView struct {
+	Value V2FlagView
+	Set   bool
+}
+
+// IsSet returns true if OptV2FlagView was set.
+func (o OptV2FlagView) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2FlagView) Reset() {
+	var v V2FlagView
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2FlagView) SetTo(v V2FlagView) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2FlagView) Get() (v V2FlagView, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2FlagView) Or(d V2FlagView) V2FlagView {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2GitMark returns new OptV2GitMark with value set to v.
+func NewOptV2GitMark(v V2GitMark) OptV2GitMark {
+	return OptV2GitMark{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2GitMark is optional V2GitMark.
+type OptV2GitMark struct {
+	Value V2GitMark
+	Set   bool
+}
+
+// IsSet returns true if OptV2GitMark was set.
+func (o OptV2GitMark) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2GitMark) Reset() {
+	var v V2GitMark
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2GitMark) SetTo(v V2GitMark) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2GitMark) Get() (v V2GitMark, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2GitMark) Or(d V2GitMark) V2GitMark {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2ItemSummaryKind returns new OptV2ItemSummaryKind with value set to v.
+func NewOptV2ItemSummaryKind(v V2ItemSummaryKind) OptV2ItemSummaryKind {
+	return OptV2ItemSummaryKind{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2ItemSummaryKind is optional V2ItemSummaryKind.
+type OptV2ItemSummaryKind struct {
+	Value V2ItemSummaryKind
+	Set   bool
+}
+
+// IsSet returns true if OptV2ItemSummaryKind was set.
+func (o OptV2ItemSummaryKind) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2ItemSummaryKind) Reset() {
+	var v V2ItemSummaryKind
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2ItemSummaryKind) SetTo(v V2ItemSummaryKind) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2ItemSummaryKind) Get() (v V2ItemSummaryKind, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2ItemSummaryKind) Or(d V2ItemSummaryKind) V2ItemSummaryKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2Plan returns new OptV2Plan with value set to v.
+func NewOptV2Plan(v V2Plan) OptV2Plan {
+	return OptV2Plan{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2Plan is optional V2Plan.
+type OptV2Plan struct {
+	Value V2Plan
+	Set   bool
+}
+
+// IsSet returns true if OptV2Plan was set.
+func (o OptV2Plan) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2Plan) Reset() {
+	var v V2Plan
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2Plan) SetTo(v V2Plan) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2Plan) Get() (v V2Plan, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2Plan) Or(d V2Plan) V2Plan {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2Progress returns new OptV2Progress with value set to v.
+func NewOptV2Progress(v V2Progress) OptV2Progress {
+	return OptV2Progress{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2Progress is optional V2Progress.
+type OptV2Progress struct {
+	Value V2Progress
+	Set   bool
+}
+
+// IsSet returns true if OptV2Progress was set.
+func (o OptV2Progress) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2Progress) Reset() {
+	var v V2Progress
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2Progress) SetTo(v V2Progress) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2Progress) Get() (v V2Progress, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2Progress) Or(d V2Progress) V2Progress {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2Relation returns new OptV2Relation with value set to v.
+func NewOptV2Relation(v V2Relation) OptV2Relation {
+	return OptV2Relation{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2Relation is optional V2Relation.
+type OptV2Relation struct {
+	Value V2Relation
+	Set   bool
+}
+
+// IsSet returns true if OptV2Relation was set.
+func (o OptV2Relation) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2Relation) Reset() {
+	var v V2Relation
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2Relation) SetTo(v V2Relation) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2Relation) Get() (v V2Relation, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2Relation) Or(d V2Relation) V2Relation {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2StageStatus returns new OptV2StageStatus with value set to v.
+func NewOptV2StageStatus(v V2StageStatus) OptV2StageStatus {
+	return OptV2StageStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2StageStatus is optional V2StageStatus.
+type OptV2StageStatus struct {
+	Value V2StageStatus
+	Set   bool
+}
+
+// IsSet returns true if OptV2StageStatus was set.
+func (o OptV2StageStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2StageStatus) Reset() {
+	var v V2StageStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2StageStatus) SetTo(v V2StageStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2StageStatus) Get() (v V2StageStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2StageStatus) Or(d V2StageStatus) V2StageStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptV2Verdict returns new OptV2Verdict with value set to v.
+func NewOptV2Verdict(v V2Verdict) OptV2Verdict {
+	return OptV2Verdict{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptV2Verdict is optional V2Verdict.
+type OptV2Verdict struct {
+	Value V2Verdict
+	Set   bool
+}
+
+// IsSet returns true if OptV2Verdict was set.
+func (o OptV2Verdict) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptV2Verdict) Reset() {
+	var v V2Verdict
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptV2Verdict) SetTo(v V2Verdict) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptV2Verdict) Get() (v V2Verdict, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptV2Verdict) Or(d V2Verdict) V2Verdict {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // Ref: #/components/schemas/projectIndex
 type ProjectIndex struct {
 	Projects []ProjectStatus `json:"projects"`
@@ -860,7 +1302,10 @@ type ProjectStatus struct {
 	Available bool   `json:"available"`
 	// The repository-level error for an unavailable root.
 	Error OptString `json:"error"`
-	// The board's uncommitted verdict, judged per project at index time; absent when git can't answer.
+	// The detected file convention, absent when detection fails.
+	Convention OptProjectStatusConvention `json:"convention"`
+	// Whether anything under the convention's scope is uncommitted. absent when the convention is
+	// unknown or git cannot answer.
 	Dirty OptBool `json:"dirty"`
 }
 
@@ -877,6 +1322,11 @@ func (s *ProjectStatus) GetAvailable() bool {
 // GetError returns the value of Error.
 func (s *ProjectStatus) GetError() OptString {
 	return s.Error
+}
+
+// GetConvention returns the value of Convention.
+func (s *ProjectStatus) GetConvention() OptProjectStatusConvention {
+	return s.Convention
 }
 
 // GetDirty returns the value of Dirty.
@@ -899,9 +1349,30 @@ func (s *ProjectStatus) SetError(val OptString) {
 	s.Error = val
 }
 
+// SetConvention sets the value of Convention.
+func (s *ProjectStatus) SetConvention(val OptProjectStatusConvention) {
+	s.Convention = val
+}
+
 // SetDirty sets the value of Dirty.
 func (s *ProjectStatus) SetDirty(val OptBool) {
 	s.Dirty = val
+}
+
+// The detected file convention, absent when detection fails.
+type ProjectStatusConvention int
+
+const (
+	ProjectStatusConvention1 ProjectStatusConvention = 1
+	ProjectStatusConvention2 ProjectStatusConvention = 2
+)
+
+// AllValues returns all ProjectStatusConvention values.
+func (ProjectStatusConvention) AllValues() []ProjectStatusConvention {
+	return []ProjectStatusConvention{
+		ProjectStatusConvention1,
+		ProjectStatusConvention2,
+	}
 }
 
 type RenameToSlugBadRequest ErrorResponse
@@ -1345,4 +1816,1406 @@ func (s *TransitionItemReq) SetExpectedOrderVersion(val string) {
 // SetPosition sets the value of Position.
 func (s *TransitionItemReq) SetPosition(val OptInt) {
 	s.Position = val
+}
+
+// Ref: #/components/schemas/v2Checklist
+type V2Checklist struct {
+	Open  int `json:"open"`
+	Total int `json:"total"`
+}
+
+// GetOpen returns the value of Open.
+func (s *V2Checklist) GetOpen() int {
+	return s.Open
+}
+
+// GetTotal returns the value of Total.
+func (s *V2Checklist) GetTotal() int {
+	return s.Total
+}
+
+// SetOpen sets the value of Open.
+func (s *V2Checklist) SetOpen(val int) {
+	s.Open = val
+}
+
+// SetTotal sets the value of Total.
+func (s *V2Checklist) SetTotal(val int) {
+	s.Total = val
+}
+
+// Ref: #/components/schemas/v2Flag
+type V2Flag struct {
+	Kind       V2FlagKind    `json:"kind"`
+	Item       OptString     `json:"item"`
+	View       OptV2FlagView `json:"view"`
+	Line       OptInt        `json:"line"`
+	Target     OptString     `json:"target"`
+	Relation   OptV2Relation `json:"relation"`
+	Diagnostic OptString     `json:"diagnostic"`
+}
+
+// GetKind returns the value of Kind.
+func (s *V2Flag) GetKind() V2FlagKind {
+	return s.Kind
+}
+
+// GetItem returns the value of Item.
+func (s *V2Flag) GetItem() OptString {
+	return s.Item
+}
+
+// GetView returns the value of View.
+func (s *V2Flag) GetView() OptV2FlagView {
+	return s.View
+}
+
+// GetLine returns the value of Line.
+func (s *V2Flag) GetLine() OptInt {
+	return s.Line
+}
+
+// GetTarget returns the value of Target.
+func (s *V2Flag) GetTarget() OptString {
+	return s.Target
+}
+
+// GetRelation returns the value of Relation.
+func (s *V2Flag) GetRelation() OptV2Relation {
+	return s.Relation
+}
+
+// GetDiagnostic returns the value of Diagnostic.
+func (s *V2Flag) GetDiagnostic() OptString {
+	return s.Diagnostic
+}
+
+// SetKind sets the value of Kind.
+func (s *V2Flag) SetKind(val V2FlagKind) {
+	s.Kind = val
+}
+
+// SetItem sets the value of Item.
+func (s *V2Flag) SetItem(val OptString) {
+	s.Item = val
+}
+
+// SetView sets the value of View.
+func (s *V2Flag) SetView(val OptV2FlagView) {
+	s.View = val
+}
+
+// SetLine sets the value of Line.
+func (s *V2Flag) SetLine(val OptInt) {
+	s.Line = val
+}
+
+// SetTarget sets the value of Target.
+func (s *V2Flag) SetTarget(val OptString) {
+	s.Target = val
+}
+
+// SetRelation sets the value of Relation.
+func (s *V2Flag) SetRelation(val OptV2Relation) {
+	s.Relation = val
+}
+
+// SetDiagnostic sets the value of Diagnostic.
+func (s *V2Flag) SetDiagnostic(val OptString) {
+	s.Diagnostic = val
+}
+
+type V2FlagKind string
+
+const (
+	V2FlagKindMalformed       V2FlagKind = "malformed"
+	V2FlagKindSlugMismatch    V2FlagKind = "slug-mismatch"
+	V2FlagKindStillBuilding   V2FlagKind = "still-building"
+	V2FlagKindMissingLink     V2FlagKind = "missing-link"
+	V2FlagKindMissingViewItem V2FlagKind = "missing-view-item"
+	V2FlagKindInNeitherView   V2FlagKind = "in-neither-view"
+	V2FlagKindMissingStage    V2FlagKind = "missing-stage"
+	V2FlagKindUnlistedStage   V2FlagKind = "unlisted-stage"
+	V2FlagKindUnreadablePlan  V2FlagKind = "unreadable-plan"
+	V2FlagKindUnreadableStage V2FlagKind = "unreadable-stage"
+)
+
+// AllValues returns all V2FlagKind values.
+func (V2FlagKind) AllValues() []V2FlagKind {
+	return []V2FlagKind{
+		V2FlagKindMalformed,
+		V2FlagKindSlugMismatch,
+		V2FlagKindStillBuilding,
+		V2FlagKindMissingLink,
+		V2FlagKindMissingViewItem,
+		V2FlagKindInNeitherView,
+		V2FlagKindMissingStage,
+		V2FlagKindUnlistedStage,
+		V2FlagKindUnreadablePlan,
+		V2FlagKindUnreadableStage,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2FlagKind) MarshalText() ([]byte, error) {
+	switch s {
+	case V2FlagKindMalformed:
+		return []byte(s), nil
+	case V2FlagKindSlugMismatch:
+		return []byte(s), nil
+	case V2FlagKindStillBuilding:
+		return []byte(s), nil
+	case V2FlagKindMissingLink:
+		return []byte(s), nil
+	case V2FlagKindMissingViewItem:
+		return []byte(s), nil
+	case V2FlagKindInNeitherView:
+		return []byte(s), nil
+	case V2FlagKindMissingStage:
+		return []byte(s), nil
+	case V2FlagKindUnlistedStage:
+		return []byte(s), nil
+	case V2FlagKindUnreadablePlan:
+		return []byte(s), nil
+	case V2FlagKindUnreadableStage:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2FlagKind) UnmarshalText(data []byte) error {
+	switch V2FlagKind(data) {
+	case V2FlagKindMalformed:
+		*s = V2FlagKindMalformed
+		return nil
+	case V2FlagKindSlugMismatch:
+		*s = V2FlagKindSlugMismatch
+		return nil
+	case V2FlagKindStillBuilding:
+		*s = V2FlagKindStillBuilding
+		return nil
+	case V2FlagKindMissingLink:
+		*s = V2FlagKindMissingLink
+		return nil
+	case V2FlagKindMissingViewItem:
+		*s = V2FlagKindMissingViewItem
+		return nil
+	case V2FlagKindInNeitherView:
+		*s = V2FlagKindInNeitherView
+		return nil
+	case V2FlagKindMissingStage:
+		*s = V2FlagKindMissingStage
+		return nil
+	case V2FlagKindUnlistedStage:
+		*s = V2FlagKindUnlistedStage
+		return nil
+	case V2FlagKindUnreadablePlan:
+		*s = V2FlagKindUnreadablePlan
+		return nil
+	case V2FlagKindUnreadableStage:
+		*s = V2FlagKindUnreadableStage
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type V2FlagView string
+
+const (
+	V2FlagViewRoadmap V2FlagView = "roadmap"
+	V2FlagViewQueue   V2FlagView = "queue"
+)
+
+// AllValues returns all V2FlagView values.
+func (V2FlagView) AllValues() []V2FlagView {
+	return []V2FlagView{
+		V2FlagViewRoadmap,
+		V2FlagViewQueue,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2FlagView) MarshalText() ([]byte, error) {
+	switch s {
+	case V2FlagViewRoadmap:
+		return []byte(s), nil
+	case V2FlagViewQueue:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2FlagView) UnmarshalText(data []byte) error {
+	switch V2FlagView(data) {
+	case V2FlagViewRoadmap:
+		*s = V2FlagViewRoadmap
+		return nil
+	case V2FlagViewQueue:
+		*s = V2FlagViewQueue
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Absent when git cannot answer.
+// Ref: #/components/schemas/v2GitMark
+type V2GitMark struct {
+	Unstaged bool `json:"unstaged"`
+	Staged   bool `json:"staged"`
+	New      bool `json:"new"`
+}
+
+// GetUnstaged returns the value of Unstaged.
+func (s *V2GitMark) GetUnstaged() bool {
+	return s.Unstaged
+}
+
+// GetStaged returns the value of Staged.
+func (s *V2GitMark) GetStaged() bool {
+	return s.Staged
+}
+
+// GetNew returns the value of New.
+func (s *V2GitMark) GetNew() bool {
+	return s.New
+}
+
+// SetUnstaged sets the value of Unstaged.
+func (s *V2GitMark) SetUnstaged(val bool) {
+	s.Unstaged = val
+}
+
+// SetStaged sets the value of Staged.
+func (s *V2GitMark) SetStaged(val bool) {
+	s.Staged = val
+}
+
+// SetNew sets the value of New.
+func (s *V2GitMark) SetNew(val bool) {
+	s.New = val
+}
+
+// Ref: #/components/schemas/v2Item
+type V2Item struct {
+	// The raw index.md.
+	Content    string        `json:"content"`
+	Hash       string        `json:"hash"`
+	Summary    V2ItemSummary `json:"summary"`
+	Subsystems []string      `json:"subsystems"`
+	Source     OptString     `json:"source"`
+	Milestone  OptString     `json:"milestone"`
+	Log        []LogEntry    `json:"log"`
+	LinksOut   []V2Link      `json:"linksOut"`
+	LinksIn    []V2Link      `json:"linksIn"`
+	HasDesign  bool          `json:"hasDesign"`
+	Plan       OptV2Plan     `json:"plan"`
+	PlanError  OptString     `json:"planError"`
+	// Stage files keyed by basename without .md, including unlisted stages.
+	Stages V2ItemStages `json:"stages"`
+	// Sidecar paths relative to the item directory.
+	Files []string `json:"files"`
+}
+
+// GetContent returns the value of Content.
+func (s *V2Item) GetContent() string {
+	return s.Content
+}
+
+// GetHash returns the value of Hash.
+func (s *V2Item) GetHash() string {
+	return s.Hash
+}
+
+// GetSummary returns the value of Summary.
+func (s *V2Item) GetSummary() V2ItemSummary {
+	return s.Summary
+}
+
+// GetSubsystems returns the value of Subsystems.
+func (s *V2Item) GetSubsystems() []string {
+	return s.Subsystems
+}
+
+// GetSource returns the value of Source.
+func (s *V2Item) GetSource() OptString {
+	return s.Source
+}
+
+// GetMilestone returns the value of Milestone.
+func (s *V2Item) GetMilestone() OptString {
+	return s.Milestone
+}
+
+// GetLog returns the value of Log.
+func (s *V2Item) GetLog() []LogEntry {
+	return s.Log
+}
+
+// GetLinksOut returns the value of LinksOut.
+func (s *V2Item) GetLinksOut() []V2Link {
+	return s.LinksOut
+}
+
+// GetLinksIn returns the value of LinksIn.
+func (s *V2Item) GetLinksIn() []V2Link {
+	return s.LinksIn
+}
+
+// GetHasDesign returns the value of HasDesign.
+func (s *V2Item) GetHasDesign() bool {
+	return s.HasDesign
+}
+
+// GetPlan returns the value of Plan.
+func (s *V2Item) GetPlan() OptV2Plan {
+	return s.Plan
+}
+
+// GetPlanError returns the value of PlanError.
+func (s *V2Item) GetPlanError() OptString {
+	return s.PlanError
+}
+
+// GetStages returns the value of Stages.
+func (s *V2Item) GetStages() V2ItemStages {
+	return s.Stages
+}
+
+// GetFiles returns the value of Files.
+func (s *V2Item) GetFiles() []string {
+	return s.Files
+}
+
+// SetContent sets the value of Content.
+func (s *V2Item) SetContent(val string) {
+	s.Content = val
+}
+
+// SetHash sets the value of Hash.
+func (s *V2Item) SetHash(val string) {
+	s.Hash = val
+}
+
+// SetSummary sets the value of Summary.
+func (s *V2Item) SetSummary(val V2ItemSummary) {
+	s.Summary = val
+}
+
+// SetSubsystems sets the value of Subsystems.
+func (s *V2Item) SetSubsystems(val []string) {
+	s.Subsystems = val
+}
+
+// SetSource sets the value of Source.
+func (s *V2Item) SetSource(val OptString) {
+	s.Source = val
+}
+
+// SetMilestone sets the value of Milestone.
+func (s *V2Item) SetMilestone(val OptString) {
+	s.Milestone = val
+}
+
+// SetLog sets the value of Log.
+func (s *V2Item) SetLog(val []LogEntry) {
+	s.Log = val
+}
+
+// SetLinksOut sets the value of LinksOut.
+func (s *V2Item) SetLinksOut(val []V2Link) {
+	s.LinksOut = val
+}
+
+// SetLinksIn sets the value of LinksIn.
+func (s *V2Item) SetLinksIn(val []V2Link) {
+	s.LinksIn = val
+}
+
+// SetHasDesign sets the value of HasDesign.
+func (s *V2Item) SetHasDesign(val bool) {
+	s.HasDesign = val
+}
+
+// SetPlan sets the value of Plan.
+func (s *V2Item) SetPlan(val OptV2Plan) {
+	s.Plan = val
+}
+
+// SetPlanError sets the value of PlanError.
+func (s *V2Item) SetPlanError(val OptString) {
+	s.PlanError = val
+}
+
+// SetStages sets the value of Stages.
+func (s *V2Item) SetStages(val V2ItemStages) {
+	s.Stages = val
+}
+
+// SetFiles sets the value of Files.
+func (s *V2Item) SetFiles(val []string) {
+	s.Files = val
+}
+
+func (*V2Item) getV2ItemRes() {}
+
+// Stage files keyed by basename without .md, including unlisted stages.
+type V2ItemStages map[string]V2Stage
+
+func (s *V2ItemStages) init() V2ItemStages {
+	m := *s
+	if m == nil {
+		m = map[string]V2Stage{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/v2ItemSummary
+type V2ItemSummary struct {
+	// Empty when unreadable.
+	Title     string               `json:"title"`
+	State     V2State              `json:"state"`
+	Kind      OptV2ItemSummaryKind `json:"kind"`
+	Created   OptString            `json:"created"`
+	Since     OptString            `json:"since"`
+	Tags      []string             `json:"tags"`
+	Includes  []string             `json:"includes"`
+	Requires  []string             `json:"requires"`
+	BlockedOn []string             `json:"blockedOn"`
+	Checklist V2Checklist          `json:"checklist"`
+	Progress  OptV2Progress        `json:"progress"`
+	Needs     []V2Need             `json:"needs"`
+	Flags     []V2Flag             `json:"flags"`
+	Git       OptV2GitMark         `json:"git"`
+}
+
+// GetTitle returns the value of Title.
+func (s *V2ItemSummary) GetTitle() string {
+	return s.Title
+}
+
+// GetState returns the value of State.
+func (s *V2ItemSummary) GetState() V2State {
+	return s.State
+}
+
+// GetKind returns the value of Kind.
+func (s *V2ItemSummary) GetKind() OptV2ItemSummaryKind {
+	return s.Kind
+}
+
+// GetCreated returns the value of Created.
+func (s *V2ItemSummary) GetCreated() OptString {
+	return s.Created
+}
+
+// GetSince returns the value of Since.
+func (s *V2ItemSummary) GetSince() OptString {
+	return s.Since
+}
+
+// GetTags returns the value of Tags.
+func (s *V2ItemSummary) GetTags() []string {
+	return s.Tags
+}
+
+// GetIncludes returns the value of Includes.
+func (s *V2ItemSummary) GetIncludes() []string {
+	return s.Includes
+}
+
+// GetRequires returns the value of Requires.
+func (s *V2ItemSummary) GetRequires() []string {
+	return s.Requires
+}
+
+// GetBlockedOn returns the value of BlockedOn.
+func (s *V2ItemSummary) GetBlockedOn() []string {
+	return s.BlockedOn
+}
+
+// GetChecklist returns the value of Checklist.
+func (s *V2ItemSummary) GetChecklist() V2Checklist {
+	return s.Checklist
+}
+
+// GetProgress returns the value of Progress.
+func (s *V2ItemSummary) GetProgress() OptV2Progress {
+	return s.Progress
+}
+
+// GetNeeds returns the value of Needs.
+func (s *V2ItemSummary) GetNeeds() []V2Need {
+	return s.Needs
+}
+
+// GetFlags returns the value of Flags.
+func (s *V2ItemSummary) GetFlags() []V2Flag {
+	return s.Flags
+}
+
+// GetGit returns the value of Git.
+func (s *V2ItemSummary) GetGit() OptV2GitMark {
+	return s.Git
+}
+
+// SetTitle sets the value of Title.
+func (s *V2ItemSummary) SetTitle(val string) {
+	s.Title = val
+}
+
+// SetState sets the value of State.
+func (s *V2ItemSummary) SetState(val V2State) {
+	s.State = val
+}
+
+// SetKind sets the value of Kind.
+func (s *V2ItemSummary) SetKind(val OptV2ItemSummaryKind) {
+	s.Kind = val
+}
+
+// SetCreated sets the value of Created.
+func (s *V2ItemSummary) SetCreated(val OptString) {
+	s.Created = val
+}
+
+// SetSince sets the value of Since.
+func (s *V2ItemSummary) SetSince(val OptString) {
+	s.Since = val
+}
+
+// SetTags sets the value of Tags.
+func (s *V2ItemSummary) SetTags(val []string) {
+	s.Tags = val
+}
+
+// SetIncludes sets the value of Includes.
+func (s *V2ItemSummary) SetIncludes(val []string) {
+	s.Includes = val
+}
+
+// SetRequires sets the value of Requires.
+func (s *V2ItemSummary) SetRequires(val []string) {
+	s.Requires = val
+}
+
+// SetBlockedOn sets the value of BlockedOn.
+func (s *V2ItemSummary) SetBlockedOn(val []string) {
+	s.BlockedOn = val
+}
+
+// SetChecklist sets the value of Checklist.
+func (s *V2ItemSummary) SetChecklist(val V2Checklist) {
+	s.Checklist = val
+}
+
+// SetProgress sets the value of Progress.
+func (s *V2ItemSummary) SetProgress(val OptV2Progress) {
+	s.Progress = val
+}
+
+// SetNeeds sets the value of Needs.
+func (s *V2ItemSummary) SetNeeds(val []V2Need) {
+	s.Needs = val
+}
+
+// SetFlags sets the value of Flags.
+func (s *V2ItemSummary) SetFlags(val []V2Flag) {
+	s.Flags = val
+}
+
+// SetGit sets the value of Git.
+func (s *V2ItemSummary) SetGit(val OptV2GitMark) {
+	s.Git = val
+}
+
+type V2ItemSummaryKind string
+
+const (
+	V2ItemSummaryKindEpic      V2ItemSummaryKind = "epic"
+	V2ItemSummaryKindStory     V2ItemSummaryKind = "story"
+	V2ItemSummaryKindDefect    V2ItemSummaryKind = "defect"
+	V2ItemSummaryKindPunchlist V2ItemSummaryKind = "punchlist"
+)
+
+// AllValues returns all V2ItemSummaryKind values.
+func (V2ItemSummaryKind) AllValues() []V2ItemSummaryKind {
+	return []V2ItemSummaryKind{
+		V2ItemSummaryKindEpic,
+		V2ItemSummaryKindStory,
+		V2ItemSummaryKindDefect,
+		V2ItemSummaryKindPunchlist,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2ItemSummaryKind) MarshalText() ([]byte, error) {
+	switch s {
+	case V2ItemSummaryKindEpic:
+		return []byte(s), nil
+	case V2ItemSummaryKindStory:
+		return []byte(s), nil
+	case V2ItemSummaryKindDefect:
+		return []byte(s), nil
+	case V2ItemSummaryKindPunchlist:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2ItemSummaryKind) UnmarshalText(data []byte) error {
+	switch V2ItemSummaryKind(data) {
+	case V2ItemSummaryKindEpic:
+		*s = V2ItemSummaryKindEpic
+		return nil
+	case V2ItemSummaryKindStory:
+		*s = V2ItemSummaryKindStory
+		return nil
+	case V2ItemSummaryKindDefect:
+		*s = V2ItemSummaryKindDefect
+		return nil
+	case V2ItemSummaryKindPunchlist:
+		*s = V2ItemSummaryKindPunchlist
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2Lane
+type V2Lane struct {
+	State V2State `json:"state"`
+	// Directory slugs in display order.
+	Items []string `json:"items"`
+}
+
+// GetState returns the value of State.
+func (s *V2Lane) GetState() V2State {
+	return s.State
+}
+
+// GetItems returns the value of Items.
+func (s *V2Lane) GetItems() []string {
+	return s.Items
+}
+
+// SetState sets the value of State.
+func (s *V2Lane) SetState(val V2State) {
+	s.State = val
+}
+
+// SetItems sets the value of Items.
+func (s *V2Lane) SetItems(val []string) {
+	s.Items = val
+}
+
+// Ref: #/components/schemas/v2Link
+type V2Link struct {
+	From     string     `json:"from"`
+	Relation V2Relation `json:"relation"`
+	Slug     string     `json:"slug"`
+	// Present for a cross-project target.
+	Project OptString `json:"project"`
+}
+
+// GetFrom returns the value of From.
+func (s *V2Link) GetFrom() string {
+	return s.From
+}
+
+// GetRelation returns the value of Relation.
+func (s *V2Link) GetRelation() V2Relation {
+	return s.Relation
+}
+
+// GetSlug returns the value of Slug.
+func (s *V2Link) GetSlug() string {
+	return s.Slug
+}
+
+// GetProject returns the value of Project.
+func (s *V2Link) GetProject() OptString {
+	return s.Project
+}
+
+// SetFrom sets the value of From.
+func (s *V2Link) SetFrom(val string) {
+	s.From = val
+}
+
+// SetRelation sets the value of Relation.
+func (s *V2Link) SetRelation(val V2Relation) {
+	s.Relation = val
+}
+
+// SetSlug sets the value of Slug.
+func (s *V2Link) SetSlug(val string) {
+	s.Slug = val
+}
+
+// SetProject sets the value of Project.
+func (s *V2Link) SetProject(val OptString) {
+	s.Project = val
+}
+
+// Ref: #/components/schemas/v2Need
+type V2Need struct {
+	Item       string    `json:"item"`
+	Stage      OptString `json:"stage"`
+	Request    OptString `json:"request"`
+	Acceptance bool      `json:"acceptance"`
+}
+
+// GetItem returns the value of Item.
+func (s *V2Need) GetItem() string {
+	return s.Item
+}
+
+// GetStage returns the value of Stage.
+func (s *V2Need) GetStage() OptString {
+	return s.Stage
+}
+
+// GetRequest returns the value of Request.
+func (s *V2Need) GetRequest() OptString {
+	return s.Request
+}
+
+// GetAcceptance returns the value of Acceptance.
+func (s *V2Need) GetAcceptance() bool {
+	return s.Acceptance
+}
+
+// SetItem sets the value of Item.
+func (s *V2Need) SetItem(val string) {
+	s.Item = val
+}
+
+// SetStage sets the value of Stage.
+func (s *V2Need) SetStage(val OptString) {
+	s.Stage = val
+}
+
+// SetRequest sets the value of Request.
+func (s *V2Need) SetRequest(val OptString) {
+	s.Request = val
+}
+
+// SetAcceptance sets the value of Acceptance.
+func (s *V2Need) SetAcceptance(val bool) {
+	s.Acceptance = val
+}
+
+// Ref: #/components/schemas/v2Plan
+type V2Plan struct {
+	Mercurius OptString `json:"mercurius"`
+	// Ordered stage names, including missing files.
+	Stages []string `json:"stages"`
+}
+
+// GetMercurius returns the value of Mercurius.
+func (s *V2Plan) GetMercurius() OptString {
+	return s.Mercurius
+}
+
+// GetStages returns the value of Stages.
+func (s *V2Plan) GetStages() []string {
+	return s.Stages
+}
+
+// SetMercurius sets the value of Mercurius.
+func (s *V2Plan) SetMercurius(val OptString) {
+	s.Mercurius = val
+}
+
+// SetStages sets the value of Stages.
+func (s *V2Plan) SetStages(val []string) {
+	s.Stages = val
+}
+
+// Ref: #/components/schemas/v2Progress
+type V2Progress struct {
+	Position V2ProgressPosition `json:"position"`
+	Stage    OptString          `json:"stage"`
+	Number   OptInt             `json:"number"`
+	Total    OptInt             `json:"total"`
+	Status   OptV2StageStatus   `json:"status"`
+	Verdict  OptV2Verdict       `json:"verdict"`
+}
+
+// GetPosition returns the value of Position.
+func (s *V2Progress) GetPosition() V2ProgressPosition {
+	return s.Position
+}
+
+// GetStage returns the value of Stage.
+func (s *V2Progress) GetStage() OptString {
+	return s.Stage
+}
+
+// GetNumber returns the value of Number.
+func (s *V2Progress) GetNumber() OptInt {
+	return s.Number
+}
+
+// GetTotal returns the value of Total.
+func (s *V2Progress) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetStatus returns the value of Status.
+func (s *V2Progress) GetStatus() OptV2StageStatus {
+	return s.Status
+}
+
+// GetVerdict returns the value of Verdict.
+func (s *V2Progress) GetVerdict() OptV2Verdict {
+	return s.Verdict
+}
+
+// SetPosition sets the value of Position.
+func (s *V2Progress) SetPosition(val V2ProgressPosition) {
+	s.Position = val
+}
+
+// SetStage sets the value of Stage.
+func (s *V2Progress) SetStage(val OptString) {
+	s.Stage = val
+}
+
+// SetNumber sets the value of Number.
+func (s *V2Progress) SetNumber(val OptInt) {
+	s.Number = val
+}
+
+// SetTotal sets the value of Total.
+func (s *V2Progress) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetStatus sets the value of Status.
+func (s *V2Progress) SetStatus(val OptV2StageStatus) {
+	s.Status = val
+}
+
+// SetVerdict sets the value of Verdict.
+func (s *V2Progress) SetVerdict(val OptV2Verdict) {
+	s.Verdict = val
+}
+
+type V2ProgressPosition string
+
+const (
+	V2ProgressPositionNoDesign       V2ProgressPosition = "no-design"
+	V2ProgressPositionDesigning      V2ProgressPosition = "designing"
+	V2ProgressPositionPlanInReview   V2ProgressPosition = "plan-in-review"
+	V2ProgressPositionReadyToHandOff V2ProgressPosition = "ready-to-hand-off"
+	V2ProgressPositionNoStages       V2ProgressPosition = "no-stages"
+	V2ProgressPositionCurrentStage   V2ProgressPosition = "current-stage"
+	V2ProgressPositionComplete       V2ProgressPosition = "complete"
+)
+
+// AllValues returns all V2ProgressPosition values.
+func (V2ProgressPosition) AllValues() []V2ProgressPosition {
+	return []V2ProgressPosition{
+		V2ProgressPositionNoDesign,
+		V2ProgressPositionDesigning,
+		V2ProgressPositionPlanInReview,
+		V2ProgressPositionReadyToHandOff,
+		V2ProgressPositionNoStages,
+		V2ProgressPositionCurrentStage,
+		V2ProgressPositionComplete,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2ProgressPosition) MarshalText() ([]byte, error) {
+	switch s {
+	case V2ProgressPositionNoDesign:
+		return []byte(s), nil
+	case V2ProgressPositionDesigning:
+		return []byte(s), nil
+	case V2ProgressPositionPlanInReview:
+		return []byte(s), nil
+	case V2ProgressPositionReadyToHandOff:
+		return []byte(s), nil
+	case V2ProgressPositionNoStages:
+		return []byte(s), nil
+	case V2ProgressPositionCurrentStage:
+		return []byte(s), nil
+	case V2ProgressPositionComplete:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2ProgressPosition) UnmarshalText(data []byte) error {
+	switch V2ProgressPosition(data) {
+	case V2ProgressPositionNoDesign:
+		*s = V2ProgressPositionNoDesign
+		return nil
+	case V2ProgressPositionDesigning:
+		*s = V2ProgressPositionDesigning
+		return nil
+	case V2ProgressPositionPlanInReview:
+		*s = V2ProgressPositionPlanInReview
+		return nil
+	case V2ProgressPositionReadyToHandOff:
+		*s = V2ProgressPositionReadyToHandOff
+		return nil
+	case V2ProgressPositionNoStages:
+		*s = V2ProgressPositionNoStages
+		return nil
+	case V2ProgressPositionCurrentStage:
+		*s = V2ProgressPositionCurrentStage
+		return nil
+	case V2ProgressPositionComplete:
+		*s = V2ProgressPositionComplete
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2Project
+type V2Project struct {
+	Project string `json:"project"`
+	Roadmap V2View `json:"roadmap"`
+	Queue   V2View `json:"queue"`
+	// Item summaries keyed by directory slug.
+	Items V2ProjectItems `json:"items"`
+	Needs []V2Need       `json:"needs"`
+	Flags []V2Flag       `json:"flags"`
+}
+
+// GetProject returns the value of Project.
+func (s *V2Project) GetProject() string {
+	return s.Project
+}
+
+// GetRoadmap returns the value of Roadmap.
+func (s *V2Project) GetRoadmap() V2View {
+	return s.Roadmap
+}
+
+// GetQueue returns the value of Queue.
+func (s *V2Project) GetQueue() V2View {
+	return s.Queue
+}
+
+// GetItems returns the value of Items.
+func (s *V2Project) GetItems() V2ProjectItems {
+	return s.Items
+}
+
+// GetNeeds returns the value of Needs.
+func (s *V2Project) GetNeeds() []V2Need {
+	return s.Needs
+}
+
+// GetFlags returns the value of Flags.
+func (s *V2Project) GetFlags() []V2Flag {
+	return s.Flags
+}
+
+// SetProject sets the value of Project.
+func (s *V2Project) SetProject(val string) {
+	s.Project = val
+}
+
+// SetRoadmap sets the value of Roadmap.
+func (s *V2Project) SetRoadmap(val V2View) {
+	s.Roadmap = val
+}
+
+// SetQueue sets the value of Queue.
+func (s *V2Project) SetQueue(val V2View) {
+	s.Queue = val
+}
+
+// SetItems sets the value of Items.
+func (s *V2Project) SetItems(val V2ProjectItems) {
+	s.Items = val
+}
+
+// SetNeeds sets the value of Needs.
+func (s *V2Project) SetNeeds(val []V2Need) {
+	s.Needs = val
+}
+
+// SetFlags sets the value of Flags.
+func (s *V2Project) SetFlags(val []V2Flag) {
+	s.Flags = val
+}
+
+func (*V2Project) getV2ProjectRes() {}
+
+// Item summaries keyed by directory slug.
+type V2ProjectItems map[string]V2ItemSummary
+
+func (s *V2ProjectItems) init() V2ProjectItems {
+	m := *s
+	if m == nil {
+		m = map[string]V2ItemSummary{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/v2Relation
+type V2Relation string
+
+const (
+	V2RelationIncludes  V2Relation = "includes"
+	V2RelationRequires  V2Relation = "requires"
+	V2RelationBlockedOn V2Relation = "blocked_on"
+	V2RelationBody      V2Relation = "body"
+)
+
+// AllValues returns all V2Relation values.
+func (V2Relation) AllValues() []V2Relation {
+	return []V2Relation{
+		V2RelationIncludes,
+		V2RelationRequires,
+		V2RelationBlockedOn,
+		V2RelationBody,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2Relation) MarshalText() ([]byte, error) {
+	switch s {
+	case V2RelationIncludes:
+		return []byte(s), nil
+	case V2RelationRequires:
+		return []byte(s), nil
+	case V2RelationBlockedOn:
+		return []byte(s), nil
+	case V2RelationBody:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2Relation) UnmarshalText(data []byte) error {
+	switch V2Relation(data) {
+	case V2RelationIncludes:
+		*s = V2RelationIncludes
+		return nil
+	case V2RelationRequires:
+		*s = V2RelationRequires
+		return nil
+	case V2RelationBlockedOn:
+		*s = V2RelationBlockedOn
+		return nil
+	case V2RelationBody:
+		*s = V2RelationBody
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2Stage
+type V2Stage struct {
+	Title    OptString        `json:"title"`
+	Status   OptV2StageStatus `json:"status"`
+	Terminus OptString        `json:"terminus"`
+	Needs    []string         `json:"needs"`
+	Accepted OptString        `json:"accepted"`
+	Error    OptString        `json:"error"`
+}
+
+// GetTitle returns the value of Title.
+func (s *V2Stage) GetTitle() OptString {
+	return s.Title
+}
+
+// GetStatus returns the value of Status.
+func (s *V2Stage) GetStatus() OptV2StageStatus {
+	return s.Status
+}
+
+// GetTerminus returns the value of Terminus.
+func (s *V2Stage) GetTerminus() OptString {
+	return s.Terminus
+}
+
+// GetNeeds returns the value of Needs.
+func (s *V2Stage) GetNeeds() []string {
+	return s.Needs
+}
+
+// GetAccepted returns the value of Accepted.
+func (s *V2Stage) GetAccepted() OptString {
+	return s.Accepted
+}
+
+// GetError returns the value of Error.
+func (s *V2Stage) GetError() OptString {
+	return s.Error
+}
+
+// SetTitle sets the value of Title.
+func (s *V2Stage) SetTitle(val OptString) {
+	s.Title = val
+}
+
+// SetStatus sets the value of Status.
+func (s *V2Stage) SetStatus(val OptV2StageStatus) {
+	s.Status = val
+}
+
+// SetTerminus sets the value of Terminus.
+func (s *V2Stage) SetTerminus(val OptString) {
+	s.Terminus = val
+}
+
+// SetNeeds sets the value of Needs.
+func (s *V2Stage) SetNeeds(val []string) {
+	s.Needs = val
+}
+
+// SetAccepted sets the value of Accepted.
+func (s *V2Stage) SetAccepted(val OptString) {
+	s.Accepted = val
+}
+
+// SetError sets the value of Error.
+func (s *V2Stage) SetError(val OptString) {
+	s.Error = val
+}
+
+// Ref: #/components/schemas/v2StageStatus
+type V2StageStatus string
+
+const (
+	V2StageStatusStarted V2StageStatus = "started"
+	V2StageStatusBuilt   V2StageStatus = "built"
+)
+
+// AllValues returns all V2StageStatus values.
+func (V2StageStatus) AllValues() []V2StageStatus {
+	return []V2StageStatus{
+		V2StageStatusStarted,
+		V2StageStatusBuilt,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2StageStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case V2StageStatusStarted:
+		return []byte(s), nil
+	case V2StageStatusBuilt:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2StageStatus) UnmarshalText(data []byte) error {
+	switch V2StageStatus(data) {
+	case V2StageStatusStarted:
+		*s = V2StageStatusStarted
+		return nil
+	case V2StageStatusBuilt:
+		*s = V2StageStatusBuilt
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2State
+type V2State string
+
+const (
+	V2StateInbox      V2State = "inbox"
+	V2StateHorizon    V2State = "horizon"
+	V2StatePending    V2State = "pending"
+	V2StateBuilding   V2State = "building"
+	V2StateEvaluating V2State = "evaluating"
+)
+
+// AllValues returns all V2State values.
+func (V2State) AllValues() []V2State {
+	return []V2State{
+		V2StateInbox,
+		V2StateHorizon,
+		V2StatePending,
+		V2StateBuilding,
+		V2StateEvaluating,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2State) MarshalText() ([]byte, error) {
+	switch s {
+	case V2StateInbox:
+		return []byte(s), nil
+	case V2StateHorizon:
+		return []byte(s), nil
+	case V2StatePending:
+		return []byte(s), nil
+	case V2StateBuilding:
+		return []byte(s), nil
+	case V2StateEvaluating:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2State) UnmarshalText(data []byte) error {
+	switch V2State(data) {
+	case V2StateInbox:
+		*s = V2StateInbox
+		return nil
+	case V2StateHorizon:
+		*s = V2StateHorizon
+		return nil
+	case V2StatePending:
+		*s = V2StatePending
+		return nil
+	case V2StateBuilding:
+		*s = V2StateBuilding
+		return nil
+	case V2StateEvaluating:
+		*s = V2StateEvaluating
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2Verdict
+type V2Verdict struct {
+	Broker V2VerdictBroker `json:"broker"`
+	Value  string          `json:"value"`
+}
+
+// GetBroker returns the value of Broker.
+func (s *V2Verdict) GetBroker() V2VerdictBroker {
+	return s.Broker
+}
+
+// GetValue returns the value of Value.
+func (s *V2Verdict) GetValue() string {
+	return s.Value
+}
+
+// SetBroker sets the value of Broker.
+func (s *V2Verdict) SetBroker(val V2VerdictBroker) {
+	s.Broker = val
+}
+
+// SetValue sets the value of Value.
+func (s *V2Verdict) SetValue(val string) {
+	s.Value = val
+}
+
+type V2VerdictBroker string
+
+const (
+	V2VerdictBrokerMercurius V2VerdictBroker = "mercurius"
+	V2VerdictBrokerTerminus  V2VerdictBroker = "terminus"
+)
+
+// AllValues returns all V2VerdictBroker values.
+func (V2VerdictBroker) AllValues() []V2VerdictBroker {
+	return []V2VerdictBroker{
+		V2VerdictBrokerMercurius,
+		V2VerdictBrokerTerminus,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s V2VerdictBroker) MarshalText() ([]byte, error) {
+	switch s {
+	case V2VerdictBrokerMercurius:
+		return []byte(s), nil
+	case V2VerdictBrokerTerminus:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *V2VerdictBroker) UnmarshalText(data []byte) error {
+	switch V2VerdictBroker(data) {
+	case V2VerdictBrokerMercurius:
+		*s = V2VerdictBrokerMercurius
+		return nil
+	case V2VerdictBrokerTerminus:
+		*s = V2VerdictBrokerTerminus
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/v2View
+type V2View struct {
+	Lanes []V2Lane `json:"lanes"`
+	// The view file's hash, or "absent" if it does not exist.
+	Version OptString `json:"version"`
+	// When set, this view has no lanes or version.
+	Error OptString    `json:"error"`
+	Git   OptV2GitMark `json:"git"`
+}
+
+// GetLanes returns the value of Lanes.
+func (s *V2View) GetLanes() []V2Lane {
+	return s.Lanes
+}
+
+// GetVersion returns the value of Version.
+func (s *V2View) GetVersion() OptString {
+	return s.Version
+}
+
+// GetError returns the value of Error.
+func (s *V2View) GetError() OptString {
+	return s.Error
+}
+
+// GetGit returns the value of Git.
+func (s *V2View) GetGit() OptV2GitMark {
+	return s.Git
+}
+
+// SetLanes sets the value of Lanes.
+func (s *V2View) SetLanes(val []V2Lane) {
+	s.Lanes = val
+}
+
+// SetVersion sets the value of Version.
+func (s *V2View) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetError sets the value of Error.
+func (s *V2View) SetError(val OptString) {
+	s.Error = val
+}
+
+// SetGit sets the value of Git.
+func (s *V2View) SetGit(val OptV2GitMark) {
+	s.Git = val
 }

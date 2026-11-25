@@ -43,6 +43,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/board"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         default:
@@ -76,6 +78,8 @@ paths:
                     type: array
                     items:
                       type: string
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         default:
@@ -137,6 +141,8 @@ paths:
                     $ref: "#/components/schemas/card"
                   hash:
                     type: string
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           description: no such project or item
           content:
@@ -170,6 +176,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         "409":
@@ -207,6 +215,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         "409":
@@ -245,6 +255,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         "409":
@@ -310,6 +322,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/freshBoard"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
         "404":
           $ref: "#/components/responses/notFound"
         "409":
@@ -389,6 +403,51 @@ paths:
         default:
           $ref: "#/components/responses/serverError"
 
+  /projects/{project}/v2/project:
+    parameters:
+      - $ref: "#/components/parameters/project"
+    get:
+      operationId: getV2Project
+      summary: both v2 views and their shared item summaries from a fresh load
+      responses:
+        "200":
+          description: the v2 project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v2Project"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
+        "404":
+          $ref: "#/components/responses/notFound"
+        default:
+          $ref: "#/components/responses/serverError"
+
+  /projects/{project}/v2/items/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/project"
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getV2Item
+      summary: one v2 item's raw content, relationships, plan, and files
+      responses:
+        "200":
+          description: the v2 item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/v2Item"
+        "400":
+          $ref: "#/components/responses/wrongConvention"
+        "404":
+          $ref: "#/components/responses/notFound"
+        default:
+          $ref: "#/components/responses/serverError"
+
 components:
   parameters:
     project:
@@ -427,6 +486,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/conflict"
+    wrongConvention:
+      description: the operation belongs to another file convention.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/conventionMismatch"
     validationError:
       description: the request fails prevalidation; nothing was written
       content:
@@ -607,11 +672,15 @@ components:
         error:
           type: string
           description: the repository-level error for an unavailable root.
+        convention:
+          type: integer
+          enum: [1, 2]
+          description: the detected file convention, absent when detection fails.
         dirty:
           type: boolean
           description: >
-            the board's uncommitted verdict, judged per project at index
-            time; absent when git can't answer.
+            whether anything under the convention's scope is uncommitted.
+            absent when the convention is unknown or git cannot answer.
 
     projectIndex:
       type: object
@@ -622,6 +691,294 @@ components:
           items:
             $ref: "#/components/schemas/projectStatus"
         default:
+          type: string
+
+    v2Project:
+      type: object
+      required: [project, roadmap, queue, items, needs, flags]
+      properties:
+        project:
+          type: string
+        roadmap:
+          $ref: "#/components/schemas/v2View"
+        queue:
+          $ref: "#/components/schemas/v2View"
+        items:
+          type: object
+          description: item summaries keyed by directory slug.
+          additionalProperties:
+            $ref: "#/components/schemas/v2ItemSummary"
+        needs:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Need"
+        flags:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Flag"
+
+    v2View:
+      type: object
+      required: [lanes]
+      properties:
+        lanes:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Lane"
+        version:
+          type: string
+          description: the view file's hash, or "absent" if it does not exist.
+        error:
+          type: string
+          description: when set, this view has no lanes or version.
+        git:
+          $ref: "#/components/schemas/v2GitMark"
+
+    v2State:
+      type: string
+      enum: [inbox, horizon, pending, building, evaluating]
+
+    v2Lane:
+      type: object
+      required: [state, items]
+      properties:
+        state:
+          $ref: "#/components/schemas/v2State"
+        items:
+          type: array
+          items:
+            type: string
+          description: directory slugs in display order.
+
+    v2ItemSummary:
+      type: object
+      required: [title, state, tags, includes, requires, blockedOn, checklist, needs, flags]
+      properties:
+        title:
+          type: string
+          description: empty when unreadable.
+        state:
+          $ref: "#/components/schemas/v2State"
+        kind:
+          type: string
+          enum: [epic, story, defect, punchlist]
+        created:
+          type: string
+        since:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        includes:
+          type: array
+          items:
+            type: string
+        requires:
+          type: array
+          items:
+            type: string
+        blockedOn:
+          type: array
+          items:
+            type: string
+        checklist:
+          $ref: "#/components/schemas/v2Checklist"
+        progress:
+          $ref: "#/components/schemas/v2Progress"
+        needs:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Need"
+        flags:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Flag"
+        git:
+          $ref: "#/components/schemas/v2GitMark"
+
+    v2Checklist:
+      type: object
+      required: [open, total]
+      properties:
+        open:
+          type: integer
+        total:
+          type: integer
+
+    v2Progress:
+      type: object
+      required: [position]
+      properties:
+        position:
+          type: string
+          enum: [no-design, designing, plan-in-review, ready-to-hand-off, no-stages, current-stage, complete]
+        stage:
+          type: string
+        number:
+          type: integer
+        total:
+          type: integer
+        status:
+          $ref: "#/components/schemas/v2StageStatus"
+        verdict:
+          $ref: "#/components/schemas/v2Verdict"
+
+    v2Verdict:
+      type: object
+      required: [broker, value]
+      properties:
+        broker:
+          type: string
+          enum: [mercurius, terminus]
+        value:
+          type: string
+
+    v2Need:
+      type: object
+      required: [item, acceptance]
+      properties:
+        item:
+          type: string
+        stage:
+          type: string
+        request:
+          type: string
+        acceptance:
+          type: boolean
+
+    v2Flag:
+      type: object
+      required: [kind]
+      properties:
+        kind:
+          type: string
+          enum: [malformed, slug-mismatch, still-building, missing-link, missing-view-item, in-neither-view, missing-stage, unlisted-stage, unreadable-plan, unreadable-stage]
+        item:
+          type: string
+        view:
+          type: string
+          enum: [roadmap, queue]
+        line:
+          type: integer
+        target:
+          type: string
+        relation:
+          $ref: "#/components/schemas/v2Relation"
+        diagnostic:
+          type: string
+
+    v2GitMark:
+      type: object
+      description: absent when git cannot answer.
+      required: [unstaged, staged, new]
+      properties:
+        unstaged:
+          type: boolean
+        staged:
+          type: boolean
+        new:
+          type: boolean
+
+    v2Item:
+      type: object
+      required: [content, hash, summary, linksOut, linksIn, stages, files, hasDesign]
+      properties:
+        content:
+          type: string
+          description: the raw index.md.
+        hash:
+          type: string
+        summary:
+          $ref: "#/components/schemas/v2ItemSummary"
+        subsystems:
+          type: array
+          items:
+            type: string
+        source:
+          type: string
+        milestone:
+          type: string
+        log:
+          type: array
+          items:
+            $ref: "#/components/schemas/logEntry"
+        linksOut:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Link"
+        linksIn:
+          type: array
+          items:
+            $ref: "#/components/schemas/v2Link"
+        hasDesign:
+          type: boolean
+        plan:
+          $ref: "#/components/schemas/v2Plan"
+        planError:
+          type: string
+        stages:
+          type: object
+          description: stage files keyed by basename without .md, including unlisted stages.
+          additionalProperties:
+            $ref: "#/components/schemas/v2Stage"
+        files:
+          type: array
+          description: sidecar paths relative to the item directory.
+          items:
+            type: string
+
+    v2Relation:
+      type: string
+      enum: [includes, requires, blocked_on, body]
+
+    v2Link:
+      type: object
+      required: [from, relation, slug]
+      properties:
+        from:
+          type: string
+        relation:
+          $ref: "#/components/schemas/v2Relation"
+        slug:
+          type: string
+        project:
+          type: string
+          description: present for a cross-project target.
+
+    v2Plan:
+      type: object
+      required: [stages]
+      properties:
+        mercurius:
+          type: string
+        stages:
+          type: array
+          description: ordered stage names, including missing files.
+          items:
+            type: string
+
+    v2StageStatus:
+      type: string
+      enum: [started, built]
+
+    v2Stage:
+      type: object
+      required: [needs]
+      properties:
+        title:
+          type: string
+        status:
+          $ref: "#/components/schemas/v2StageStatus"
+        terminus:
+          type: string
+        needs:
+          type: array
+          items:
+            type: string
+        accepted:
+          type: string
+        error:
           type: string
 
     itemLanded:
@@ -651,6 +1008,14 @@ components:
         destPath:
           type: string
           description: the colliding destination.
+
+    conventionMismatch:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: names the project's actual and required conventions.
 
     errorResponse:
       type: object

@@ -237,6 +237,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects/{project}/v2/project": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
+            cookie?: never;
+        };
+        /** both v2 views and their shared item summaries from a fresh load */
+        get: operations["getV2Project"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project}/v2/items/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** one v2 item's raw content, relationships, plan, and files */
+        get: operations["getV2Item"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -309,12 +348,147 @@ export interface components {
             available: boolean;
             /** @description the repository-level error for an unavailable root. */
             error?: string;
-            /** @description the board's uncommitted verdict, judged per project at index time; absent when git can't answer. */
+            /**
+             * @description the detected file convention, absent when detection fails.
+             * @enum {integer}
+             */
+            convention?: 1 | 2;
+            /** @description whether anything under the convention's scope is uncommitted. absent when the convention is unknown or git cannot answer. */
             dirty?: boolean;
         };
         projectIndex: {
             projects: components["schemas"]["projectStatus"][];
             default: string;
+        };
+        v2Project: {
+            project: string;
+            roadmap: components["schemas"]["v2View"];
+            queue: components["schemas"]["v2View"];
+            /** @description item summaries keyed by directory slug. */
+            items: {
+                [key: string]: components["schemas"]["v2ItemSummary"];
+            };
+            needs: components["schemas"]["v2Need"][];
+            flags: components["schemas"]["v2Flag"][];
+        };
+        v2View: {
+            lanes: components["schemas"]["v2Lane"][];
+            /** @description the view file's hash, or "absent" if it does not exist. */
+            version?: string;
+            /** @description when set, this view has no lanes or version. */
+            error?: string;
+            git?: components["schemas"]["v2GitMark"];
+        };
+        /** @enum {string} */
+        v2State: "inbox" | "horizon" | "pending" | "building" | "evaluating";
+        v2Lane: {
+            state: components["schemas"]["v2State"];
+            /** @description directory slugs in display order. */
+            items: string[];
+        };
+        v2ItemSummary: {
+            /** @description empty when unreadable. */
+            title: string;
+            state: components["schemas"]["v2State"];
+            /** @enum {string} */
+            kind?: "epic" | "story" | "defect" | "punchlist";
+            created?: string;
+            since?: string;
+            tags: string[];
+            includes: string[];
+            requires: string[];
+            blockedOn: string[];
+            checklist: components["schemas"]["v2Checklist"];
+            progress?: components["schemas"]["v2Progress"];
+            needs: components["schemas"]["v2Need"][];
+            flags: components["schemas"]["v2Flag"][];
+            git?: components["schemas"]["v2GitMark"];
+        };
+        v2Checklist: {
+            open: number;
+            total: number;
+        };
+        v2Progress: {
+            /** @enum {string} */
+            position: "no-design" | "designing" | "plan-in-review" | "ready-to-hand-off" | "no-stages" | "current-stage" | "complete";
+            stage?: string;
+            number?: number;
+            total?: number;
+            status?: components["schemas"]["v2StageStatus"];
+            verdict?: components["schemas"]["v2Verdict"];
+        };
+        v2Verdict: {
+            /** @enum {string} */
+            broker: "mercurius" | "terminus";
+            value: string;
+        };
+        v2Need: {
+            item: string;
+            stage?: string;
+            request?: string;
+            acceptance: boolean;
+        };
+        v2Flag: {
+            /** @enum {string} */
+            kind: "malformed" | "slug-mismatch" | "still-building" | "missing-link" | "missing-view-item" | "in-neither-view" | "missing-stage" | "unlisted-stage" | "unreadable-plan" | "unreadable-stage";
+            item?: string;
+            /** @enum {string} */
+            view?: "roadmap" | "queue";
+            line?: number;
+            target?: string;
+            relation?: components["schemas"]["v2Relation"];
+            diagnostic?: string;
+        };
+        /** @description absent when git cannot answer. */
+        v2GitMark: {
+            unstaged: boolean;
+            staged: boolean;
+            new: boolean;
+        };
+        v2Item: {
+            /** @description the raw index.md. */
+            content: string;
+            hash: string;
+            summary: components["schemas"]["v2ItemSummary"];
+            subsystems?: string[];
+            source?: string;
+            milestone?: string;
+            log?: components["schemas"]["logEntry"][];
+            linksOut: components["schemas"]["v2Link"][];
+            linksIn: components["schemas"]["v2Link"][];
+            hasDesign: boolean;
+            plan?: components["schemas"]["v2Plan"];
+            planError?: string;
+            /** @description stage files keyed by basename without .md, including unlisted stages. */
+            stages: {
+                [key: string]: components["schemas"]["v2Stage"];
+            };
+            /** @description sidecar paths relative to the item directory. */
+            files: string[];
+        };
+        /** @enum {string} */
+        v2Relation: "includes" | "requires" | "blocked_on" | "body";
+        v2Link: {
+            from: string;
+            relation: components["schemas"]["v2Relation"];
+            slug: string;
+            /** @description present for a cross-project target. */
+            project?: string;
+        };
+        v2Plan: {
+            mercurius?: string;
+            /** @description ordered stage names, including missing files. */
+            stages: string[];
+        };
+        /** @enum {string} */
+        v2StageStatus: "started" | "built";
+        v2Stage: {
+            title?: string;
+            status?: components["schemas"]["v2StageStatus"];
+            terminus?: string;
+            needs: string[];
+            accepted?: string;
+            error?: string;
         };
         itemLanded: {
             filename: string;
@@ -330,6 +504,10 @@ export interface components {
             sourcePath?: string;
             /** @description the colliding destination. */
             destPath?: string;
+        };
+        conventionMismatch: {
+            /** @description names the project's actual and required conventions. */
+            message: string;
         };
         errorResponse: {
             message: string;
@@ -361,6 +539,15 @@ export interface components {
             };
             content: {
                 "application/json": components["schemas"]["conflict"];
+            };
+        };
+        /** @description the operation belongs to another file convention. */
+        wrongConvention: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["conventionMismatch"];
             };
         };
         /** @description the request fails prevalidation; nothing was written */
@@ -433,6 +620,7 @@ export interface operations {
                     "application/json": components["schemas"]["board"];
                 };
             };
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             default: components["responses"]["serverError"];
         };
@@ -461,6 +649,7 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             default: components["responses"]["serverError"];
         };
@@ -523,6 +712,7 @@ export interface operations {
                     };
                 };
             };
+            400: components["responses"]["wrongConvention"];
             /** @description no such project or item */
             404: {
                 headers: {
@@ -556,6 +746,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
@@ -584,6 +775,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
@@ -610,6 +802,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
@@ -660,6 +853,7 @@ export interface operations {
         };
         responses: {
             200: components["responses"]["freshBoard"];
+            400: components["responses"]["wrongConvention"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
             default: components["responses"]["serverError"];
@@ -731,6 +925,57 @@ export interface operations {
             400: components["responses"]["validationError"];
             404: components["responses"]["notFound"];
             409: components["responses"]["conflict"];
+            default: components["responses"]["serverError"];
+        };
+    };
+    getV2Project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description the v2 project */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["v2Project"];
+                };
+            };
+            400: components["responses"]["wrongConvention"];
+            404: components["responses"]["notFound"];
+            default: components["responses"]["serverError"];
+        };
+    };
+    getV2Item: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project: components["parameters"]["project"];
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description the v2 item */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["v2Item"];
+                };
+            };
+            400: components["responses"]["wrongConvention"];
+            404: components["responses"]["notFound"];
             default: components["responses"]["serverError"];
         };
     };

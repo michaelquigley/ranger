@@ -9,6 +9,7 @@ import (
 	"github.com/michaelquigley/ranger/internal/api"
 	"github.com/michaelquigley/ranger/internal/document"
 	"github.com/michaelquigley/ranger/internal/model"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
@@ -20,6 +21,9 @@ func (s *Server) GetProjects(_ context.Context) (*api.ProjectIndex, error) {
 	out := &api.ProjectIndex{Default: idx.Default, Projects: []api.ProjectStatus{}}
 	for _, p := range idx.Projects {
 		status := api.ProjectStatus{Name: p.Name, Available: p.Available}
+		if p.Convention != 0 {
+			status.Convention = api.NewOptProjectStatusConvention(api.ProjectStatusConvention(p.Convention))
+		}
 		if p.Error != "" {
 			status.Error = api.NewOptString(p.Error)
 		}
@@ -32,13 +36,17 @@ func (s *Server) GetProjects(_ context.Context) (*api.ProjectIndex, error) {
 }
 
 func (s *Server) GetBoard(_ context.Context, params api.GetBoardParams) (api.GetBoardRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	board, err := freshBoard(w, params.Project)
 	if err != nil {
 		return nil, err
@@ -47,13 +55,17 @@ func (s *Server) GetBoard(_ context.Context, params api.GetBoardParams) (api.Get
 }
 
 func (s *Server) GetItem(_ context.Context, params api.GetItemParams) (api.GetItemRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	snap, err := w.Load()
 	if err != nil {
 		return nil, err
@@ -77,13 +89,17 @@ func cardFor(snap *workspace.Snapshot, filename string) model.CardInput {
 }
 
 func (s *Server) SearchItems(_ context.Context, params api.SearchItemsParams) (api.SearchItemsRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	snap, err := w.Load()
 	if err != nil {
 		return nil, err
@@ -99,13 +115,17 @@ func (s *Server) SearchItems(_ context.Context, params api.SearchItemsParams) (a
 }
 
 func (s *Server) CreateItem(_ context.Context, req *api.CreateItemReq, params api.CreateItemParams) (api.CreateItemRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return (*api.CreateItemNotFound)(notFound), nil
 	}
+	if wrong != nil {
+		return &api.CreateItemBadRequest{Message: wrong.Message}, nil
+	}
+	w := workspace.New(project.Root())
 	// prevalidated: no draft file exists for a title capture can never
 	// finalize, so the form loses nothing and the tree stays clean.
 	if req.Title == "" {
@@ -152,13 +172,17 @@ func (s *Server) CreateItem(_ context.Context, req *api.CreateItemReq, params ap
 }
 
 func (s *Server) SaveContent(_ context.Context, req *api.SaveContentReq, params api.SaveContentParams) (api.SaveContentRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	if err := w.SaveContent(params.Filename, []byte(req.Content), req.ExpectedHash, req.ExpectedOrderVersion); err != nil {
 		if conflict, ok := asConflict(err); ok {
 			return conflict, nil
@@ -173,13 +197,17 @@ func (s *Server) SaveContent(_ context.Context, req *api.SaveContentReq, params 
 }
 
 func (s *Server) TransitionItem(_ context.Context, req *api.TransitionItemReq, params api.TransitionItemParams) (api.TransitionItemRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	var position *int
 	if p, ok := req.Position.Get(); ok {
 		position = &p
@@ -198,13 +226,17 @@ func (s *Server) TransitionItem(_ context.Context, req *api.TransitionItemReq, p
 }
 
 func (s *Server) ReorderLane(_ context.Context, req *api.ReorderLaneReq, params api.ReorderLaneParams) (api.ReorderLaneRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	if err := w.Reorder(model.State(params.Lane), req.Filenames, req.ExpectedVersion); err != nil {
 		if conflict, ok := asConflict(err); ok {
 			return conflict, nil
@@ -219,13 +251,17 @@ func (s *Server) ReorderLane(_ context.Context, req *api.ReorderLaneReq, params 
 }
 
 func (s *Server) SaveFilters(_ context.Context, req *api.SaveFiltersReq, params api.SaveFiltersParams) (api.SaveFiltersRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return (*api.SaveFiltersNotFound)(notFound), nil
 	}
+	if wrong != nil {
+		return &api.SaveFiltersBadRequest{Message: wrong.Message}, nil
+	}
+	w := workspace.New(project.Root())
 	// prevalidated: a filter without a name has no identity to apply or
 	// delete by, and duplicate names would make both ambiguous.
 	seen := map[string]bool{}
@@ -254,13 +290,17 @@ func (s *Server) SaveFilters(_ context.Context, req *api.SaveFiltersReq, params 
 }
 
 func (s *Server) DeleteItem(_ context.Context, req *api.DeleteItemReq, params api.DeleteItemParams) (api.DeleteItemRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return notFound, nil
 	}
+	if wrong != nil {
+		return wrong, nil
+	}
+	w := workspace.New(project.Root())
 	if err := w.Delete(params.Filename, req.ExpectedHash, req.ExpectedOrderVersion); err != nil {
 		if conflict, ok := asConflict(err); ok {
 			return conflict, nil
@@ -275,13 +315,17 @@ func (s *Server) DeleteItem(_ context.Context, req *api.DeleteItemReq, params ap
 }
 
 func (s *Server) RetitleItem(_ context.Context, req *api.RetitleItemReq, params api.RetitleItemParams) (api.RetitleItemRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return (*api.RetitleItemNotFound)(notFound), nil
 	}
+	if wrong != nil {
+		return &api.RetitleItemBadRequest{Message: wrong.Message}, nil
+	}
+	w := workspace.New(project.Root())
 	if req.Title == "" {
 		return &api.RetitleItemBadRequest{Message: "title must not be empty"}, nil
 	}
@@ -300,13 +344,17 @@ func (s *Server) RetitleItem(_ context.Context, req *api.RetitleItemReq, params 
 }
 
 func (s *Server) RenameToSlug(_ context.Context, req *api.RenameToSlugReq, params api.RenameToSlugParams) (api.RenameToSlugRes, error) {
-	w, notFound, err := s.resolve(params.Project)
+	project, notFound, wrong, err := s.resolve(params.Project, v2.V1)
 	if err != nil {
 		return nil, err
 	}
 	if notFound != nil {
 		return (*api.RenameToSlugNotFound)(notFound), nil
 	}
+	if wrong != nil {
+		return &api.RenameToSlugBadRequest{Message: wrong.Message}, nil
+	}
+	w := workspace.New(project.Root())
 	newName, err := w.RenameToSlug(params.Filename, req.ExpectedHash, req.ExpectedOrderVersion)
 	if err != nil {
 		var refusal *workspace.Refusal

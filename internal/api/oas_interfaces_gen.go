@@ -17,6 +17,14 @@ type GetItemRes interface {
 	getItemRes()
 }
 
+type GetV2ItemRes interface {
+	getV2ItemRes()
+}
+
+type GetV2ProjectRes interface {
+	getV2ProjectRes()
+}
+
 type RenameToSlugRes interface {
 	renameToSlugRes()
 }

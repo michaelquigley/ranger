@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/michaelquigley/ranger/internal/config"
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
@@ -35,30 +36,63 @@ func (e *UnknownProjectError) Error() string {
 	return fmt.Sprintf("unknown project %q", e.Name)
 }
 
-// Resolve maps a project name to its workspace. a miss is an
-// UnknownProjectError; whether the workspace is healthy is the caller's own
-// fresh Load to judge.
-func (p *Projects) Resolve(name string) (*workspace.Workspace, error) {
+// Project is a configured root with its freshly detected convention.
+type Project struct {
+	root       string
+	Convention v2.Convention
+}
+
+func (p Project) Root() string { return p.root }
+
+// LoadForAvailability loads with the detected convention. the v1 load
+// can migrate a legacy order.yaml.
+func (p Project) LoadForAvailability() error {
+	switch p.Convention {
+	case v2.V1:
+		_, err := workspace.New(p.root).Load()
+		return err
+	case v2.V2:
+		_, err := v2.Load(p.root)
+		return err
+	default:
+		return fmt.Errorf("no detected convention for %s", p.root)
+	}
+}
+
+func detectProject(root string) (Project, error) {
+	convention, err := v2.Detect(root)
+	return Project{root: root, Convention: convention}, err
+}
+
+// Resolve maps a configured name to its root and detects its convention.
+func (p *Projects) Resolve(name string) (Project, error) {
+	root, err := p.rootFor(name)
+	if err != nil {
+		return Project{}, err
+	}
+	return detectProject(root)
+}
+
+func (p *Projects) rootFor(name string) (string, error) {
 	cfg, err := p.source()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	for _, ref := range cfg.Projects {
 		if ref.Name == name {
-			return workspace.New(ref.Root), nil
+			return ref.Root, nil
 		}
 	}
-	return nil, &UnknownProjectError{Name: name}
+	return "", &UnknownProjectError{Name: name}
 }
 
-// ProjectStatus is one project's index entry: its name and the verdict of a
-// fresh load at call time.
+// ProjectStatus is one project's index entry, judged by a fresh load.
 type ProjectStatus struct {
-	Name      string
-	Available bool
-	Error     string
-	// Dirty carries the git verdict only when DirtyKnown — unknown is
-	// absent information, never cleanliness.
+	Name       string
+	Convention v2.Convention
+	Available  bool
+	Error      string
+	// Dirty carries the git verdict only when DirtyKnown.
 	Dirty      bool
 	DirtyKnown bool
 }
@@ -78,14 +112,23 @@ func (p *Projects) Index() (*ProjectIndex, error) {
 	}
 	idx := &ProjectIndex{Default: cfg.Default}
 	for _, ref := range cfg.Projects {
-		status := ProjectStatus{Name: ref.Name, Available: true}
-		w := workspace.New(ref.Root)
-		if _, err := w.Load(); err != nil {
-			status.Available = false
+		project, err := detectProject(ref.Root)
+		status := ProjectStatus{Name: ref.Name, Convention: project.Convention}
+		if err == nil {
+			err = project.LoadForAvailability()
+			switch project.Convention {
+			case v2.V1:
+				git := workspace.New(project.root).GitStatus()
+				status.Dirty, status.DirtyKnown = git.Dirty, git.Known
+			case v2.V2:
+				git := v2.GitStatus(project.root)
+				status.Dirty, status.DirtyKnown = git.Dirty, git.Known
+			}
+		}
+		status.Available = err == nil
+		if err != nil {
 			status.Error = err.Error()
 		}
-		git := w.GitStatus()
-		status.Dirty, status.DirtyKnown = git.Dirty, git.Known
 		idx.Projects = append(idx.Projects, status)
 	}
 	return idx, nil

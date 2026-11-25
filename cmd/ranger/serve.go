@@ -11,23 +11,20 @@ import (
 	"time"
 
 	"github.com/michaelquigley/df/dl"
-	"github.com/spf13/cobra"
 	"github.com/michaelquigley/ranger/internal/api"
 	"github.com/michaelquigley/ranger/internal/config"
 	"github.com/michaelquigley/ranger/internal/server"
 	"github.com/michaelquigley/ranger/ui"
+	"github.com/spf13/cobra"
 )
 
-// newServeCmd presents the localhost board over the discovered root — the
-// ad-hoc, zero-config path. fail-fast is reserved for repository-level
-// failures: the roadmap directory missing or unreadable, an unreadable
-// order.yaml — checked once at startup, and again per request, because the
-// working tree never stops changing.
+// newServeCmd runs the localhost server for the discovered root. it
+// checks for repository-level failures using the project's convention.
 func newServeCmd() *cobra.Command {
 	var port int
 	cmd := &cobra.Command{
 		Use:   "serve",
-		Short: "serve the localhost board",
+		Short: "run a localhost server for one discovered project",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			w, err := discovered()
@@ -54,11 +51,11 @@ func serveBootstrap(root string, port int) (*config.Config, http.Handler, error)
 		return nil, nil, err
 	}
 	projects := server.NewProjects(func() (*config.Config, error) { return cfg, nil })
-	w, err := projects.Resolve(cfg.Default)
+	project, err := projects.Resolve(cfg.Default)
 	if err != nil {
 		return nil, nil, err
 	}
-	if _, err := w.Load(); err != nil {
+	if err := project.LoadForAvailability(); err != nil {
 		return nil, nil, err
 	}
 	mux, err := buildMux(projects)
@@ -69,8 +66,7 @@ func serveBootstrap(root string, port int) (*config.Config, http.Handler, error)
 }
 
 // buildMux assembles the one server surface serve and the daemon share:
-// the ogen API at /api/v1, project-scoped roadmap assets at
-// /roadmap/{project}/, and the embedded SPA with index fallback.
+// the ogen API, project-scoped roadmap and future assets, and the SPA.
 func buildMux(projects *server.Projects) (http.Handler, error) {
 	apiServer, err := api.NewServer(server.NewServer(projects), api.WithPathPrefix("/api/v1"))
 	if err != nil {
@@ -78,6 +74,7 @@ func buildMux(projects *server.Projects) (http.Handler, error) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/roadmap/", http.StripPrefix("/roadmap/", server.ProjectAssets(projects)))
+	mux.Handle("/future/", http.StripPrefix("/future/", server.FutureAssets(projects)))
 	mux.Handle("/", ui.Middleware(apiServer))
 	return mux, nil
 }

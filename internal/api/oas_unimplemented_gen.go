@@ -60,6 +60,24 @@ func (UnimplementedHandler) GetProjects(ctx context.Context) (r *ProjectIndex, _
 	return r, ht.ErrNotImplemented
 }
 
+// GetV2Item implements getV2Item operation.
+//
+// One v2 item's raw content, relationships, plan, and files.
+//
+// GET /projects/{project}/v2/items/{slug}
+func (UnimplementedHandler) GetV2Item(ctx context.Context, params GetV2ItemParams) (r GetV2ItemRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetV2Project implements getV2Project operation.
+//
+// Both v2 views and their shared item summaries from a fresh load.
+//
+// GET /projects/{project}/v2/project
+func (UnimplementedHandler) GetV2Project(ctx context.Context, params GetV2ProjectParams) (r GetV2ProjectRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RenameToSlug implements renameToSlug operation.
 //
 // Repair the filename-mismatch flag with one rename.

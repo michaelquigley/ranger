@@ -9,7 +9,7 @@ created: 2026-07-14
 
 ## root discovery
 
-`DiscoverRoot` is the single upward walk: at each ancestor, `docs/future/roadmap/` claims the root; failing that, any entry named `.git` — file or directory, checked with `Lstat` only, never opened — claims it and walls the walk. Exhaustion falls back to the start directory. Capture from three directories deep lands in the repo's roadmap; capture in a nested repo lands in that repo, never the enclosing one.
+`DiscoverRoot` walks upward from the start directory. At each step it checks for `docs/future/roadmap/` and then `docs/future/.ranger/`. Either marker claims the root. Otherwise an entry named `.git` claims the root and stops the walk. Ranger checks that entry with `Lstat` only. If no directory claims the walk, Ranger uses the start directory.
 
 ## load and the snapshot
 

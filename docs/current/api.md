@@ -11,7 +11,7 @@ The contract is project-scoped: every operation except the index lives under `/p
 
 ## the surface
 
-- `GET /projects` — the project index: each configured project's name and availability (`available` plus an `error` diagnostic for a root that failed its load, judged by a fresh load at request time), its `dirty` verdict where git can answer, and which project is the default. This is what the selector renders, and what the bare `/` consults to redirect.
+- `GET /projects` — the project index: each configured project's name and availability (`available` plus an `error` diagnostic for a root that failed its load, judged by a fresh load at request time), its numeric `convention` (1 or 2) when detection succeeds, its `dirty` verdict where git can answer, and which project is the default. This is what the selector renders, and what the bare `/` consults to redirect.
 - `GET /projects/{project}/board` — lanes in lifecycle order; each card carries filename, title (empty when unreadable — show the filename), its readable state and created date when they exist, tags/subsystems/milestone/source/log, flags, and its content `hash`; each lane carries `rankedCount`, the boundary between the ranked prefix and the computed unranked tail. The board carries `orderVersion` — `.ranger/order.yaml`'s hash or the `"absent"` sentinel, because absence is a version — and `project`, the configured name (slug-shaped everywhere, serve's synthesized entry included). It also carries the saved-filter set: `savedFilters` (from `.ranger/filters.yaml`, empty included) and `filtersVersion` (its hash or the `"absent"` sentinel); when the file exists but can't be read, both fields are absent — degraded, never a board failure.
 - `GET /projects/{project}/search?q=` — case-insensitive substring search over titles and bodies, computed against a fresh disk read per query; returns matching filenames.
 - `GET /projects/{project}/items/{filename}` — raw `content` + parsed card + `hash`; 404 for a name that doesn't exist.
@@ -25,9 +25,18 @@ The contract is project-scoped: every operation except the index lives under `/p
 
 Every mutation carries `expectedHash` and/or `expectedOrderVersion` — the order version is required on *every* gesture that can touch order.yaml, never conditional on whether the item happens to be ranked. Every mutation success returns a fresh board, rebuilt from disk truth after the write.
 
+## v2 reads
+
+- `GET /projects/{project}/v2/project` returns `roadmap` and `queue` as ordered lanes of slugs, with one `items` map keyed by directory slug. Its summaries carry the title, effective state, kind, dates, tags, typed link targets, checklist counts, Needs you, flags, and Building progress with the posted verdict and its broker. The project payload also carries all requests and flags, including flags owned by a line in a view file.
+- `GET /projects/{project}/v2/items/{slug}` returns the raw `index.md`, its hash, the same summary, links in both directions, design presence, and the plan and stage facts. The plan lists stages in order and the stage map reports every file found by name. The sidecar file list uses paths relative to the item directory. The item read returns a 404 when the slug is absent.
+
+Both reads load the files fresh. Each readable view carries the hash of its file or the `"absent"` sentinel when the file is missing. An unreadable view carries its own error and an empty lane array with the version omitted. The other view, item summaries, and detail reads still work. An unreadable item, plan, or stage appears through item flags. An invalid version marker fails convention detection and appears as a project error in the index.
+
 ## the dirty verdict
 
-Three surfaces carry an optional `dirty` boolean: each card (this item's file is uncommitted), the board (anything under the roadmap directory is uncommitted — items, order.yaml, and assets alike), and each project-index entry (the board's verdict, judged per project at index time). The verdict comes from one read-only `git status --porcelain` shelled out per request, scoped to the roadmap directory; modified, staged, and untracked all count, because every one is work the operator hasn't committed. Where git can't answer — no git binary, a root outside any repository — the field is absent, never `false`: unknown is missing information, not cleanliness. This is the one place the tool consults git, and it only reads (the 2026-07-21 design change that opened it is exactly that narrow); altering git state remains outside the tool's jurisdiction entirely.
+Three v1 surfaces carry an optional `dirty` boolean: each card (this item's file is uncommitted), the board (anything under the roadmap directory is uncommitted — items, order.yaml, and assets alike), and each project-index entry (the board's verdict, judged per project at index time). The verdict comes from one read-only `git status --porcelain` shelled out per request, scoped to the roadmap directory; modified, staged, and untracked all count, because every one is work the operator hasn't committed. Where git can't answer — no git binary, a root outside any repository — the field is absent, never `false`: unknown is missing information, not cleanliness. This is the one place the tool consults git, and it only reads (the 2026-07-21 design change that opened it is exactly that narrow); altering git state remains outside the tool's jurisdiction entirely.
+
+In v2 each item and view file carries a `git` object with `unstaged`, `staged`, and `new` booleans when Git answers. Both views and all summaries share one status call scoped to `docs/future/`. Changes accumulate across all paths under an item. An untracked `index.md` marks the item new. Other untracked files add an unstaged mark. An untracked view file is new. Renames mark their destination. The project index runs status once per detected project using its convention's scope. A removed v2 item still dirties the index entry until the deletion is committed.
 
 ## the error family
 
@@ -36,7 +45,7 @@ The typed conflict (409) carries a machine-readable `reason`:
 - `item_conflict` / `order_conflict` / `filters_conflict` — a guard refusal: the view went stale; the client reloads. Split by which file's guard tripped.
 - `slug_collision` — a no-clobber refusal, carrying structured recovery paths: `tempPath` (capture: the preserved draft), `sourcePath`/`destPath` (retitle, rename-to-slug) — so the collision affordance the workspace guarantees survives to the browser surface.
 
-An unknown `{project}` is a 404 `errorResponse` on every scoped operation. Refusals that are neither conflicts nor server faults — rename-to-slug against an unreadable or empty-slug title — are typed 400s. Everything else, including partial two-file failure and repository-level errors on a degraded project, lands in the default error response with the server's message verbatim.
+An unknown `{project}` is a 404 `errorResponse` on every scoped operation. An operation for the other convention returns a typed 400 naming the actual and required conventions before it can load or mutate the project. Refusals that are neither conflicts nor server faults — rename-to-slug against an unreadable or empty-slug title — are typed 400s. Everything else, including partial two-file failure and repository-level errors on a degraded project, lands in the default error response with the server's message verbatim.
 
 ## tests
 

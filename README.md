@@ -56,7 +56,7 @@ Capture is the root command. `ranger retry semantics v2` opens your editor (`RAN
 
 The board itself: five lanes in lifecycle order, embedded in the binary and fully offline (fonts, icons, everything). Dragging a card between lanes patches its `state:` line; dragging within a lane rewrites the ranked prefix; drops are anchor-placed, so reordering works correctly even under active filters. The board filters by tag, subsystem, and milestone — plain click includes, alt-click filters out — saves named filters into the roadmap itself (`.ranger/filters.yaml`, published alongside the cards), searches titles and bodies against a fresh disk read, and opens each item in a modal: rendered markdown with the prompt reading ahead of its supporting sections, in-place retitle, raw-bytes edit, and deletion behind a confirm. The board keeps itself fresh — a quiet two-second poll re-reads the disk (only while the tab is visible, never mid-drag), so changes from any hand — your editor, the CLI, an agent, another window — appear on their own. Cards with uncommitted changes carry a quiet red edge, and the project selector marks dirty boards with the git vernacular's `*` — one glance answers whether everything you range across is committed.
 
-`ranger serve` is the same server, ad-hoc: run it anywhere inside a repo — no config, no tray — and get that one project's board, ctrl-C when done. `ranger list` prints the board in the terminal, ranked prefix numbered and flags inline; `ranger state <filename|slug> <state>` transitions an item from the command line. The CLI gestures never consult the daemon's config: in-repo, discovery is the addressing.
+`ranger serve` runs the same server for one discovered repo, without config or a tray. It serves the v1 board for v1 projects and the read API and attachments for v2 projects. Press Ctrl-C to stop it. `ranger list` prints the board in the terminal, ranked prefix numbered and flags inline; `ranger state <filename|slug> <state>` transitions an item from the command line. The CLI gestures never consult the daemon's config: in-repo, discovery is the addressing.
 
 ## Load-bearing rules
 
@@ -85,7 +85,7 @@ ranger list
 ranger state retry-semantics-v2 horizon
 ```
 
-Root discovery is an upward walk: the nearest ancestor with `docs/future/roadmap/` — or, failing that, a `.git` entry — claims the root, so capture from three directories deep lands in the right roadmap, and a nested repo never leaks items into its enclosing one.
+Root discovery walks upward. At each directory, Ranger checks for `docs/future/roadmap/` and `docs/future/.ranger/` before checking for a `.git` entry. The first directory that claims the walk becomes the project root, so a nested repository keeps its own items.
 
 ## Status
 

@@ -11,6 +11,8 @@ const (
 	GetBoardOperation       OperationName = "GetBoard"
 	GetItemOperation        OperationName = "GetItem"
 	GetProjectsOperation    OperationName = "GetProjects"
+	GetV2ItemOperation      OperationName = "GetV2Item"
+	GetV2ProjectOperation   OperationName = "GetV2Project"
 	RenameToSlugOperation   OperationName = "RenameToSlug"
 	ReorderLaneOperation    OperationName = "ReorderLane"
 	RetitleItemOperation    OperationName = "RetitleItem"

@@ -8,20 +8,28 @@ import (
 	"path/filepath"
 	"strings"
 
+	v2 "github.com/michaelquigley/ranger/internal/v2/workspace"
 	"github.com/michaelquigley/ranger/internal/workspace"
 )
 
-// ProjectAssets resolves the leading path segment as a project name and
-// serves that root's roadmap files through Assets — a resolution addition
-// only; every containment property lives in Assets, unchanged.
+// ProjectAssets serves the named project's roadmap files through Assets.
 func ProjectAssets(projects *Projects) http.Handler {
+	return projectAssets(projects, workspace.RoadmapRel)
+}
+
+// FutureAssets serves the named project's future files through Assets.
+func FutureAssets(projects *Projects) http.Handler {
+	return projectAssets(projects, v2.FutureRel)
+}
+
+func projectAssets(projects *Projects, scope string) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		name, rest, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/"), "/")
 		if name == "" {
 			http.NotFound(rw, r)
 			return
 		}
-		w, err := projects.Resolve(name)
+		root, err := projects.rootFor(name)
 		if err != nil {
 			var unknown *UnknownProjectError
 			if errors.As(err, &unknown) {
@@ -33,7 +41,7 @@ func ProjectAssets(projects *Projects) http.Handler {
 		}
 		scoped := r.Clone(r.Context())
 		scoped.URL.Path = "/" + rest
-		Assets(filepath.Join(w.Root(), filepath.FromSlash(workspace.RoadmapRel))).ServeHTTP(rw, scoped)
+		Assets(filepath.Join(root, filepath.FromSlash(scope))).ServeHTTP(rw, scoped)
 	})
 }
 
