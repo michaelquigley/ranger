@@ -68,3 +68,14 @@ Everything on this card is evidence for that. The notes group under the things h
 - **Structure a card lacks.** No way to say what it waits for, who it waits on, or what it has been evidenced by; position meaning something different in each lane; closing, folding and removing all being the deletion of a file.
 
 On the same day the same idea was recorded from mega's side: its hub epic lists this as the seventh direction and points here.
+
+## 2026-11-19: a work order became a sequence of cards
+
+Mega's simplification started as one spec section and one work order of seven stages. After eight review rounds in a day it was split into eleven cards under an epic, to be built one at a time.
+
+- **An epic's stories have an order, and the board has nowhere to say it.** The sequence lives in three places kept in step by hand: a numbered list in the epic's text, each card's own "fourth in the sequence" line, and the cards' positions in the researching lane. Position in a lane was already carrying other meanings.
+- **Two of the eleven are built on a branch and the rest on the main line.** That is a fact about where a card's work lands, said in prose on each card.
+- **Each card names a failure it makes impossible.** It is the measure the operator took from an independent review, and every card now has a section for it under the same heading. It is structure by convention: nothing checks that a card has one.
+- **A card can be a design to decide before anything is built,** sitting second in a sequence of things to build. The lane says researching for all eleven.
+- **The split was a migration out of a document.** Stages of a work order became cards, with their gates, and the work order was left behind marked superseded. Specs, work orders and cards are three forms of one thing at different sizes, and moving between them was all hand work.
+- **Dependencies between cards are sentences.** "Easier after", "before, because it removes a difference", "its shape depends on what is decided for". There are three kinds there at least, and none is a link.
